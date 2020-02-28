@@ -19,6 +19,6 @@ const int MATRIX_ZERO = -9999998;
 /// @brief NODATA value in the matrix
 const int NODATA = -9999999;
 /// @brief DEBUG
-const bool   = true;
+const bool DEBUG = true;
 
 #endif /* UNIVERSAL_CONST_H_ */
