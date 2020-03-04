@@ -15,12 +15,14 @@
 #include <iostream>
 #include <fstream>
 #include "../Universal/const.h"
+#include "../Universal/log.hpp"
 ISEA3H::ISEA3H() {
 
 }
 ISEA3H::ISEA3H(const string p_filename) {
-	filename = p_filename;
 
+	filename = p_filename;
+	//LOG(INFO)<<"Reading "<<filename;
 	CSVReader reader(filename, " ", true);
 	vector<vector<string> > data = reader.getData();
 	for (vector<string> vec : data) {
@@ -72,7 +74,7 @@ void ISEA3H::save(const string fileName) {
 	vector<string> output;
 	char line[50];
 	// Note: The old version has only 5 columns without lon and lat columns.
-	sprintf(line, "global_id v");
+	sprintf(line, "global_id,v");
 	output.push_back(line);
 	for (auto item : values) {
 		char line[50];

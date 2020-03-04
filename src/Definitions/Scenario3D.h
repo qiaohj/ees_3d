@@ -138,20 +138,6 @@ private:
 			unsigned current_year);
 
 	/**
-	 * @brief An enhanced function of 'markJointOrganism'. The simulation would detect all the individuals in population 1 and 2, but the the individual-pair which distance smaller than a threshold. It is faster but will cause some bugs. Unused now.
-	 * @param speciation_year
-	 * @param group_id_1
-	 * @param group_id_2
-	 * @param organisms
-	 * @param current_year
-	 */
-	/**
-	unsigned getMinDividedYear_minDistance(unsigned speciation_year,
-			unsigned short group_id_1, unsigned short group_id_2,
-			boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms,
-			unsigned current_year);
-	 **/
-	/**
 	 * Get the separating time length of two individuals.
 	 * @param o_1 individual 1
 	 * @param o_2 individual 2

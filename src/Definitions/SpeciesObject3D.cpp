@@ -56,7 +56,8 @@ SpeciesObject3D::SpeciesObject3D(const string json_path) {
     Json::Value initial_seeds_array = species_json["initial_seeds"];
     for (unsigned index = 0; index < initial_seeds_array.size(); ++index) {
         Json::Value initial_seeds_json = initial_seeds_array[index];
-        unsigned initial_seed = initial_seeds_json.asUInt();
+        LOG(INFO)<<initial_seeds_json;
+        unsigned initial_seed = (unsigned)initial_seeds_json.asInt();
         seeds.insert(initial_seed);
     }
     LOG(INFO)<<"finished";

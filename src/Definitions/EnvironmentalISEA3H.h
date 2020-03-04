@@ -13,7 +13,7 @@
 
 #ifndef EnvironmentalISEA3H_H_
 #define EnvironmentalISEA3H_H_
-
+using namespace std;
 #include <boost/unordered_map.hpp>
 #include "ISEA3H.h"
 /**

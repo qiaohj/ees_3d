@@ -37,14 +37,14 @@
 #include <boost/thread/thread.hpp>
 
 #include "ExpressionParser/parser.h"
-#include "Definitions/Scenario3D.h"
+#include "Definitions/Scenario.h"
 #include "Universal/log.hpp"
 #include "Universal/CommonFun.h"
 #include "Definitions/IndividualOrganism.h"
 #include "Definitions/ISEA3H.h"
 #include "Definitions/Neighbor3D.h"
 
-void handler(int sig) {
+void handlerxx(int sig) {
   void *array[10];
   size_t size;
 
@@ -72,7 +72,7 @@ _INITIALIZE_EASYLOGGINGPP
  * 7. with detail. An ZERO value means output the details of the simulation or not.
  *
  *-----------------------------------------*/
-int mainx(int argc, const char* argv[]) {
+int mainxx(int argc, const char* argv[]) {
 	ISEA3H* t = new ISEA3H("/home/huijieqiao/git/ees_3d_data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
 	LOG(INFO) <<t->readByID(55);
 
@@ -86,7 +86,7 @@ int mainx(int argc, const char* argv[]) {
 	//LOG(INFO) <<"distance is "<< neighborInfo->distance(22, 50145);
 	LOG(INFO) <<"distance is "<< neighborInfo->distance(31184, 31262, 10);
 }
-int main(int argc, const char* argv[]) {
+int mainyy(int argc, const char* argv[]) {
 
 	// Check the validity of the input
 	// If the length of parameters are not satisfied with the required number, the application will skip this simulation and show out a warning.
@@ -106,7 +106,7 @@ int main(int argc, const char* argv[]) {
 	bool is_overwrite = atoi(argv[5]);
 	bool is_sqlite =  atoi(argv[7]);
 	//initialize the main scenario
-	Scenario3D* scenario = new Scenario3D(std::string(scenario_json_path), argv[2], argv[1], argv[3], is_overwrite, memory_limit, with_detail, is_sqlite);
+	Scenario* scenario = new Scenario(std::string(scenario_json_path), argv[2], argv[1], argv[3], is_overwrite, memory_limit, with_detail, is_sqlite);
 
 	if (scenario->isTerminated()){
 		//delete scenario;

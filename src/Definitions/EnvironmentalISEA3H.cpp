@@ -13,12 +13,12 @@
 
 #include "EnvironmentalISEA3H.h"
 
-EnvironmentalISEA3H::EnvironmentalISEA3H(const std::string p_basefolder, unsigned p_burn_in_year,
+EnvironmentalISEA3H::EnvironmentalISEA3H(const string p_basefolder, unsigned p_burn_in_year,
 		unsigned p_begin_year, unsigned p_end_year, unsigned p_step) {
 	for (unsigned y=p_begin_year + p_burn_in_year; y>=p_end_year; y -= p_step){
 		unsigned year = y / 100;
-		std::string layer = p_basefolder + "/"
-					+  CommonFun::fixedLength(year, 4) + ".tif";
+		string layer = p_basefolder + "/"
+					+  CommonFun::fixedLength(year, 4) + ".csv";
 		if (y>p_begin_year){
 			layer = p_basefolder + "/"
 					+  CommonFun::fixedLength(p_begin_year / 100, 4) + ".csv";

@@ -50,6 +50,8 @@ Scenario3D::Scenario3D(const string p_scenario_json_path, string p_scenario_id,
     }
     //Load the required parameters of the scenario from the JSON file.
     totalYears = root_Scenario3D.get("total_years", 120000).asInt();
+
+    LOG(INFO)<<"Loading Neighbor list";
     neighborInfo = new Neighbor3D(root_Scenario3D.get("neighbor_info", "").asString());
     const string mask_file = root_Scenario3D.get("mask", "").asString();
     mask = new ISEA3H(mask_file);
@@ -61,11 +63,11 @@ Scenario3D::Scenario3D(const string p_scenario_json_path, string p_scenario_id,
         string species_json_path = baseFolder
                 + string("/Species_Configurations/")
                 + species_json_array[index].asString() + string(".json");
-        SpeciesObject3D *species = new SpeciesObject3D(
+        SpeciesObject3D *new_species = new SpeciesObject3D(
                 species_json_path.c_str());
-        this->species.push_back(species);
-        createSpeciesFolder(species, true);
-        set<int> seeds = species->getSeeds();
+        this->species.push_back(new_species);
+        createSpeciesFolder(new_species, true);
+        set<int> seeds = new_species->getSeeds();
         boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > t_o;
 
         vector<string> output;
@@ -84,13 +86,13 @@ Scenario3D::Scenario3D(const string p_scenario_json_path, string p_scenario_id,
             sprintf(line, "%d", seed);
             output.push_back(line);
             IndividualOrganism3D *individualOrganism = new IndividualOrganism3D(
-                    0, species, NULL, seed);
+                    0, new_species, NULL, seed);
             boost::unordered_map<unsigned, IndividualOrganism3D*> t;
             t[seed] = individualOrganism;
             t_o[seed].push_back(individualOrganism);
 
         }
-        all_individualOrganisms[0][species] = t_o;
+        all_individualOrganisms[0][new_species] = t_o;
         /*---------------------
          *
          * get the minimal dispersal speed from all the species in the simulation.
@@ -100,8 +102,8 @@ Scenario3D::Scenario3D(const string p_scenario_json_path, string p_scenario_id,
          -----------------------*/
 
         minSpeciesDispersalSpeed =
-                (species->getDispersalSpeed() < minSpeciesDispersalSpeed) ?
-                        species->getDispersalSpeed() : minSpeciesDispersalSpeed;
+                (new_species->getDispersalSpeed() < minSpeciesDispersalSpeed) ?
+                        new_species->getDispersalSpeed() : minSpeciesDispersalSpeed;
         char filepath2[target.length() + 15];
         sprintf(filepath2, "%s/seeds.csv", target.c_str());
         CommonFun::writeFile(output, filepath2);
@@ -316,7 +318,7 @@ unsigned Scenario3D::run() {
         int organism_count = 0;
 
         //Handle the active individual organisms one by one.
-        //LOG(INFO)<<"start to simulate organism by species. Count of species is " << actived_individualOrganisms.size();
+        LOG(INFO)<<"start to simulate organism by species. Count of species is " << actived_individualOrganisms.size();
         for (auto s_it : actived_individualOrganisms) {
             //If it is the beginning of the simulation, generate a suitable layer for the species;
             if (year == minSpeciesDispersalSpeed) {
@@ -327,12 +329,14 @@ unsigned Scenario3D::run() {
                 sprintf(tiffName, "%s/suitable.csv", speciesFolder.c_str());
                 vector<ISEA3H*> current_environments = getEnvironmenMap(year);
                 ISEA3H *map = new ISEA3H();
-                //LOG(INFO)<<"Begin to generate the suitable area";
+                LOG(INFO)<<"Begin to generate the suitable area";
                 for (auto item : current_environments[0]->getValues()) {
                     unsigned id = item.first;
+                    LOG(INFO)<<"ID is "<<id;
                     unsigned short v = 0;
                     for (unsigned i = 0; i < nicheBreadth.size(); ++i) {
                         float env_value = current_environments[i]->readByID(id);
+                        LOG(INFO)<<env_value;
                         if ((env_value > nicheBreadth[i]->getMax())
                                 || (env_value < nicheBreadth[i]->getMin())) {
                             v = 0;
@@ -346,8 +350,8 @@ unsigned Scenario3D::run() {
                     }
                 }
                 map->save(tiffName);
-                //LOG(INFO)<<"END to generate the suitable area";
-                //exit(1);
+                LOG(INFO)<<"END to generate the suitable area";
+                exit(1);
             }
             //LOG(INFO)<<"start to simulate organism by organism. Current species is "<< s_it.first << ". Count of organisms is " << s_it.second.size();
 
@@ -814,67 +818,9 @@ void Scenario3D::markedSpeciesID(unsigned short group_id,
 }
 unsigned Scenario3D::distance3D(unsigned id1, unsigned id2, unsigned limited) {
 
-    return this->neighborInfo->distance(id1, id2, limited);
+    return neighborInfo->distance(id1, id2, limited);
 }
-/**
-unsigned Scenario3D::getMinDividedYear_minDistance(unsigned speciation_year,
-        unsigned short group_id_1, unsigned short group_id_2,
-        boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms,
-        unsigned current_year) {
-    unsigned nearest_divided_year = 0;
-    vector<unsigned> group_c_1;
-    vector<unsigned> group_c_2;
-    double min_distance = 9999999;
-    unsigned group_1_index = 0;
-    unsigned group_2_index = 0;
-    for (auto c_it : (*organisms)) {
-        if (c_it.second.front()->getGroupId() == group_id_1) {
-            group_c_1.push_back(c_it.first);
-        } else if (c_it.second.front()->getGroupId() == group_id_2) {
-            group_c_2.push_back(c_it.first);
-        }
-    }
-    for (auto o_it_1 : group_c_1) {
-        IndividualOrganism3D *org1 = (*organisms)[o_it_1].front();
-        int id1 = org1->getID();
 
-        for (auto o_it_2 : group_c_2) {
-            IndividualOrganism3D *org2 = (*organisms)[o_it_2].front();
-            int id2 = org2->getID();
-
-            int dispersal_ability =
-                    (org2->getDispersalAbility() > org1->getDispersalAbility()) ?
-                            org2->getDispersalAbility() :
-                            org1->getDispersalAbility();
-            double distance = distance3D(id1, id2, 10);
-            if (min_distance > distance) {
-                min_distance = distance;
-                group_1_index = o_it_1;
-                group_2_index = o_it_2;
-            }
-        }
-    }
-
-    vector<IndividualOrganism3D*> group_1 = (*organisms)[group_1_index];
-    vector<IndividualOrganism3D*> group_2 = (*organisms)[group_2_index];
-
-    for (auto o_it_1 : group_1) {
-        for (auto o_it_2 : group_2) {
-            //if ((o_it_1->getGroupId()==group_id_1)&&(o_it_2->getGroupId()==group_id_2)){
-            unsigned divided_year = getDividedYear(o_it_1, o_it_2);
-            nearest_divided_year =
-                    (divided_year > nearest_divided_year) ?
-                            divided_year : nearest_divided_year;
-            if ((current_year - nearest_divided_year) < speciation_year) {
-                return current_year - nearest_divided_year;
-            }
-            //}
-        }
-        //printf("%u/%u\n", i++, group_1.size() * group_2.size());
-    }
-    return current_year - nearest_divided_year;
-}
-**/
 unsigned Scenario3D::getMinDividedYear(unsigned speciation_year,
         unsigned short group_id_1, unsigned short group_id_2,
         boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms,
@@ -927,8 +873,11 @@ unsigned Scenario3D::getDividedYear(IndividualOrganism3D *o_1,
     }
 }
 set<unsigned> Scenario3D::getNeighbors(unsigned id, unsigned distance) {
-    set<unsigned> a;
-    return a;
+    set<unsigned> neighbors;
+    set<unsigned> handled_ids;
+    this->neighborInfo->getNeighborByID(id, distance, &neighbors, &handled_ids);
+    handled_ids.clear();
+    return neighbors;
 }
 void Scenario3D::markJointOrganism(unsigned short p_group_id,
         IndividualOrganism3D *p_unmarked_organism,
@@ -959,7 +908,7 @@ void Scenario3D::markJointOrganism(unsigned short p_group_id,
             }
         }
     }
-
+    neighbors.clear();
 }
 
 IndividualOrganism3D* Scenario3D::getUnmarkedOrganism(
@@ -1015,7 +964,7 @@ set<unsigned> Scenario3D::getDispersalMap_2(
             individualOrganism->getDispersalAbility();
     if (individualOrganism->getNumOfPath() == -1) {
         unsigned id = individualOrganism->getID();
-        set<unsigned> neighbors = this->getNeighbors(id, p_dispersal_ability);
+        set<unsigned> neighbors = getNeighbors(id, p_dispersal_ability);
         for (unsigned nei_id : neighbors){
             new_cells.insert(nei_id);
         }
