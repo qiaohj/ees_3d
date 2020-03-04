@@ -42,6 +42,7 @@
 #include "Universal/CommonFun.h"
 #include "Definitions/IndividualOrganism.h"
 #include "Definitions/ISEA3H.h"
+#include "Definitions/Neighbor3D.h"
 
 void handler(int sig) {
   void *array[10];
@@ -74,6 +75,16 @@ _INITIALIZE_EASYLOGGINGPP
 int main(int argc, const char* argv[]) {
 	ISEA3H* t = new ISEA3H("/home/huijieqiao/git/ees_3d_data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
 	LOG(INFO) <<t->readByID(55);
+
+	Neighbor3D* neighborInfo = new Neighbor3D("/home/huijieqiao/git/ees_3d_data/ISEA3H8/isea3h8neigpbor.nbr");
+	set<unsigned> neighbors;
+	set<unsigned> handled_ids;
+	neighborInfo->getNeighborByID(22, 2, &neighbors, &handled_ids);
+	for (unsigned id : neighbors){
+	    LOG(INFO) << id;
+	}
+	//LOG(INFO) <<"distance is "<< neighborInfo->distance(22, 50145);
+	LOG(INFO) <<"distance is "<< neighborInfo->distance(31184, 31262, 10);
 }
 int mainx(int argc, const char* argv[]) {
 

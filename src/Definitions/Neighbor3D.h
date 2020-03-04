@@ -29,7 +29,7 @@ using namespace std;
  */
 class Neighbor3D {
 private:
-	boost::unordered_map<unsigned, set<int>> neighbors;
+	boost::unordered_map<unsigned, set<unsigned>> neighbors;
 	string filename;
 public:
 
@@ -50,9 +50,9 @@ public:
 	 * @brief return all the neighbors of a given face within a given distance
 	 * @return
 	 */
-	void getNeighborByID(unsigned p_id, unsigned distance, set<int>* neighbors);
+	void getNeighborByID(unsigned p_id, unsigned distance, set<unsigned>* neighbors, set<unsigned> *handled_neighbors);
 
-	unsigned distance(unsigned p_id1, unsigned p_id2, set<int>* neighbors);
+	unsigned distance(unsigned p_id1, unsigned p_id2, unsigned limited);
 	/**
 	 * @brief return the file name of the 3D Neighbor3D object.
 	 * @return

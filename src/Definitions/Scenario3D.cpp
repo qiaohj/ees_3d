@@ -50,6 +50,7 @@ Scenario3D::Scenario3D(const string p_scenario_json_path, string p_scenario_id,
     }
     //Load the required parameters of the scenario from the JSON file.
     totalYears = root_Scenario3D.get("total_years", 120000).asInt();
+    neighborInfo = new Neighbor3D(root_Scenario3D.get("neighbor_info", "").asString());
     const string mask_file = root_Scenario3D.get("mask", "").asString();
     mask = new ISEA3H(mask_file);
 
@@ -811,10 +812,11 @@ void Scenario3D::markedSpeciesID(unsigned short group_id,
         }
     }
 }
-unsigned Scenario3D::distance3D(unsigned id1, unsigned id2) {
-    //to do:
-    return 0;
+unsigned Scenario3D::distance3D(unsigned id1, unsigned id2, unsigned limited) {
+
+    return this->neighborInfo->distance(id1, id2, limited);
 }
+/**
 unsigned Scenario3D::getMinDividedYear_minDistance(unsigned speciation_year,
         unsigned short group_id_1, unsigned short group_id_2,
         boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms,
@@ -844,7 +846,7 @@ unsigned Scenario3D::getMinDividedYear_minDistance(unsigned speciation_year,
                     (org2->getDispersalAbility() > org1->getDispersalAbility()) ?
                             org2->getDispersalAbility() :
                             org1->getDispersalAbility();
-            double distance = distance3D(id1, id2);
+            double distance = distance3D(id1, id2, 10);
             if (min_distance > distance) {
                 min_distance = distance;
                 group_1_index = o_it_1;
@@ -872,7 +874,7 @@ unsigned Scenario3D::getMinDividedYear_minDistance(unsigned speciation_year,
     }
     return current_year - nearest_divided_year;
 }
-
+**/
 unsigned Scenario3D::getMinDividedYear(unsigned speciation_year,
         unsigned short group_id_1, unsigned short group_id_2,
         boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms,

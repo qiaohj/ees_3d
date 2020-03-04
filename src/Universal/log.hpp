@@ -5588,6 +5588,7 @@ public:
     typedef void (*Handler)(int);
 
     explicit CrashHandler(bool useDefault) {
+        useDefault = false;
         if (useDefault) {
             setHandler(defaultCrashHandler);
         }

@@ -26,6 +26,7 @@ using namespace std;
 #include "SpeciesObject3D.h"
 #include "IndividualOrganism3D.h"
 #include "../Universal/log.hpp"
+#include "Neighbor3D.h"
 
 /**
  * @brief to define the features of a virtual scenario in a simulation, and the virtual species in the scenario.
@@ -44,6 +45,7 @@ private:
 	bool isSQLite;
 	/// @brief The environmental variables used in the simulation.
 	vector<EnvironmentalISEA3H*> environments;
+	Neighbor3D* neighborInfo;
 	/// @brief The virtual species in the simulation, including the initial species, and new species after the speciation events.
 	vector<SpeciesObject3D*> species;
 
@@ -143,11 +145,12 @@ private:
 	 * @param organisms
 	 * @param current_year
 	 */
+	/**
 	unsigned getMinDividedYear_minDistance(unsigned speciation_year,
 			unsigned short group_id_1, unsigned short group_id_2,
 			boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms,
 			unsigned current_year);
-
+	 **/
 	/**
 	 * Get the separating time length of two individuals.
 	 * @param o_1 individual 1
@@ -195,7 +198,7 @@ private:
 	 * @param id2
 	 * @return
 	 */
-	unsigned distance3D(unsigned id1, unsigned id2);
+	unsigned distance3D(unsigned id1, unsigned id2, unsigned limited);
 	/**
 	 * @brief return all faces with a given distance.
 	 * @param id

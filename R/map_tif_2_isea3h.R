@@ -159,3 +159,19 @@ if (F){
 #}
 
 
+ 
+  if (F){
+    library("geosphere")
+    distMeeus(point@coords[20,], point@coords[21,])
+    distMeeus(point@coords[21,], point@coords[22,])
+    distMeeus(point@coords[21,], point@coords[23,])
+    
+    ids<-c(20, 21, 22, 23, 24,102,103,104,105,184,185,186,
+           31104,31105,31185,31186,31266,31267,31348)
+    shape_t<-shape
+    shape_t@polygons<-subset(shape_t@polygons, shape_t$global_id %in% ids)
+    shape_t@data<-subset(shape_t@data, shape_t$global_id %in% ids)
+    writeOGR(shape_t, dsn = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/test", 
+             layer = "test", driver="ESRI Shapefile", overwrite_layer=T)
+    
+  }
