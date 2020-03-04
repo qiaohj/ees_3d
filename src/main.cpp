@@ -41,7 +41,7 @@
 #include "Universal/log.hpp"
 #include "Universal/CommonFun.h"
 #include "Definitions/IndividualOrganism.h"
-
+#include "Definitions/ISEA3H.h"
 
 void handler(int sig) {
   void *array[10];
@@ -72,6 +72,11 @@ _INITIALIZE_EASYLOGGINGPP
  *
  *-----------------------------------------*/
 int main(int argc, const char* argv[]) {
+	ISEA3H* t = new ISEA3H("/home/huijieqiao/git/ees_3d_data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
+	LOG(INFO) <<t->readByID(55);
+}
+int mainx(int argc, const char* argv[]) {
+
 	// Check the validity of the input
 	// If the length of parameters are not satisfied with the required number, the application will skip this simulation and show out a warning.
 	if (argc==1){

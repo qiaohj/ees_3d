@@ -15,6 +15,7 @@
 
 #ifndef DEFINITIONS_SCENARIO_H_
 #define DEFINITIONS_SCENARIO_H_
+using namespace std;
 #include <string>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
@@ -46,9 +47,9 @@ private:
     /// @brief If save the results to a sqlite database. Suggested to set it to true
     bool isSQLite;
     /// @brief The environmental variables used in the simulation.
-    std::vector<EnvironmentalHadley*> environments;
+    vector<EnvironmentalHadley*> environments;
     /// @brief The virtual species in the simulation, including the initial species, and new species after the speciation events.
-    std::vector<SpeciesObject*> species;
+    vector<SpeciesObject*> species;
 
     //useless
     boost::unordered_map<unsigned, boost::unordered_map<unsigned, double>> distances;
@@ -63,10 +64,10 @@ private:
     SparseMap* mask;
 
     /// @brief The base folder of the simulation
-    std::string baseFolder;
+    string baseFolder;
 
     /// @brief The target folder where the log files is saved.
-    std::string target;
+    string target;
 
     /// @brief The GeoTransform matrix of the raster layers, can be extract from the mask or any environmental layers.
     double* geoTrans;
@@ -104,7 +105,7 @@ private:
 
     /// @brief A hash map to save all the living individual objects in the simulation.
     boost::unordered_map<unsigned, boost::unordered_map<SpeciesObject*,
-            boost::unordered_map<unsigned, std::vector<IndividualOrganism*> > > > all_individualOrganisms;
+            boost::unordered_map<unsigned, vector<IndividualOrganism*> > > > all_individualOrganisms;
 
     /**
      * @brief Get the potential distribution of a given individual in the next time step.
@@ -113,8 +114,8 @@ private:
      * @param year Time step
      * @return Return the potential distribution in pixel.
      */
-    std::vector<CoodLocation*> getDispersalMap_2(
-            IndividualOrganism* individualOrganism, std::string species_folder, unsigned year);
+    vector<CoodLocation*> getDispersalMap_2(
+            IndividualOrganism* individualOrganism, string species_folder, unsigned year);
 
     /**
      * @brief Get the first individual object without a population ID from all the individuals.
@@ -122,7 +123,7 @@ private:
      * @return The first individual object
      */
     IndividualOrganism* getUnmarkedOrganism(
-            boost::unordered_map<unsigned, std::vector<IndividualOrganism*> >* organisms);
+            boost::unordered_map<unsigned, vector<IndividualOrganism*> >* organisms);
 
     /**
      * @brief Allocate a population ID to the individuals which connect with the given individual.
@@ -132,7 +133,7 @@ private:
      */
     void markJointOrganism(unsigned short p_group_id,
             IndividualOrganism* p_unmarked_organism,
-            boost::unordered_map<unsigned, std::vector<IndividualOrganism*> >* organisms);
+            boost::unordered_map<unsigned, vector<IndividualOrganism*> >* organisms);
 
     /**
      * @brief Get the minimal separating time length of two populations
@@ -143,7 +144,7 @@ private:
      * @param current_year Current time step.
      */
     unsigned getMinDividedYear(unsigned speciation_year, unsigned short group_id_1,
-            unsigned short group_id_2, boost::unordered_map<unsigned, std::vector<IndividualOrganism*> >* organisms, unsigned current_year);
+            unsigned short group_id_2, boost::unordered_map<unsigned, vector<IndividualOrganism*> >* organisms, unsigned current_year);
 
     /**
      * @brief An enhanced function of 'markJointOrganism'. The simulation would detect all the individuals in population 1 and 2, but the the individual-pair which distance smaller than a threshold. It is faster but will cause some bugs. Unused now.
@@ -154,7 +155,7 @@ private:
      * @param current_year
      */
     unsigned getMinDividedYear_minDistance(unsigned speciation_year, unsigned short group_id_1,
-            unsigned short group_id_2, boost::unordered_map<unsigned, std::vector<IndividualOrganism*> >* organisms, unsigned current_year);
+            unsigned short group_id_2, boost::unordered_map<unsigned, vector<IndividualOrganism*> >* organisms, unsigned current_year);
 
     /**
      * Get the separating time length of two individuals.
@@ -169,20 +170,20 @@ private:
      * @param temp_species_id species ID
      * @param organisms All the individuals
      */
-    void markedSpeciesID(unsigned short group_id, unsigned short temp_species_id, boost::unordered_map<unsigned, std::vector<IndividualOrganism*> >* organisms);
+    void markedSpeciesID(unsigned short group_id, unsigned short temp_species_id, boost::unordered_map<unsigned, vector<IndividualOrganism*> >* organisms);
 
     /**
      * @brief Get a temporary species ID based on the parent species ID and population ID
      * @param group_id The population ID
      * @param organisms All the individuals
      */
-    unsigned short getTempSpeciesID(unsigned short group_id, boost::unordered_map<unsigned, std::vector<IndividualOrganism*> >* organisms);
+    unsigned short getTempSpeciesID(unsigned short group_id, boost::unordered_map<unsigned, vector<IndividualOrganism*> >* organisms);
     /**
      * @brief Get the folder of the given species
      * @param p_species The species to return the folder
      * @return The folder of the species in the parameter.
      */
-    std::string getSpeciesFolder(SpeciesObject* p_species);
+    string getSpeciesFolder(SpeciesObject* p_species);
     /**
      * @brief Generate the speciation information of the simulation, including the speciation tree (in both NEXUS and HTML format), number of speciation and extinction, etc.
      * @param year time step
@@ -233,8 +234,8 @@ public:
 	 * @param p_with_detail Output the details of the simulation (all occupy a huge hard disk space) or not. Only for debug.
 	 * @param p_isSQLite save the results to a sqlite database.
      */
-    Scenario(const std::string p_scenario_json_path, std::string p_scenario_id, std::string p_base_folder,
-            std::string p_target, bool p_overwrite, unsigned long p_mem_limit, bool p_with_detail, bool p_isSQLite);
+    Scenario(const string p_scenario_json_path, string p_scenario_id, string p_base_folder,
+            string p_target, bool p_overwrite, unsigned long p_mem_limit, bool p_with_detail, bool p_isSQLite);
 
     /**
      * @brief Destructor of Scenario class
@@ -258,13 +259,13 @@ public:
      * @param p_year The time step to get the environmental layers.
      * @return The environmental layers at the given time step
      */
-    std::vector<SparseMap*> getEnvironmenMap(unsigned p_year);
+    vector<SparseMap*> getEnvironmenMap(unsigned p_year);
 
     /**
      * @brief Return the folder to save the result of the simulation.
      * @return The folder to save the result of the simulation.
      */
-    std::string getTarget();
+    string getTarget();
 
     /**
      * @brief Save the distribution map, the population, and the speciation information to the log file

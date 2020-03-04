@@ -1,9 +1,9 @@
 /**
- * @file IndividualOrganism.h
- * @brief Class IndividualOrganism. A class to handle the behavior of an individual in the simulation
+ * @file IndividualOrganism3D.h
+ * @brief Class IndividualOrganism3D. A class to handle the behavior of an individual in the simulation
  * @author Huijie Qiao
  * @version 1.0
- * @date 11/25/2018
+ * @date 3/3/2020
  * @details
  * Copyright 2014-2019 Huijie Qiao
  * Distributed under GNU license
@@ -13,43 +13,41 @@
 
 #ifndef DEFINITIONS_INDIVIDUALORGANISM3D_H_
 #define DEFINITIONS_INDIVIDUALORGANISM3D_H_
-
-#include "SpeciesObject.h"
-#include "SparseMap.h"
+using namespace std;
+#include "SpeciesObject3D.h"
+#include "ISEA3H.h"
 #include "../Universal/log.hpp"
 /**
  * @brief A class to handle the behavior of an individual in the simulation
  */
-class IndividualOrganism {
+class IndividualOrganism3D {
 private:
-    unsigned short x;
-    unsigned short y;
+    unsigned id;
     unsigned short groupId;
     unsigned short tempSpeciesID;
     unsigned short dispersalAbility;
-    SpeciesObject* species;
+    SpeciesObject3D* species;
     unsigned year;
-    IndividualOrganism* parent;
-//    std::vector<IndividualOrganism*> children;
+    IndividualOrganism3D* parent;
+//    vector<IndividualOrganism3D*> children;
 
 public:
     /**
-     * @brief Constructor of IndividualOrganism class
+     * @brief Constructor of IndividualOrganism3D class
      * @param p_year the time step of the individual
      * @param p_species the species ID of the individual
      * @param p_parent the parent species ID of the individual
-     * @param p_x the X index of the individual's locality.
-     * @param p_y the Y index of the individual's locality.
+     * @param p_id the id of the face of the individual's locality.
      */
-    IndividualOrganism(unsigned p_year, SpeciesObject* p_species,
-            IndividualOrganism* p_parent, unsigned short p_x, unsigned short p_y);
+    IndividualOrganism3D(unsigned p_year, SpeciesObject3D* p_species,
+            IndividualOrganism3D* p_parent, unsigned p_id);
 
     /**
-	 * @brief Destructor of IndividualOrganism class
+	 * @brief Destructor of IndividualOrganism3D class
 	 *
 	 * release all the resources
 	 */
-    virtual ~IndividualOrganism();
+    virtual ~IndividualOrganism3D();
 
     /**
      * @brief return the next dispersal time step of the individual based on the dispersal speed of the species.
@@ -88,13 +86,13 @@ public:
      * @param p_current_environments
      * @return True: suitable False: unsuitable
      */
-    bool isSuitable(std::vector<SparseMap*>* p_current_environments);
+    bool isSuitable(vector<ISEA3H*>* p_current_environments);
 
     /**
      * @brief return the species object of the individual
      * @return
      */
-    SpeciesObject* getSpecies();
+    SpeciesObject3D* getSpecies();
 
     /**
      * @brief return the species ID of the individual
@@ -105,7 +103,7 @@ public:
      * @brief set the parent species to the individual
      * @param p_parent
      */
-    void setParent(IndividualOrganism* p_parent);
+    void setParent(IndividualOrganism3D* p_parent);
 
     /**
      * @brief set a dispersal ability based on the dispersal ability of the species.
@@ -116,20 +114,16 @@ public:
      * @brief return the parent of the individual
      * @return
      */
-    IndividualOrganism* getParent();
+    IndividualOrganism3D* getParent();
 
     /**
      * @brief return the time step which the individual is living
      */
     unsigned getYear();
     /**
-	 * @brief return X index of the individual
+	 * @brief return id of faceof the individual
 	 */
-    unsigned short getX();
-    /**
-	 * @brief return Y index of the individual
-	 */
-    unsigned short getY();
+    unsigned getID();
     /**
      * @brief set the time step which the individual is living.
      * @param p_year
@@ -160,10 +154,10 @@ public:
      * @brief set the species object to the individual
      * @param p_species
      */
-    void setSpecies(SpeciesObject* p_species);
-//    void addChild(IndividualOrganism* child);
+    void setSpecies(SpeciesObject3D* p_species);
+//    void addChild(IndividualOrganism3D* child);
 //    void clearChildren();
-//    void removeChild(IndividualOrganism* child);
+//    void removeChild(IndividualOrganism3D* child);
 
     /**
      * @brief return the memory usage of the object (for debug).
@@ -171,4 +165,4 @@ public:
     unsigned long getMemoryUsage();
 };
 
-#endif /* DEFINITIONS_INDIVIDUALORGANISM_H_ */
+#endif /* DEFINITIONS_INDIVIDUALORGANISM3D_H_ */
