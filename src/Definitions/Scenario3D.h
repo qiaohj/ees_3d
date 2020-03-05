@@ -34,7 +34,7 @@ using namespace std;
 class Scenario3D {
 private:
 	/// @brief a sqlite db connection to save the results.
-	sqlite3 *db;
+	sqlite3 *log_db;
 	/// @brief Whether the simulation runs to the end, or be terminated before the end-time-step because of an exception (such as out of memory, full hard disk, or another exception)
 	bool isFinished;
 	/// @brief If the target folder exists, overwrite it or skip it.

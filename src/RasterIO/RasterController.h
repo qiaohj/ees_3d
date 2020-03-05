@@ -17,6 +17,7 @@
 #include <string>
 #include <gdal.h>
 #include <gdal_priv.h>
+#include "../Universal/log.hpp"
 
 /**
  * @brief A class to handle the raster files
@@ -82,11 +83,12 @@ template<typename T> void RasterController::writeRaster(char* p_driver_name, cha
     dataset->SetGeoTransform(p_geo_trans);
 
     dataset->SetProjection(p_prj);
-    GDALRasterBand* band = dataset->GetRasterBand(1);
-
-    band->SetNoDataValue(p_nodata);
-    band->RasterIO(GF_Write, 0, 0, p_xsize, p_ysize, p_array, p_xsize, p_ysize, p_datatype,
+    dataset->GetRasterBand(1)->SetNoDataValue(p_nodata);
+    int err_code = dataset->GetRasterBand(1)->RasterIO(GF_Write, 0, 0, p_xsize, p_ysize, p_array, p_xsize, p_ysize, p_datatype,
             0, 0);
+    if (err_code == CE_Failure){
+        LOG(INFO)<<"Write Raster Error. "<<p_driver_name;
+    }
     dataset->FlushCache();
     GDALClose( (GDALDatasetH) dataset );;
 }

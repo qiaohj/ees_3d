@@ -263,9 +263,8 @@ void Scenario::createDB(const char* path) {
 	} else {
 		LOG(INFO)<<"Opened database successfully";
 	}
-	char *zErrMsg = 0;
 	//Create a table to save the log // year,x,y,lon,lat,group,sp_id
-	char *sql = "CREATE TABLE map("  \
+	string sql = "CREATE TABLE map("  \
 	         "YEAR		INT				NOT NULL," \
 	         "X			INT				NOT NULL," \
 			 "Y			INT				NOT NULL," \
@@ -832,7 +831,7 @@ unsigned Scenario::getMinDividedYear_minDistance(unsigned speciation_year,
 			IndividualOrganism *org2 = (*organisms)[o_it_2].front();
 			int x2 = org2->getX();
 			int y2 = org2->getY();
-			int dispersal_ability = (org2->getDispersalAbility()>org1->getDispersalAbility())?org2->getDispersalAbility():org1->getDispersalAbility();
+			//int dispersal_ability = (org2->getDispersalAbility()>org1->getDispersalAbility())?org2->getDispersalAbility():org1->getDispersalAbility();
 			double distance = distanceFast(x1, y1, x2, y2);
 			if (min_distance > distance) {
 				min_distance = distance;
@@ -955,7 +954,7 @@ void Scenario::getExtend(int p_dispersal_ability, int x, int y,
 	tried = 0;
 	while (distance <= p_dispersal_ability){
 		i_x += 1;
-		if (i_x >= xSize){
+		if (i_x >= (int)xSize){
 			i_x = xSize - i_x;
 		}
 		tried++;
@@ -981,7 +980,7 @@ void Scenario::getExtend(int p_dispersal_ability, int x, int y,
 
 	for (int i_y = y - p_dispersal_ability; i_y <= y + p_dispersal_ability; ++i_y) {
 		i_y = (i_y < 0) ? 0 : i_y;
-		if (i_y > ySize){
+		if (i_y > (int)ySize){
 			break;
 		}
 		distance = distanceFast((int) x, (int) i_y,
@@ -1016,7 +1015,7 @@ void Scenario::markJointOrganism(unsigned short p_group_id,
 			continue;
 		}
 
-		if (next_x >= xSize) {
+		if (next_x >= (int)xSize) {
 			continue;
 		}
 		for (int i_y = (y - p_dispersal_ability);
@@ -1130,7 +1129,7 @@ vector<CoodLocation*> Scenario::getDispersalMap_2(
 				continue;
 			}
 
-			if (next_x >= xSize) {
+			if (next_x >= (int)xSize) {
 				continue;
 			}
 			for (int i_y = (y - p_dispersal_ability);

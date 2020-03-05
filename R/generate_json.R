@@ -15,7 +15,7 @@ hist(v_mean_temp$v)
 hist(v_mean_prec$v)
 species <- sprintf("%s/species.json", base)
 str<-readChar(species, file.info(species)$size)
-id=10382
+id=31832
 
 da_label<-"GOOD"
 

@@ -30,10 +30,6 @@ private:
      */
     unsigned burnInYears;
 
-    /**
-     * @brief the NODATA value in the environmental layers.
-     */
-    float noData;
 
 public:
 
@@ -45,8 +41,11 @@ public:
      * @param p_end_year End time step of the simulation
      * @param p_step The step length of the simulation
      */
-	EnvironmentalISEA3H(const std::string p_basefolder, unsigned p_burn_in_year,
+	EnvironmentalISEA3H(const string p_basefolder, unsigned p_burn_in_year,
 			unsigned p_begin_year, unsigned p_end_year, unsigned p_step);
+
+	EnvironmentalISEA3H(const string p_env_name, sqlite3* p_env_db, unsigned p_burn_in_year,
+	            unsigned p_begin_year, unsigned p_end_year, unsigned p_step);
 
 	/**
 	 * @brief Destructor of EnvironmentalISEA3H class

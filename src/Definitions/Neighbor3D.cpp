@@ -52,9 +52,10 @@ void Neighbor3D::getNeighborByID(unsigned p_id, unsigned distance,
                 getNeighborByID(nei_id, distance - 1, p_neighbors, handled_ids);
             }
         }
-    }else{
-        p_neighbors->insert(p_id);
     }
+
+    p_neighbors->insert(p_id);
+
 }
 unsigned Neighbor3D::distance(unsigned p_id1, unsigned p_id2, unsigned limited) {
     unsigned distance = 0;

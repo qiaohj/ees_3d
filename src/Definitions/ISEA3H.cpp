@@ -19,6 +19,9 @@
 ISEA3H::ISEA3H() {
 
 }
+ISEA3H::ISEA3H(boost::unordered_map<unsigned, float> p_values){
+    values = p_values;
+}
 ISEA3H::ISEA3H(const string p_filename) {
 
 	filename = p_filename;

@@ -37,6 +37,8 @@ public:
 	 * @brief Constructor of ISEA3H class No.2 (Create a blank map)
 	 */
 	ISEA3H();
+
+	ISEA3H(boost::unordered_map<unsigned, float> p_values);
 	/**
 	 * @brief Constructor of ISEA3H class No.1 (load an ISEA3H from a file)
 	 * @param p_filename the file to load the map info

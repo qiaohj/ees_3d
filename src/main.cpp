@@ -79,12 +79,13 @@ int mainx(int argc, const char* argv[]) {
 	Neighbor3D* neighborInfo = new Neighbor3D("/home/huijieqiao/git/ees_3d_data/ISEA3H8/isea3h8neigpbor.nbr");
 	set<unsigned> neighbors;
 	set<unsigned> handled_ids;
-	neighborInfo->getNeighborByID(22, 2, &neighbors, &handled_ids);
+	neighborInfo->getNeighborByID(10382, 2, &neighbors, &handled_ids);
 	for (unsigned id : neighbors){
 	    LOG(INFO) << id;
 	}
 	//LOG(INFO) <<"distance is "<< neighborInfo->distance(22, 50145);
-	LOG(INFO) <<"distance is "<< neighborInfo->distance(31184, 31262, 10);
+	//LOG(INFO) <<"distance is "<< neighborInfo->distance(31184, 31262, 10);
+	return 0;
 }
 int main(int argc, const char* argv[]) {
 

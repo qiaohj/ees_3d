@@ -48,13 +48,12 @@ Scenario3D::Scenario3D(const string p_scenario_json_path, string p_scenario_id,
     } else {
         CommonFun::createFolder((target + "/Map_Folder").c_str());
     }
+
     //Load the required parameters of the scenario from the JSON file.
     totalYears = root_Scenario3D.get("total_years", 120000).asInt();
 
     LOG(INFO)<<"Loading Neighbor list";
     neighborInfo = new Neighbor3D(root_Scenario3D.get("neighbor_info", "").asString());
-    const string mask_file = root_Scenario3D.get("mask", "").asString();
-    mask = new ISEA3H(mask_file);
 
     minSpeciesDispersalSpeed = totalYears;
     Json::Value species_json_array = root_Scenario3D["species"];
@@ -72,7 +71,7 @@ Scenario3D::Scenario3D(const string p_scenario_json_path, string p_scenario_id,
 
         vector<string> output;
         char line[100];
-        sprintf(line, "%s,%s", "long", "lat");
+        sprintf(line, "%s", "id");
         output.push_back(line);
         /* -----------------
          * Create the individual organism(s) based on the seeds in the species' configuration.
@@ -112,19 +111,37 @@ Scenario3D::Scenario3D(const string p_scenario_json_path, string p_scenario_id,
 
     //Load the environments layers for the simulation.
     LOG(INFO) << "Load environments";
+    sqlite3* env_db;
+    string base = root_Scenario3D.get("base", "").asString();
+    int rc;
+    rc = sqlite3_open(base.c_str(), &env_db);
+    if (rc) {
+        LOG(INFO) << "Can't open environment database: " << sqlite3_errmsg(env_db);
+        exit(0);
+    } else {
+        LOG(INFO) << "Opened environment database from <" << base;
+    }
+
+    //CommonFun::executeSQL("SELECT * FROM sqlite_master", env_db);
+
     Json::Value environment_json_array = root_Scenario3D["environments"];
     environments.reserve(environment_json_array.size());
     burnInYear = root_Scenario3D.get("burn_in_year", 0).asInt();
     for (unsigned index = 0; index < environment_json_array.size(); ++index) {
         LOG(INFO) << "Load environments of " << index;
-        string environment_folder_path =
+        const string environment_name =
                 environment_json_array[index].asString();
         /// @todo Here is a hard code (120000, 0 and 100) to be solved.
-        EnvironmentalISEA3H *layer = new EnvironmentalISEA3H(
-                environment_folder_path, burnInYear, 120000, 0, 100);
+        EnvironmentalISEA3H *layer = new EnvironmentalISEA3H(environment_name,
+                env_db, burnInYear, 1200, 0, 1);
         environments.push_back(layer);
     }
 
+    const string mask_table = root_Scenario3D.get("mask", "").asString();
+    boost::unordered_map<unsigned, boost::unordered_map<unsigned, float>> mask_v = CommonFun::readEnvInfo(
+               env_db, mask_table, false);
+    mask = new ISEA3H(mask_v[0]);
+    sqlite3_close(env_db);
     LOG(INFO) << "Finished";
 }
 
@@ -215,7 +232,7 @@ void Scenario3D::saveGroupmap_db(unsigned year,
     vector<string> output;
     char line[100];
     // Note: The old version has only 5 columns without lon and lat columns.
-    sprintf(line, "insert into map (YEAR, ID, group_id, sp_id ) values ");
+    sprintf(line, "BEGIN TRANSACTION; insert into map (YEAR, ID, group_id, sp_id ) values ");
     output.push_back(line);
     int i = 0;
     for (auto sp_it : species_group_maps) {
@@ -242,30 +259,30 @@ void Scenario3D::saveGroupmap_db(unsigned year,
 
         }
     }
-    output.push_back(";");
+    output.push_back("; COMMIT;");
     if (output.size() > 0) {
-        CommonFun::executeSQL(output, db);
+        CommonFun::executeSQL(output, log_db);
         output.clear();
     }
 }
 void Scenario3D::createDB(const char *path) {
 
     int rc;
-    rc = sqlite3_open(path, &db);
+    rc = sqlite3_open(path, &log_db);
     if (rc) {
-        LOG(INFO) << "Can't open database: " << sqlite3_errmsg(db);
+        LOG(INFO) << "Can't open database: " << sqlite3_errmsg(log_db);
         exit(0);
     } else {
         LOG(INFO) << "Opened database successfully";
     }
-    char *zErrMsg = 0;
+    //char *zErrMsg = 0;
     //Create a table to save the log // year,x,y,lon,lat,group,sp_id
-    char *sql = "CREATE TABLE map("
+    string sql = "CREATE TABLE map("
             "YEAR		INT				NOT NULL,"
             "ID			INT				NOT NULL,"
             "group_id	INT				NOT NULL,"
             "sp_id		CHAR(50)				);";
-    CommonFun::executeSQL(sql, db);
+    CommonFun::executeSQL(sql, log_db);
 
 }
 /*-------------------------
@@ -318,7 +335,7 @@ unsigned Scenario3D::run() {
         int organism_count = 0;
 
         //Handle the active individual organisms one by one.
-        LOG(INFO)<<"start to simulate organism by species. Count of species is " << actived_individualOrganisms.size();
+        //LOG(INFO)<<"start to simulate organism by species. Count of species is " << actived_individualOrganisms.size();
         for (auto s_it : actived_individualOrganisms) {
             //If it is the beginning of the simulation, generate a suitable layer for the species;
             if (year == minSpeciesDispersalSpeed) {
@@ -329,14 +346,12 @@ unsigned Scenario3D::run() {
                 sprintf(tiffName, "%s/suitable.csv", speciesFolder.c_str());
                 vector<ISEA3H*> current_environments = getEnvironmenMap(year);
                 ISEA3H *map = new ISEA3H();
-                LOG(INFO)<<"Begin to generate the suitable area";
+                //LOG(INFO)<<"Begin to generate the suitable area";
                 for (auto item : current_environments[0]->getValues()) {
                     unsigned id = item.first;
-                    LOG(INFO)<<"ID is "<<id;
                     unsigned short v = 0;
                     for (unsigned i = 0; i < nicheBreadth.size(); ++i) {
                         float env_value = current_environments[i]->readByID(id);
-                        LOG(INFO)<<env_value;
                         if ((env_value > nicheBreadth[i]->getMax())
                                 || (env_value < nicheBreadth[i]->getMin())) {
                             v = 0;
@@ -350,8 +365,8 @@ unsigned Scenario3D::run() {
                     }
                 }
                 map->save(tiffName);
-                LOG(INFO)<<"END to generate the suitable area";
-                exit(1);
+                //LOG(INFO)<<"END to generate the suitable area";
+                //exit(1);
             }
             //LOG(INFO)<<"start to simulate organism by organism. Current species is "<< s_it.first << ". Count of organisms is " << s_it.second.size();
 
@@ -359,7 +374,7 @@ unsigned Scenario3D::run() {
             for (auto o_it : s_it.second) {
                 IndividualOrganism3D *individualOrganism = o_it.second;
                 //if current year no smaller than individual organism's next run year, then move this organism.
-                //LOG(INFO)<<"Organism index is "<< individualOrganism->getX()<<","<<individualOrganism->getY()<<". Current year is "<<year<<". Next year is "<<individualOrganism->getNextRunYear();
+                //LOG(INFO)<<"Organism index is "<< individualOrganism->getID()<<". Current year is "<<year<<". Next year is "<<individualOrganism->getNextRunYear();
                 if (year >= individualOrganism->getNextRunYear()) {
                     set<unsigned> next_cells;
                     switch (individualOrganism->getDispersalMethod()) {
@@ -522,6 +537,7 @@ unsigned Scenario3D::run() {
                 //LOG(INFO)<<"Begin to mark the organism.";
                 IndividualOrganism3D *unmarked_organism = getUnmarkedOrganism(
                         &organisms);
+                //LOG(INFO)<<"111";
                 while (unmarked_organism != NULL) {
                     //LOG(INFO)<<"Unmarked organism is "<<unmarked_organism->getX() <<", "<<unmarked_organism->getY()
                     //		<<" dispersal ability is "<<unmarked_organism->getDispersalAbility()<<". current_group_id is "<<current_group_id;
@@ -530,6 +546,7 @@ unsigned Scenario3D::run() {
                     current_group_id++;
                     unmarked_organism = getUnmarkedOrganism(&organisms);
                 }
+
                 /*if (current_group_id>1000){
                  LOG(INFO)<<"current_group_id is "<<current_group_id;
                  exit(1);
@@ -875,7 +892,7 @@ unsigned Scenario3D::getDividedYear(IndividualOrganism3D *o_1,
 set<unsigned> Scenario3D::getNeighbors(unsigned id, unsigned distance) {
     set<unsigned> neighbors;
     set<unsigned> handled_ids;
-    this->neighborInfo->getNeighborByID(id, distance, &neighbors, &handled_ids);
+    neighborInfo->getNeighborByID(id, distance, &neighbors, &handled_ids);
     handled_ids.clear();
     return neighbors;
 }
@@ -890,15 +907,19 @@ void Scenario3D::markJointOrganism(unsigned short p_group_id,
     if (p_dispersal_ability == 0) {
         p_dispersal_ability = 1;
     }
+    //LOG(INFO)<<"id="<<id<<" p_dispersal_ability="<<p_dispersal_ability;
     set<unsigned> neighbors = getNeighbors(id, p_dispersal_ability);
+    //LOG(INFO)<<"2222";
     for (unsigned n_id : neighbors) {
+       // LOG(INFO)<<"Neighbor is "<<n_id;
         if (organisms->find(n_id) == organisms->end()) {
-            //                LOG(INFO)<<"skip 2";
+            //LOG(INFO) << "skip 2";
             continue;
         }
         unsigned short group_id = (*organisms)[n_id].front()->getGroupId();
+        //LOG(INFO)<<"GROUP ID OF '"<<n_id<<"' IS: "<<group_id;
         if (group_id != 0) {
-            //                LOG(INFO)<<"skip 3";
+            //LOG(INFO) << "skip 3";
             continue;
         }
         for (auto it : (*organisms)[n_id]) {
@@ -974,8 +995,8 @@ set<unsigned> Scenario3D::getDispersalMap_2(
 
 Scenario3D::~Scenario3D() {
     delete mask;
-    CommonFun::executeSQL("CREATE INDEX idx_year ON map (year)", db);
-    sqlite3_close(db);
+    CommonFun::executeSQL("CREATE INDEX idx_year ON map (year)", log_db);
+    sqlite3_close(log_db);
 //	cleanEnvironments();
 //	cleanActivedIndividualOrganism3Ds();
 //	cleanSpecies();

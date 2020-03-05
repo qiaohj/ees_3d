@@ -15,7 +15,7 @@
 
 SpeciesObject3D::SpeciesObject3D(const string json_path) {
 	currentSpeciesExtinctionTimeSteps = 0;
-	LOG(INFO)<<"Load species configure from " <<json_path;
+	//LOG(INFO)<<"Load species configure from " <<json_path;
 	Json::Value species_json = CommonFun::readJson(json_path.c_str());
     newSpecies = true;
     id = species_json.get("id", "").asInt();
@@ -56,7 +56,7 @@ SpeciesObject3D::SpeciesObject3D(const string json_path) {
     Json::Value initial_seeds_array = species_json["initial_seeds"];
     for (unsigned index = 0; index < initial_seeds_array.size(); ++index) {
         Json::Value initial_seeds_json = initial_seeds_array[index];
-        LOG(INFO)<<initial_seeds_json;
+        //LOG(INFO)<<initial_seeds_json;
         unsigned initial_seed = (unsigned)initial_seeds_json.asInt();
         seeds.insert(initial_seed);
     }
