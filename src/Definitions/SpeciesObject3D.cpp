@@ -3,9 +3,9 @@
  * @brief Class SpeciesObject3D. A class to handle the attributes and behaviors of a virtual species
  * @author Huijie Qiao
  * @version 1.0
- * @date 11/25/2018
+ * @date 3/6/2020
  * @details
- * Copyright 2014-2019 Huijie Qiao
+ * Copyright 2014-2020 Huijie Qiao
  * Distributed under GNU license
  * See file LICENSE for detail or copy at https://www.gnu.org/licenses/gpl-3.0.en.html
  *
@@ -13,28 +13,29 @@
 
 #include "SpeciesObject3D.h"
 
-SpeciesObject3D::SpeciesObject3D(const string json_path) {
+SpeciesObject3D::SpeciesObject3D(sqlite3_stmt *stmt) {
 	currentSpeciesExtinctionTimeSteps = 0;
 	//LOG(INFO)<<"Load species configure from " <<json_path;
-	Json::Value species_json = CommonFun::readJson(json_path.c_str());
     newSpecies = true;
-    id = species_json.get("id", "").asInt();
-    Json::Value dispersal_ability_array = species_json["dispersal_ability"];
-    dispersalAbilityLength = dispersal_ability_array.size();
-    dispersalAbility = new double[10];
-	for (unsigned index = 0; index < dispersalAbilityLength; ++index) {
-		dispersalAbility[index] = dispersal_ability_array[index].asDouble();
+    id = sqlite3_column_int(stmt, SIMULATION_id);
+    vector<string> dispersalAbility_str = CommonFun::splitStr(
+            string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_dispersal_ability))), ",");
+    label = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_label)));
+    dispersalAbilityLength = dispersalAbility_str.size();
+    dispersalAbility = new double[dispersalAbilityLength];
+	for (int index = 0; index < dispersalAbilityLength; ++index) {
+		dispersalAbility[index] = stod(dispersalAbility_str[index]);
 	}
 
-    dispersalSpeed = species_json.get("dispersal_speed", 100).asInt();
-    dispersalMethod = species_json.get("dispersal_method", 2).asInt();
-    numberOfPath = species_json.get("number_of_path", -1).asInt();
-    speciationYears = species_json.get("speciation_years", 10000).asInt();
+    dispersalSpeed = sqlite3_column_int(stmt, SIMULATION_dispersal_speed);
+    dispersalMethod = sqlite3_column_int(stmt, SIMULATION_dispersal_method);
+    numberOfPath = sqlite3_column_int(stmt, SIMULATION_number_of_path);
+    speciationYears = sqlite3_column_int(stmt, SIMULATION_speciation_years);
 
-    speciesExtinctionThreshold = species_json.get("species_extinction_threshold", 1).asInt();
-    groupExtinctionThreshold = species_json.get("group_extinction_threshold", 1).asInt();
-    speciesExtinctionTimeSteps = species_json.get("species_extinction_time_steps", 1).asInt();
-    speciesExtinctionThreaholdPercentage = 1 - species_json.get("species_extinction_threahold_percentage", 1).asDouble();
+    speciesExtinctionThreshold = (unsigned)sqlite3_column_int(stmt, SIMULATION_species_extinction_threshold);
+    groupExtinctionThreshold = sqlite3_column_int(stmt, SIMULATION_group_extinction_threshold);
+    speciesExtinctionTimeSteps = sqlite3_column_int(stmt, SIMULATION_species_extinction_time_steps);
+    speciesExtinctionThreaholdPercentage = 1 - sqlite3_column_double(stmt, SIMULATION_species_extinction_threahold_percentage);;
     //LOG(INFO)<<"speciesExtinctionThreaholdPercentage"<<speciesExtinctionThreaholdPercentage;
     maxSpeciesDistribution = 0;
     appearedYear = 0;
@@ -44,23 +45,21 @@ SpeciesObject3D::SpeciesObject3D(const string json_path) {
     number_of_clade_extinction = 0;
     number_of_speciation = 0;
     number_of_species_extinction = 0;
-    Json::Value niche_breadth_array = species_json["niche_breadth"];
-    for (unsigned index = 0; index < niche_breadth_array.size(); ++index) {
-        Json::Value niche_breadth_json = niche_breadth_array[index];
-        NicheBreadth* niche_breadth = new NicheBreadth(
-                niche_breadth_json[0].asFloat(),
-                niche_breadth_json[1].asFloat());
-        nicheBreadth.push_back(niche_breadth);
+    environment_labels = CommonFun::splitStr(string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments))), ",");
+    vector<string> niche_breadth_array = CommonFun::splitStr(
+            string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_nb_v))), "|");
+    for (unsigned i = 0; i < niche_breadth_array.size(); ++i) {
+        vector<string> niche_breadth_item = CommonFun::splitStr(niche_breadth_array[i], ",");
+        NicheBreadth* niche_breadth = new NicheBreadth(stod(niche_breadth_item[0]), stod(niche_breadth_item[1]));
+        nicheBreadth[environment_labels[i]] = niche_breadth;
     }
 
-    Json::Value initial_seeds_array = species_json["initial_seeds"];
-    for (unsigned index = 0; index < initial_seeds_array.size(); ++index) {
-        Json::Value initial_seeds_json = initial_seeds_array[index];
-        //LOG(INFO)<<initial_seeds_json;
-        unsigned initial_seed = (unsigned)initial_seeds_json.asInt();
-        seeds.insert(initial_seed);
-    }
+    int initial_seed = sqlite3_column_int(stmt, SIMULATION_initial_seeds);;
+    seeds.insert(initial_seed);
     LOG(INFO)<<"finished";
+}
+string SpeciesObject3D::getLabel(){
+    return label;
 }
 string SpeciesObject3D::getIDWithParentID(){
     if (parent==NULL){
@@ -74,8 +73,8 @@ string SpeciesObject3D::getIDWithParentID(){
         return string(t_char);
     }
 }
-SpeciesObject3D::SpeciesObject3D(unsigned p_id, SpeciesObject3D* p_parent,
-        unsigned p_year) {
+SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent,
+        int p_year) {
 	currentSpeciesExtinctionTimeSteps = 0;
 
 
@@ -102,7 +101,7 @@ SpeciesObject3D::SpeciesObject3D(unsigned p_id, SpeciesObject3D* p_parent,
     number_of_speciation = 0;
     number_of_species_extinction = 0;
 }
-void SpeciesObject3D::setCladeExtinctionStatus(unsigned status) {
+void SpeciesObject3D::setCladeExtinctionStatus(int status) {
     clade_extinction_status = status;
 }
 void SpeciesObject3D::markParentClade() {
@@ -112,14 +111,14 @@ void SpeciesObject3D::markParentClade() {
     }
 }
 string SpeciesObject3D::getSpeciationExtinction(bool isroot,
-        unsigned total_years) {
+        int total_years) {
     char t_char[100];
     sprintf(t_char, "clade_extinction,species_extinction,speciation\n%u,%u,%u,%u",
     		total_years, number_of_clade_extinction, number_of_species_extinction,
             number_of_speciation);
     return string(t_char);
 }
-bool SpeciesObject3D::isAllLeafExtinction(unsigned total_years) {
+bool SpeciesObject3D::isAllLeafExtinction(int total_years) {
     bool is_extinction = true;
     for (auto child : children) {
         if (child->getChildren().size() == 0) {
@@ -135,16 +134,16 @@ bool SpeciesObject3D::isAllLeafExtinction(unsigned total_years) {
     }
     return true;
 }
-unsigned SpeciesObject3D::getNumberOfCladeExtinction() {
+int SpeciesObject3D::getNumberOfCladeExtinction() {
     return number_of_clade_extinction;
 }
-unsigned SpeciesObject3D::getNumberOfSpeciation() {
+int SpeciesObject3D::getNumberOfSpeciation() {
     return number_of_speciation;
 }
-unsigned SpeciesObject3D::getNumberOfSpeciesExtinction() {
+int SpeciesObject3D::getNumberOfSpeciesExtinction() {
     return number_of_species_extinction;
 }
-void SpeciesObject3D::markNode(unsigned total_years) {
+void SpeciesObject3D::markNode(int total_years) {
     number_of_clade_extinction = 0;
     number_of_speciation = 0;
     number_of_species_extinction = 0;
@@ -181,7 +180,7 @@ void SpeciesObject3D::markNode(unsigned total_years) {
         number_of_speciation++;
     }
 }
-vector<string> SpeciesObject3D::getHTMLTree(unsigned p_year) {
+vector<string> SpeciesObject3D::getHTMLTree(int p_year) {
     vector<string> html_output;
     html_output.push_back(
             "<!DOCTYPE html><html lang='en' xml:lang='en' xmlns='http://www.w3.org/1999/xhtml'>");
@@ -234,7 +233,7 @@ vector<string> SpeciesObject3D::getHTMLTree(unsigned p_year) {
     html_output.push_back("</html>");
     return html_output;
 }
-string SpeciesObject3D::getNewickTree(bool isroot, bool iscolor, unsigned p_year) {
+string SpeciesObject3D::getNewickTree(bool isroot, bool iscolor, int p_year) {
     string output = "";
     unsigned i = 0;
     if (children.size() > 0) {
@@ -261,7 +260,7 @@ string SpeciesObject3D::getNewickTree(bool isroot, bool iscolor, unsigned p_year
     if ((clade_extinction_status == 1) || (clade_extinction_status == 3)) {
         linecolor = "red";
     }
-    unsigned t_disappearedYear = (disappearedYear==0)?p_year:disappearedYear;
+    int t_disappearedYear = (disappearedYear==0)?p_year:disappearedYear;
     int parent_year = (parent == NULL) ? 0 : parent->getDisappearedYear();
     if (appearedYear == t_disappearedYear) {
         if (iscolor) {
@@ -301,20 +300,20 @@ vector<SpeciesObject3D*> SpeciesObject3D::getChildren() {
 void SpeciesObject3D::addChild(SpeciesObject3D* child) {
     children.push_back(child);
 }
-void SpeciesObject3D::setDisappearedYear(unsigned p_disappeared_year) {
+void SpeciesObject3D::setDisappearedYear(int p_disappeared_year) {
     disappearedYear = p_disappeared_year;
 }
-unsigned SpeciesObject3D::getDisappearedYear() {
+int SpeciesObject3D::getDisappearedYear() {
     return disappearedYear;
 }
-unsigned SpeciesObject3D::getAppearedYear() {
+int SpeciesObject3D::getAppearedYear() {
     return appearedYear;
 }
 SpeciesObject3D::~SpeciesObject3D() {
-    CommonFun::clearVector(&nicheBreadth);
+    //CommonFun::clearUnordered_map);
     seeds.clear();
 }
-unsigned short SpeciesObject3D::getDispersalAbilityLength(){
+int short SpeciesObject3D::getDispersalAbilityLength(){
 	return dispersalAbilityLength;
 }
 double* SpeciesObject3D::getDispersalAbility() {
@@ -325,28 +324,28 @@ unsigned SpeciesObject3D::getSpeciesExtinctionThreshold(){
 	return speciesExtinctionThreshold;
 }
 
-unsigned SpeciesObject3D::getGroupExtinctionThreshold(){
+int SpeciesObject3D::getGroupExtinctionThreshold(){
 	return groupExtinctionThreshold;
 }
 
-unsigned SpeciesObject3D::getSpeciesExtinctionTimeSteps(){
+int SpeciesObject3D::getSpeciesExtinctionTimeSteps(){
 	return speciesExtinctionTimeSteps;
 }
 
 double SpeciesObject3D::getSpeciesExtinctionThreaholdPercentage(){
 	return speciesExtinctionThreaholdPercentage;
 }
-void SpeciesObject3D::setMaxSpeciesDistribution(unsigned distribution){
-	maxSpeciesDistribution = distribution;
+void SpeciesObject3D::setMaxSpeciesDistribution(unsigned p_max_species_distribution){
+	maxSpeciesDistribution = p_max_species_distribution;
 }
 unsigned SpeciesObject3D::getMaxSpeciesDistribution(){
 	return maxSpeciesDistribution;
 }
-unsigned SpeciesObject3D::getCurrentSpeciesExtinctionTimeSteps(){
+int SpeciesObject3D::getCurrentSpeciesExtinctionTimeSteps(){
 	return currentSpeciesExtinctionTimeSteps;
 }
 
-void SpeciesObject3D::setCurrentSpeciesExtinctionTimeSteps(unsigned p_currentSpeciesExtinctionTimeSteps){
+void SpeciesObject3D::setCurrentSpeciesExtinctionTimeSteps(int p_currentSpeciesExtinctionTimeSteps){
 	currentSpeciesExtinctionTimeSteps = p_currentSpeciesExtinctionTimeSteps;
 }
 
@@ -355,13 +354,13 @@ void SpeciesObject3D::addCurrentSpeciesExtinctionTimeSteps(){
 }
 
 
-unsigned SpeciesObject3D::getDispersalSpeed() {
+int SpeciesObject3D::getDispersalSpeed() {
     return dispersalSpeed;
 }
 set<int> SpeciesObject3D::getSeeds() {
     return seeds;
 }
-unsigned SpeciesObject3D::getID() {
+int SpeciesObject3D::getID() {
     return id;
 }
 int SpeciesObject3D::getDispersalMethod() {
@@ -370,10 +369,10 @@ int SpeciesObject3D::getDispersalMethod() {
 int SpeciesObject3D::getNumOfPath() {
     return numberOfPath;
 }
-vector<NicheBreadth*> SpeciesObject3D::getNicheBreadth() {
+boost::unordered_map<string, NicheBreadth*> SpeciesObject3D::getNicheBreadth() {
     return nicheBreadth;
 }
-unsigned SpeciesObject3D::getSpeciationYears() {
+int SpeciesObject3D::getSpeciationYears() {
 	//return 99999999;
     return speciationYears;
 }

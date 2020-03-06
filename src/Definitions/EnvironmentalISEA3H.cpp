@@ -12,14 +12,37 @@
  */
 
 #include "EnvironmentalISEA3H.h"
-EnvironmentalISEA3H::EnvironmentalISEA3H(const string p_env_name,
-        sqlite3 *p_env_db, unsigned p_burn_in_year, unsigned p_begin_year,
-        unsigned p_end_year, unsigned p_step) {
-    boost::unordered_map<unsigned, boost::unordered_map<unsigned, float>> values = CommonFun::readEnvInfo(
-            p_env_db, p_env_name, true);
-    for (unsigned y = p_begin_year + p_burn_in_year; y >= p_end_year; y -=
-            p_step) {
-        unsigned key = p_begin_year + p_burn_in_year - y;
+EnvironmentalISEA3H::EnvironmentalISEA3H(string p_env_name,
+        sqlite3 *p_env_db) {
+    boost::unordered_map<int, boost::unordered_map<int, float>> values =
+            CommonFun::readEnvInfo(p_env_db, p_env_name, true);
+    string sql = "SELECT * FROM environments WHERE names='" + p_env_name + "'";
+    sqlite3_stmt *stmt;
+    sqlite3_prepare(p_env_db, sql.c_str(), sizeof sql.c_str(), &stmt, NULL);
+    bool done = false;
+    int begin_year = 0;
+    int end_year = 0;
+    int step = 0;
+    while (!done) {
+        switch (sqlite3_step(stmt)) {
+        case SQLITE_ROW: {
+            begin_year = sqlite3_column_int(stmt, 0);
+            end_year = sqlite3_column_int(stmt, 1);
+            step = sqlite3_column_int(stmt, 3);
+            break;
+        }
+
+        case SQLITE_DONE:
+            done = true;
+            break;
+
+        default:
+            LOG(INFO) << "SQLITE ERROR: " << sqlite3_errmsg(p_env_db);
+        }
+    }
+
+    for (int y = begin_year; y >= end_year; y -= step) {
+        int key = begin_year - y;
         ISEA3H *v = new ISEA3H(values[y]);
         //LOG(INFO)<<"Initial environments information size is "<<values[y].size()<<" to key "<<key;
         layers[key] = v;
@@ -27,43 +50,17 @@ EnvironmentalISEA3H::EnvironmentalISEA3H(const string p_env_name,
             break;
         }
     }
-    this->burnInYears = p_burn_in_year;
+    sqlite3_finalize(stmt);
 }
-EnvironmentalISEA3H::EnvironmentalISEA3H(const string p_basefolder,
-        unsigned p_burn_in_year, unsigned p_begin_year, unsigned p_end_year,
-        unsigned p_step) {
-    for (unsigned y = p_begin_year + p_burn_in_year; y >= p_end_year; y -=
-            p_step) {
-        unsigned year = y / 100;
-        string layer = p_basefolder + "/" + CommonFun::fixedLength(year, 4)
-                + ".csv";
-        if (y > p_begin_year) {
-            layer = p_basefolder + "/"
-                    + CommonFun::fixedLength(p_begin_year / 100, 4) + ".csv";
-        }
 
-        //RasterObject* r = new RasterObject(layer);
-        unsigned key = p_begin_year + p_burn_in_year - y;
-        ISEA3H *v = new ISEA3H(layer);
-        //LOG(INFO)<<"Initial environments information from "<<layer<<" to key "<<key;
-        layers[key] = v;
-        if (y == 0) {
-            break;
-        }
-    }
-    this->burnInYears = p_burn_in_year;
-}
-unsigned EnvironmentalISEA3H::getBurnInYears() {
-    return burnInYears;
-}
-ISEA3H* EnvironmentalISEA3H::getValues(unsigned p_year) {
+ISEA3H* EnvironmentalISEA3H::getValues(int p_year) {
     //LOG(INFO)<<"get:"<<p_year;
     //LOG(INFO)<<" from "<<layers[p_year]->getFilename();
 
     return layers[p_year];
 }
 
-float EnvironmentalISEA3H::readByID(unsigned p_year, unsigned p_id) {
+float EnvironmentalISEA3H::readByID(int p_year, int p_id) {
 
     float value = layers[p_year]->readByID(p_id);
     return value;

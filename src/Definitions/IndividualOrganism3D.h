@@ -22,12 +22,12 @@ using namespace std;
  */
 class IndividualOrganism3D {
 private:
-    unsigned id;
-    unsigned short groupId;
-    unsigned short tempSpeciesID;
-    unsigned short dispersalAbility;
+    int id;
+    int short groupId;
+    int short tempSpeciesID;
+    int short dispersalAbility;
     SpeciesObject3D* species;
-    unsigned year;
+    int year;
     IndividualOrganism3D* parent;
 //    vector<IndividualOrganism3D*> children;
 
@@ -39,8 +39,8 @@ public:
      * @param p_parent the parent species ID of the individual
      * @param p_id the id of the face of the individual's locality.
      */
-    IndividualOrganism3D(unsigned p_year, SpeciesObject3D* p_species,
-            IndividualOrganism3D* p_parent, unsigned p_id);
+    IndividualOrganism3D(int p_year, SpeciesObject3D* p_species,
+            IndividualOrganism3D* p_parent, int p_id);
 
     /**
 	 * @brief Destructor of IndividualOrganism3D class
@@ -52,7 +52,7 @@ public:
     /**
      * @brief return the next dispersal time step of the individual based on the dispersal speed of the species.
      */
-    unsigned getNextRunYear();
+    int getNextRunYear();
     /**
      * @brief return the dispersal method (X direction(s) or full directions) based on the dispersal method of the species. (full directions only now)
      * @return
@@ -68,25 +68,25 @@ public:
     /**
      * @brief return the speciation years of the species
      */
-    unsigned getSpeciationYears();
+    int getSpeciationYears();
 
     /**
      * @brief return the dispersal ability of the individual based on the dispersal ability array of the species.
      */
-    unsigned short getDispersalAbility();
+    int short getDispersalAbility();
 
     /**
      * @brief set the dispersal ability of the individual based on the dispersal ability array of the species.
      * @param p_dispersal_ability
      */
-    void setDispersalAbility(unsigned short p_dispersal_ability);
+    void setDispersalAbility(int short p_dispersal_ability);
 
     /**
      * @brief detect the area where the individual is living is suitable or not, based on the environmental values of the pixel that the individual is in and the niche breadth of the species.
      * @param p_current_environments
      * @return True: suitable False: unsuitable
      */
-    bool isSuitable(vector<ISEA3H*>* p_current_environments);
+    bool isSuitable(boost::unordered_map<string, ISEA3H*>* p_current_environments);
 
     /**
      * @brief return the species object of the individual
@@ -97,7 +97,7 @@ public:
     /**
      * @brief return the species ID of the individual
      */
-    unsigned getSpeciesID();
+    int getSpeciesID();
 
     /**
      * @brief set the parent species to the individual
@@ -119,36 +119,36 @@ public:
     /**
      * @brief return the time step which the individual is living
      */
-    unsigned getYear();
+    int getYear();
     /**
 	 * @brief return id of faceof the individual
 	 */
-    unsigned getID();
+    int getID();
     /**
      * @brief set the time step which the individual is living.
      * @param p_year
      */
-    void setYear(unsigned p_year);
+    void setYear(int p_year);
     /**
      * @brief set the population ID of the individual
      * @param p_group_id
      */
-    void setGroupId(unsigned short p_group_id);
+    void setGroupId(int short p_group_id);
 
     /**
 	 * @brief return the population ID of the individual
 	 */
-    unsigned short getGroupId();
+    int short getGroupId();
 
     /**
      * @brief set a temporary species ID to the individual
      * @param p_species_id
      */
-    void setTempSpeciesId(unsigned short p_species_id);
+    void setTempSpeciesId(int short p_species_id);
     /**
      * @brief return the temporary species ID of the individual
      */
-    unsigned getTempSpeciesId();
+    int getTempSpeciesId();
 
     /**
      * @brief set the species object to the individual
@@ -162,7 +162,7 @@ public:
     /**
      * @brief return the memory usage of the object (for debug).
      */
-    unsigned long getMemoryUsage();
+    int long getMemoryUsage();
 };
 
 #endif /* DEFINITIONS_INDIVIDUALORGANISM3D_H_ */

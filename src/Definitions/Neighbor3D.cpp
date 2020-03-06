@@ -17,37 +17,47 @@
 #include "../Universal/const.h"
 #include "../Universal/log.hpp"
 
-Neighbor3D::Neighbor3D(const string p_filename) {
-    filename = p_filename;
+Neighbor3D::Neighbor3D(sqlite3* env_db) {
+    string sql = "SELECT * FROM neighbor";
+    sqlite3_stmt *stmt;
 
-    CSVReader reader(filename, " ", true);
-    vector<vector<string> > data = reader.getData();
-    for (vector<string> vec : data) {
-        bool isFirst = true;
-        unsigned key = 0;
-        set<unsigned> values;
-        for (string data : vec) {
-            if (isFirst) {
-                //LOG(INFO)<<"put "<<stoi(data)<<" to key";
-                key = stoi(data);
-                isFirst = false;
-            } else {
-                //LOG(INFO)<<"add "<<stoi(data)<<" to values";
-                values.insert(stoi(data));
+    sqlite3_prepare(env_db, sql.c_str(), sizeof sql.c_str(), &stmt, NULL);
+    bool done = false;
+    while (!done) {
+        switch (sqlite3_step(stmt)) {
+        case SQLITE_ROW: {
+            int key = (int) sqlite3_column_int(stmt, 0);
+            string neighbor =
+                    string(
+                            reinterpret_cast<const char*>(sqlite3_column_text(
+                                    stmt, 1)));
+            vector<string> tokens = CommonFun::splitStr(neighbor, ",");
+            set<int> values;
+            for (string token : tokens){
+                values.insert(stoul(token));
             }
+            neighbors[key] = values;
+            break;
         }
-        neighbors[key] = values;
 
+        case SQLITE_DONE:
+            done = true;
+            break;
+
+        default:
+            LOG(INFO) << "SQLITE ERROR: " << sqlite3_errmsg(env_db);
+        }
     }
 
+    sqlite3_finalize(stmt);
 }
-void Neighbor3D::getNeighborByID(unsigned p_id, unsigned distance,
-        set<unsigned> *p_neighbors, set<unsigned> *handled_ids) {
+void Neighbor3D::getNeighborByID(int p_id, int distance,
+        set<int> *p_neighbors, set<int> *handled_ids) {
     //LOG(INFO)<<p_id<<" "<<distance;
     if (distance > 0) {
-        set<unsigned> v = neighbors[p_id];
+        set<int> v = neighbors[p_id];
         handled_ids->insert(p_id);
-        for (unsigned nei_id : v) {
+        for (int nei_id : v) {
             if (find(handled_ids->begin(), handled_ids->end(), nei_id) == handled_ids->end()) {
                 getNeighborByID(nei_id, distance - 1, p_neighbors, handled_ids);
             }
@@ -57,12 +67,12 @@ void Neighbor3D::getNeighborByID(unsigned p_id, unsigned distance,
     p_neighbors->insert(p_id);
 
 }
-unsigned Neighbor3D::distance(unsigned p_id1, unsigned p_id2, unsigned limited) {
-    unsigned distance = 0;
+int Neighbor3D::distance(int p_id1, int p_id2, int limited) {
+    int distance = 0;
     while (true) {
         //LOG(INFO)<<"distance "<<distance;
-        set<unsigned> neighbors;
-        set<unsigned> handled_ids;
+        set<int> neighbors;
+        set<int> handled_ids;
         getNeighborByID(p_id1, distance, &neighbors, &handled_ids);
         if (find(neighbors.begin(), neighbors.end(), p_id2) == neighbors.end()) {
             getNeighborByID(p_id1, ++distance, &neighbors, &handled_ids);
@@ -73,9 +83,6 @@ unsigned Neighbor3D::distance(unsigned p_id1, unsigned p_id2, unsigned limited) 
             return distance;
         }
     }
-}
-string Neighbor3D::getFilename() {
-    return filename;
 }
 
 Neighbor3D::~Neighbor3D() {

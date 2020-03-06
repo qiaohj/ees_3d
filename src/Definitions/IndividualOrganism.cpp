@@ -22,6 +22,7 @@ IndividualOrganism::IndividualOrganism(unsigned p_year,
     y = p_y;
     groupId = 0;
     tempSpeciesID = 0;
+    dispersalAbility = 0;
 }
 void IndividualOrganism::setGroupId(unsigned short p_group_id){
     groupId = p_group_id;

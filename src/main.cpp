@@ -17,7 +17,7 @@
  */
 
 
-
+using namespace std;
 #include <gdal.h>
 #include <gdal_priv.h>
 #include <ogr_srs_api.h>
@@ -32,7 +32,7 @@
 #include <algorithm> // sort
 #include <string>
 #include <math.h>
-
+#include <sqlite3.h>
 #include <unistd.h>
 #include <boost/thread/thread.hpp>
 
@@ -73,12 +73,21 @@ _INITIALIZE_EASYLOGGINGPP
  *
  *-----------------------------------------*/
 int mainx(int argc, const char* argv[]) {
-	ISEA3H* t = new ISEA3H("/home/huijieqiao/git/ees_3d_data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
-	LOG(INFO) <<t->readByID(55);
-
-	Neighbor3D* neighborInfo = new Neighbor3D("/home/huijieqiao/git/ees_3d_data/ISEA3H8/isea3h8neigpbor.nbr");
-	set<unsigned> neighbors;
-	set<unsigned> handled_ids;
+	//ISEA3H* t = new ISEA3H("/home/huijieqiao/git/ees_3d_data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
+	//LOG(INFO) <<t->readByID(55);
+	sqlite3* env_db;
+	string env_db_str = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/SQLITE/env_Hadley3D.sqlite";
+    int rc = sqlite3_open(env_db_str.c_str(), &env_db);
+    if (rc) {
+        LOG(INFO) << "Can't open environment database: "
+                << sqlite3_errmsg(env_db);
+        exit(0);
+    } else {
+        LOG(INFO) << "Opened environment database from <" << env_db_str;
+    }
+	Neighbor3D* neighborInfo = new Neighbor3D(env_db);
+	set<int> neighbors;
+	set<int> handled_ids;
 	neighborInfo->getNeighborByID(10382, 2, &neighbors, &handled_ids);
 	for (unsigned id : neighbors){
 	    LOG(INFO) << id;
@@ -92,47 +101,29 @@ int main(int argc, const char* argv[]) {
 	// Check the validity of the input
 	// If the length of parameters are not satisfied with the required number, the application will skip this simulation and show out a warning.
 	if (argc==1){
-		printf("configure_base_folder, scenario_json, specied_id, result_root, memory_limit(in M), is_overwrite, with_detail (unused), isSQLite\n");
+		printf("env_db, conf_db, base_folder, id(-1=all), memory_limit(in M), is_overwrite\n");
 		exit(1);
 	}
 	// Set up the timer.
 	srand(static_cast<unsigned>(time(0)));
-
-	// Load the parameters
-    char scenario_json_path[strlen(argv[1]) + strlen(argv[2]) + 30];
-    sprintf(scenario_json_path, "%s/Scenario_Configurations/%s.json", argv[1], argv[2]);
-
-	unsigned long memory_limit = atoi(argv[4]);
-	bool with_detail = atoi(argv[6]);
-	bool is_overwrite = atoi(argv[5]);
-	bool is_sqlite =  atoi(argv[7]);
-	//initialize the main scenario
-	Scenario3D* scenario = new Scenario3D(std::string(scenario_json_path), argv[2], argv[1], argv[3], is_overwrite, memory_limit, with_detail, is_sqlite);
-
-	if (scenario->isTerminated()){
-		//delete scenario;
-		printf("Result folder is exist, skip this simulation!\n");
-		return EXIT_SUCCESS;
-	}
+	string env_db = argv[1];
+	string conf_db = argv[2];
+	string target = argv[3];
+	int id = atoi(argv[4]);
 
 	//initialize the logger
-	el::Configurations c;
-	c.setGlobally(el::ConfigurationType::Filename, scenario->getTarget() + "/runtime.log");
-	el::Loggers::setDefaultConfigurations(c);
-	el::Loggers::getLogger("default");
-	el::Loggers::setDefaultConfigurations(c, true);
+    el::Configurations c;
+    c.setGlobally(el::ConfigurationType::Filename, target + "/runtime.log");
+    el::Loggers::setDefaultConfigurations(c);
+    el::Loggers::getLogger("default");
+    el::Loggers::setDefaultConfigurations(c, true);
 
-	//run the simulation and get the runtime status
-	unsigned status = scenario->run();
+    unsigned long memory_limit = atoi(argv[4]);
+	bool is_overwrite = atoi(argv[6]);
+	//initialize the main scenario
 
-	if (status==0){
-		LOG(INFO)<<"Done!";
-	}
-	if (status==1){
-		LOG(INFO)<<"To the memory limit, exit!";
-	}
-	//delete fromRaster;
-	//delete toRaster;
+	new Scenario3D(env_db, conf_db, target, id, is_overwrite, memory_limit);
+
     return EXIT_SUCCESS;
 }
 

@@ -85,6 +85,7 @@ int mainxx(int argc, const char* argv[]) {
 	}
 	//LOG(INFO) <<"distance is "<< neighborInfo->distance(22, 50145);
 	LOG(INFO) <<"distance is "<< neighborInfo->distance(31184, 31262, 10);
+	return (1);
 }
 int mainyy(int argc, const char* argv[]) {
 

@@ -24,7 +24,10 @@ RasterObject::RasterObject(std::string p_raster_name){
 	ySize = poBand->GetYSize();
 	noData = poBand->GetNoDataValue();
 	valueArray = new float[xSize * ySize];
-	poBand->RasterIO(GF_Read, 0, 0, xSize, ySize, valueArray, xSize, ySize, GDT_Float32, 0, 0);
+	int v = poBand->RasterIO(GF_Read, 0, 0, xSize, ySize, valueArray, xSize, ySize, GDT_Float32, 0, 0);
+	if (v==CE_Failure){
+	    LOG(INFO)<<"ERROR to output TIFF";
+	}
 	adfGeoTransform = new double[6];
 	poDataset->GetGeoTransform(adfGeoTransform);
 //	printRasterInfo();

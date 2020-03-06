@@ -19,57 +19,32 @@
 ISEA3H::ISEA3H() {
 
 }
-ISEA3H::ISEA3H(boost::unordered_map<unsigned, float> p_values){
+ISEA3H::ISEA3H(boost::unordered_map<int, float> p_values){
     values = p_values;
 }
-ISEA3H::ISEA3H(const string p_filename) {
 
-	filename = p_filename;
-	//LOG(INFO)<<"Reading "<<filename;
-	CSVReader reader(filename, " ", true);
-	vector<vector<string> > data = reader.getData();
-	for (vector<string> vec : data) {
-		bool isFirst = true;
-		int key = NODATA;
-		float value = NODATA;
-		for (string data : vec) {
-			if (isFirst) {
-				key = stoi(data);
-				isFirst = false;
-			} else {
-				value = std::stof(data);
-				isFirst = true;
-			}
-		}
-		values[key] = value;
-
-	}
-
-}
-unsigned ISEA3H::getCellSize() {
+int ISEA3H::getCellSize() {
 	return values.size();
 }
-string ISEA3H::getFilename() {
-	return filename;
-}
-void ISEA3H::setValue(unsigned p_id, float p_value) {
+
+void ISEA3H::setValue(int p_id, float p_value) {
 	values[p_id] = p_value;
 }
 
-boost::unordered_map<unsigned, float> ISEA3H::getValues() {
+boost::unordered_map<int, float> ISEA3H::getValues() {
 	return values;
 }
 
-unsigned* ISEA3H::getIDs() {
-	unsigned *array = new unsigned[values.size()];
+int* ISEA3H::getIDs() {
+	int *array = new int[values.size()];
 	int i = 0;
 	for (auto iitem : values) {
-		unsigned id = iitem.first;
+		int id = iitem.first;
 		array[i++] = id;
 	}
 	return array;
 }
-float ISEA3H::readByID(unsigned p_id) {
+float ISEA3H::readByID(int p_id) {
 	return values[p_id];
 }
 

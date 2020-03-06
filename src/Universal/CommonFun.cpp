@@ -12,7 +12,7 @@
  */
 
 #include "CommonFun.h"
-static const double DEG_TO_RAD = 0.017453292519943295769236907684886;
+//static const double DEG_TO_RAD = 0.017453292519943295769236907684886;
 
 /**
  * @brief A class to implement the public functions common used in the application.
@@ -220,8 +220,8 @@ void CommonFun::executeSQL(string s, sqlite3 *db) {
         //LOG(INFO)<<"success insert ";
     }
 }
-boost::unordered_map<unsigned, boost::unordered_map<unsigned, float>> CommonFun::readEnvInfo(sqlite3 *db, string tablename, bool with_year) {
-    boost::unordered_map<unsigned, boost::unordered_map<unsigned, float>> values;
+boost::unordered_map<int, boost::unordered_map<int, float>> CommonFun::readEnvInfo(sqlite3 *db, string tablename, bool with_year) {
+    boost::unordered_map<int, boost::unordered_map<int, float>> values;
     char q[999];
     sqlite3_stmt *stmt;
 
@@ -230,15 +230,15 @@ boost::unordered_map<unsigned, boost::unordered_map<unsigned, float>> CommonFun:
     //LOG(INFO) << "Query: "<< q;
 
     sqlite3_prepare(db, q, sizeof q, &stmt, NULL);
-    unsigned year = 0;
+    int year = 0;
     bool done = false;
     while (!done) {
         switch (sqlite3_step(stmt)) {
         case SQLITE_ROW:{
             if (with_year){
-                year = (unsigned)sqlite3_column_int(stmt, 2);
+                year = sqlite3_column_int(stmt, 2);
             }
-            unsigned id = (unsigned)sqlite3_column_int(stmt, 0);
+            int id = sqlite3_column_int(stmt, 0);
             float v = (float)sqlite3_column_double(stmt, 1);
             //LOG(INFO)<<"year "<<year<<" id "<<id<<" v "<<v;
             values[year][id] = v;
@@ -309,7 +309,17 @@ string CommonFun::fixedLength(int value, int digits = 3) {
     reverse(result.begin(), result.end());
     return result;
 }
-
+vector<string> CommonFun::splitStr(string s, string delimiter){
+    vector<string> v;
+    size_t pos = 0;
+    std::string token;
+    while ((pos = s.find(delimiter)) != std::string::npos) {
+        token = s.substr(0, pos);
+        v.push_back(token);
+        s.erase(0, pos + delimiter.length());
+    }
+    return v;
+}
 /**
  * Returns the peak (maximum so far) resident set size (physical
  * memory use) measured in bytes, or zero if the value cannot be

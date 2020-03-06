@@ -27,6 +27,8 @@ using namespace std;
 #include "IndividualOrganism3D.h"
 #include "../Universal/log.hpp"
 #include "Neighbor3D.h"
+#include "DBField.h"
+
 
 /**
  * @brief to define the features of a virtual scenario in a simulation, and the virtual species in the scenario.
@@ -35,37 +37,27 @@ class Scenario3D {
 private:
 	/// @brief a sqlite db connection to save the results.
 	sqlite3 *log_db;
-	/// @brief Whether the simulation runs to the end, or be terminated before the end-time-step because of an exception (such as out of memory, full hard disk, or another exception)
-	bool isFinished;
-	/// @brief If the target folder exists, overwrite it or skip it.
-	bool isOverwrite;
-	/// @brief The maximum memory allocated to the application
+	int totalYears;
+	string target;
 	unsigned long memLimit;
-	/// @brief If save the results to a sqlite database. Suggested to set it to true
-	bool isSQLite;
-	/// @brief The environmental variables used in the simulation.
-	vector<EnvironmentalISEA3H*> environments;
+	ISEA3H* mask;
 	Neighbor3D* neighborInfo;
+	/// @brief If save the results to a sqlite database. Suggested to set it to true
+	/// @brief The environmental variables used in the simulation.
+	boost::unordered_map<string, EnvironmentalISEA3H*> environments_base;
+	boost::unordered_map<string, EnvironmentalISEA3H*> environments;
+
 	/// @brief The virtual species in the simulation, including the initial species, and new species after the speciation events.
 	vector<SpeciesObject3D*> species;
 
 	//useless
-	boost::unordered_map<unsigned, boost::unordered_map<unsigned, double>> distances;
-
-	/// @brief The last time step
-	unsigned totalYears;
+	boost::unordered_map<int, boost::unordered_map<int, double>> distances;
 
 	/// @brief The time span per time step
-	unsigned minSpeciesDispersalSpeed;
-
-	/// @brief The mask file of the simulation
-	ISEA3H *mask;
+	int minSpeciesDispersalSpeed;
 
 	/// @brief The base folder of the simulation
 	string baseFolder;
-
-	/// @brief The target folder where the log files is saved.
-	string target;
 	/**
 	 * @brief Remove all the individual objects and release the resources.
 	 */
@@ -89,12 +81,12 @@ private:
 	void createSpeciesFolder(SpeciesObject3D *p_species, bool isRoot);
 
 	/// @brief Burn-in year of the simulation
-	unsigned burnInYear;
+	int burnInYear;
 
 	/// @brief A hash map to save all the living individual objects in the simulation.
-	boost::unordered_map<unsigned,
+	boost::unordered_map<int,
 			boost::unordered_map<SpeciesObject3D*,
-					boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > > > all_individualOrganisms;
+					boost::unordered_map<int, vector<IndividualOrganism3D*> > > > all_individualOrganisms;
 
 	/**
 	 * @brief Get the potential distribution of a given individual in the next time step.
@@ -103,8 +95,8 @@ private:
 	 * @param year Time step
 	 * @return Return the potential distribution in pixel.
 	 */
-	set<unsigned>  getDispersalMap_2(IndividualOrganism3D *individualOrganism,
-			string species_folder, unsigned year);
+	set<int>  getDispersalMap_2(IndividualOrganism3D *individualOrganism,
+			string species_folder, int year);
 
 	/**
 	 * @brief Get the first individual object without a population ID from all the individuals.
@@ -112,7 +104,7 @@ private:
 	 * @return The first individual object
 	 */
 	IndividualOrganism3D* getUnmarkedOrganism(
-			boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms);
+			boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
 
 	/**
 	 * @brief Allocate a population ID to the individuals which connect with the given individual.
@@ -120,9 +112,9 @@ private:
 	 * @param p_unmarked_organism The given individual object
 	 * @param organisms All the individuals
 	 */
-	void markJointOrganism(unsigned short p_group_id,
+	void markJointOrganism(int short p_group_id,
 			IndividualOrganism3D *p_unmarked_organism,
-			boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms);
+			boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
 
 	/**
 	 * @brief Get the minimal separating time length of two populations
@@ -132,17 +124,17 @@ private:
 	 * @param organisms All the individuals
 	 * @param current_year Current time step.
 	 */
-	unsigned getMinDividedYear(unsigned speciation_year,
-			unsigned short group_id_1, unsigned short group_id_2,
-			boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms,
-			unsigned current_year);
+	int getMinDividedYear(int speciation_year,
+			int short group_id_1, int short group_id_2,
+			boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms,
+			int current_year);
 
 	/**
 	 * Get the separating time length of two individuals.
 	 * @param o_1 individual 1
 	 * @param o_2 individual 2
 	 */
-	unsigned getDividedYear(IndividualOrganism3D *o_1,
+	int getDividedYear(IndividualOrganism3D *o_1,
 			IndividualOrganism3D *o_2);
 
 	/**
@@ -151,17 +143,17 @@ private:
 	 * @param temp_species_id species ID
 	 * @param organisms All the individuals
 	 */
-	void markedSpeciesID(unsigned short group_id,
-			unsigned short temp_species_id,
-			boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms);
+	void markedSpeciesID(int short group_id,
+			int short temp_species_id,
+			boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
 
 	/**
 	 * @brief Get a temporary species ID based on the parent species ID and population ID
 	 * @param group_id The population ID
 	 * @param organisms All the individuals
 	 */
-	unsigned short getTempSpeciesID(unsigned short group_id,
-			boost::unordered_map<unsigned, vector<IndividualOrganism3D*> > *organisms);
+	int short getTempSpeciesID(int short group_id,
+			boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
 	/**
 	 * @brief Get the folder of the given species
 	 * @param p_species The species to return the folder
@@ -173,7 +165,7 @@ private:
 	 * @param year time step
 	 * @param is_tree Whether generating the speciation tree.
 	 */
-	void generateSpeciationInfo(unsigned year, bool is_tree);
+	void generateSpeciationInfo(int year, bool is_tree);
 
 	/// @brief Whether outputing the details of the simulation, for debug only.
 	bool with_detail;
@@ -184,36 +176,38 @@ private:
 	 * @param id2
 	 * @return
 	 */
-	unsigned distance3D(unsigned id1, unsigned id2, unsigned limited);
+	int distance3D(int id1, int id2, int limited);
 	/**
 	 * @brief return all faces with a given distance.
 	 * @param id
 	 * @param distance
 	 * @return
 	 */
-	set<unsigned> getNeighbors(unsigned id, unsigned distance);
+	set<int> getNeighbors(int id, int distance);
 
 	/**
 	 * @brief create a db used to save the logs
 	 * @param path
 	 */
 	void createDB(const char *path);
+
+	/**
+     * @brief Run the simulation
+     */
+    int run();
+
 public:
 	/**
 	 * @brief Constructor of Scenario3D class
 	 *
-	 * @param p_scenario_json_path A path points to the configuration file (in JSON format) which defines the features of the scenario.
-	 * @param p_scenario_id A unique ID of the scenario
-	 * @param p_base_folder A base folder where the application can load the required resource
+	 * @param p_env_db A path points to the environment database.
+	 * @param p_conf_db A path points to the configuration database
+	 * @param p_id ID of the simualtion in the p_conf_db. -1 means all simulations in it.
 	 * @param p_target A folder to save simulation results.
 	 * @param p_overwrite Overwrite the folder or not if the folder is existed.
 	 * @param p_mem_limit The maximum memory allocated to the application.
-	 * @param p_with_detail Output the details of the simulation (all occupy a huge hard disk space) or not. Only for debug.
-	 * @param p_isSQLite save the results to a sqlite database.
 	 */
-	Scenario3D(const string p_scenario_json_path, string p_scenario_id,
-			string p_base_folder, string p_target, bool p_overwrite,
-			unsigned long p_mem_limit, bool p_with_detail, bool p_isSQLite);
+	Scenario3D(string p_env_db, string p_conf_db, string p_target, bool p_overwrite, int p_id, unsigned long p_mem_limit);
 
 	/**
 	 * @brief Destructor of Scenario3D class
@@ -222,10 +216,7 @@ public:
 	 */
 	virtual ~Scenario3D();
 
-	/**
-	 * @brief Run the simulation
-	 */
-	unsigned run();
+
 	/**
 	 * @brief Detect whether the simulation is terminated.
 	 * @return Return the terminated reason. TRUE means the simulation is terminated because it finishes the simulation successfully.
@@ -237,7 +228,7 @@ public:
 	 * @param p_year The time step to get the environmental layers.
 	 * @return The environmental layers at the given time step
 	 */
-	vector<ISEA3H*> getEnvironmenMap(unsigned p_year);
+	boost::unordered_map<string, ISEA3H*> getEnvironmenMap(int p_year);
 
 	/**
 	 * @brief Return the folder to save the result of the simulation.
@@ -250,13 +241,13 @@ public:
 	 * @param year The time step to save the result
 	 * @param species_group_maps The population information to save
 	 */
-	void saveGroupmap(unsigned year,
+	void saveGroupmap(int year,
 			boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps);
 
-	void saveGroupmap_file(unsigned year,
+	void saveGroupmap_file(int year,
 			boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps);
 
-	void saveGroupmap_db(unsigned year,
+	void saveGroupmap_db(int year,
 			boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps);
 	//bool generateEnv();
 };

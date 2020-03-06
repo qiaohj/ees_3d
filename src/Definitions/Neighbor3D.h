@@ -21,23 +21,23 @@ using namespace std;
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/unordered_map.hpp>
+#include <sqlite3.h>
 #include "../Universal/const.h"
 #include "../Universal/CommonFun.h"
-#include "../Universal/CSVReader.h"
+
 /**
  *@brief A class to handle the Neighbor3D data
  */
 class Neighbor3D {
 private:
-	boost::unordered_map<unsigned, set<unsigned>> neighbors;
-	string filename;
+	boost::unordered_map<int, set<int>> neighbors;
 public:
 
 	/**
 	 * @brief Constructor of Neighbor3D class No.1
 	 * @param p_filename the file to load the map info
 	 */
-	Neighbor3D(const string p_filename);
+	Neighbor3D(sqlite3* env_db);
 
 	/**
 	 * @brief Destructor of Neighbor3D class
@@ -50,14 +50,9 @@ public:
 	 * @brief return all the neighbors of a given face within a given distance
 	 * @return
 	 */
-	void getNeighborByID(unsigned p_id, unsigned distance, set<unsigned>* neighbors, set<unsigned> *handled_neighbors);
+	void getNeighborByID(int p_id, int distance, set<int>* neighbors, set<int> *handled_neighbors);
 
-	unsigned distance(unsigned p_id1, unsigned p_id2, unsigned limited);
-	/**
-	 * @brief return the file name of the 3D Neighbor3D object.
-	 * @return
-	 */
-	string getFilename();
+	int distance(int p_id1, int p_id2, int limited);
 
 };
 

@@ -71,6 +71,13 @@ public:
      */
     static string readFile(const char *path);
     /**
+     * @brief split string with a given delimiter
+     * @param the string to split
+     * @param delimiter
+     * @return
+     */
+    static vector<string> splitStr(string s, string delimiter);
+    /**
      * @brief remove the the given extension from a file name
      * @param path
      * @param extension
@@ -124,8 +131,7 @@ public:
      * @param db the database to execute the command
      * @param year the year to read, -1 means all data.
      */
-    static boost::unordered_map<unsigned, boost::unordered_map<unsigned, float>> readEnvInfo(sqlite3 *db, string tablename, bool with_year);
-
+    static boost::unordered_map<int, boost::unordered_map<int, float>> readEnvInfo(sqlite3 *db, string tablename, bool with_year);
     /**
      * @brief convert longitude and latitude to X, Y index
      * @param adfGeoTransform The GeoTransform matrix of the raster layers

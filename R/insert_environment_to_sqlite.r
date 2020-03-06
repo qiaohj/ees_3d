@@ -37,5 +37,18 @@ for (y in c(0:1200)){
 }
 dbWriteTable(mydb, folder, df_all, overwrite=T)
 
+neighbor_info<-read.csv("/home/huijieqiao/git/ees_3d_data/ISEA3H8/isea3h8neigpbor.nbr", sep=" ", head=F)
+neighbor_info$neighbor<-paste(neighbor_info$V2, neighbor_info$V3, 
+                              neighbor_info$V4, neighbor_info$V5, 
+                              neighbor_info$V6, sep=",")
+neighbor_info[which(!is.na(neighbor_info$V7)), "neighbor"]<-paste(neighbor_info[which(!is.na(neighbor_info$V7)), "neighbor"],
+                                                                  neighbor_info[which(!is.na(neighbor_info$V7)), "V7"], sep=",")
+neighbor_info<-neighbor_info[, c("V1", "neighbor")]
+colnames(neighbor_info)[1]<-"global_id"
+dbWriteTable(mydb, "neighbor", neighbor_info, overwrite=T)
 dbDisconnect(mydb)
 
+mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/SQLITE/env_Hadley3D.sqlite", base))
+environments<-data.frame(names=folders)
+dbWriteTable(mydb, "environments", environments, overwrite=T)
+dbDisconnect(mydb)

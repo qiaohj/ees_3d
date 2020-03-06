@@ -13,9 +13,10 @@
 
 #ifndef EnvironmentalISEA3H_H_
 #define EnvironmentalISEA3H_H_
-using namespace std;
+
 #include <boost/unordered_map.hpp>
 #include "ISEA3H.h"
+
 /**
  * @brief A class to handle the environmental layers in ISEA3H format
  */
@@ -24,28 +25,20 @@ private:
 	/**
 	 * @brief A hash map to save the environmental layers used in the simulation time step by time step. The keys are the time steps, and the values are the environmental layers on the time step.
 	 */
-    boost::unordered_map<unsigned, ISEA3H*> layers;
-    /**
-     * @brief the burn-in year used in the simulation.
-     */
-    unsigned burnInYears;
+    boost::unordered_map<int, ISEA3H*> layers;
 
 
 public:
 
     /**
      * @brief Constructor of EnvironmentalISEA3H class
-     * @param p_basefolder The base folder where the application can load the raster files.
-     * @param p_burn_in_year Burn-in year of the simulation
+     * @param p_env_name The table name of the environment in the database.
+     * @param p_env_db database
      * @param p_begin_year Start time step of the simulation
      * @param p_end_year End time step of the simulation
      * @param p_step The step length of the simulation
      */
-	EnvironmentalISEA3H(const string p_basefolder, unsigned p_burn_in_year,
-			unsigned p_begin_year, unsigned p_end_year, unsigned p_step);
-
-	EnvironmentalISEA3H(const string p_env_name, sqlite3* p_env_db, unsigned p_burn_in_year,
-	            unsigned p_begin_year, unsigned p_end_year, unsigned p_step);
+	EnvironmentalISEA3H(string p_env_name, sqlite3* p_env_db);
 
 	/**
 	 * @brief Destructor of EnvironmentalISEA3H class
@@ -54,17 +47,12 @@ public:
 	 */
 	virtual ~EnvironmentalISEA3H();
 
-	/**
-	 * @brief Return the burn in year.
-	 */
-    unsigned getBurnInYears();
-
     /**
      * @brief Get the environmental layer of the given time step
      * @param p_year time step
      * @return A ISEA3H object of the environmental layer of the given time step.
      */
-    ISEA3H* getValues(unsigned p_year);
+    ISEA3H* getValues(int p_year);
 
     /**
      * @brief Get the value based on the id of the face
@@ -72,7 +60,7 @@ public:
      * @param p_id face id
      * @return the value on the id
      */
-	float readByID(unsigned p_year, unsigned p_id);
+	float readByID(int p_year, int p_id);
 
 };
 

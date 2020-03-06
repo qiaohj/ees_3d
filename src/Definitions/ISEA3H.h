@@ -14,7 +14,6 @@
 #ifndef ISEA3H_H
 #define ISEA3H_H
 
-using namespace std;
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -29,16 +28,14 @@ using namespace std;
  */
 class ISEA3H {
 private:
-	boost::unordered_map<unsigned, float> values;
-	string filename;
-	unsigned cellSize;
+	boost::unordered_map<int, float> values;
 public:
 	/**
 	 * @brief Constructor of ISEA3H class No.2 (Create a blank map)
 	 */
 	ISEA3H();
 
-	ISEA3H(boost::unordered_map<unsigned, float> p_values);
+	ISEA3H(boost::unordered_map<int, float> p_values);
 	/**
 	 * @brief Constructor of ISEA3H class No.1 (load an ISEA3H from a file)
 	 * @param p_filename the file to load the map info
@@ -56,36 +53,30 @@ public:
 	 * @brief read value by ID of face
 	 * @return
 	 */
-	float readByID(unsigned p_id);
+	float readByID(int p_id);
 
 	/**
 	 * @brief return the number of faces.
 	 * @return
 	 */
-	unsigned getCellSize();
+	int getCellSize();
 
 	/**
 	 * @brief return all the IDs of the face.
 	 * @return
 	 */
-	unsigned* getIDs();
+	int* getIDs();
 
 	/**
 	 * @brief set value to a given face by id.
 	 * @return
 	 */
-	void setValue(unsigned p_id, float p_value);
+	void setValue(int p_id, float p_value);
 	/**
 	 * @brief return the face/value map.
 	 * @return
 	 */
-	boost::unordered_map<unsigned, float> getValues();
-
-	/**
-	 * @brief return the file name of the 3D ISEA3H object.
-	 * @return
-	 */
-	string getFilename();
+	boost::unordered_map<int, float> getValues();
 
 	void save(const string fileName);
 };

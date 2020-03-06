@@ -37,6 +37,7 @@ EnvironmentalHadley::EnvironmentalHadley(const std::string p_basefolder, double*
 		}
 	}
 	this->burnInYears = p_burn_in_year;
+	noData = NODATA;
 }
 unsigned EnvironmentalHadley::getBurnInYears() {
 	return burnInYears;
