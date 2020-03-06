@@ -38,7 +38,7 @@
 
 #include "ExpressionParser/parser.h"
 #include "Definitions/Scenario.h"
-#include "Universal/log.hpp"
+#include "Universal/easylogging.h"
 #include "Universal/CommonFun.h"
 #include "Definitions/IndividualOrganism.h"
 #include "Definitions/ISEA3H.h"

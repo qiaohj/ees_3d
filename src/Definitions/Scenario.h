@@ -29,7 +29,7 @@ using namespace std;
 #include "SpeciesObject.h"
 #include "IndividualOrganism.h"
 #include "CoodLocation.h"
-#include "../Universal/log.hpp"
+#include "../Universal/easylogging.h"
 
 /**
  * @brief to define the features of a virtual scenario in a simulation, and the virtual species in the scenario.

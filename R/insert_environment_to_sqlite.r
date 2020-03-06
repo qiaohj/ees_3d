@@ -50,5 +50,9 @@ dbDisconnect(mydb)
 
 mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/SQLITE/env_Hadley3D.sqlite", base))
 environments<-data.frame(names=folders)
+environments$begin_year<-1200
+environments$end_year<-0
+environments$step<-1
+
 dbWriteTable(mydb, "environments", environments, overwrite=T)
 dbDisconnect(mydb)

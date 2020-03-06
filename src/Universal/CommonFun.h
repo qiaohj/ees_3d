@@ -38,7 +38,7 @@ using namespace std;
 
 #include "../JsonPaster/include/json/json.h"
 #include "const.h"
-#include "log.hpp"
+#include "easylogging.h"
 #include <cmath>
 
 #ifndef M_PI

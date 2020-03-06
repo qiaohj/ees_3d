@@ -20,7 +20,7 @@ using namespace std;
 #include <sqlite3.h>
 #include "../JsonPaster/include/json/json.h"
 #include "NicheBreadth.h"
-#include "../Universal/log.hpp"
+#include "../Universal/easylogging.h"
 #include "../Universal/CommonFun.h"
 #include "DBField.h"
 

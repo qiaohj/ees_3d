@@ -16,7 +16,7 @@
 using namespace std;
 #include "SpeciesObject3D.h"
 #include "ISEA3H.h"
-#include "../Universal/log.hpp"
+#include "../Universal/easylogging.h"
 /**
  * @brief A class to handle the behavior of an individual in the simulation
  */

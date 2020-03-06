@@ -15,7 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include "../Universal/const.h"
-#include "../Universal/log.hpp"
+#include "../Universal/easylogging.h"
 ISEA3H::ISEA3H() {
 
 }

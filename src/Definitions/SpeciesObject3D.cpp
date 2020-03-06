@@ -15,8 +15,7 @@
 
 SpeciesObject3D::SpeciesObject3D(sqlite3_stmt *stmt) {
 	currentSpeciesExtinctionTimeSteps = 0;
-	//LOG(INFO)<<"Load species configure from " <<json_path;
-    newSpecies = true;
+	newSpecies = true;
     id = sqlite3_column_int(stmt, SIMULATION_id);
     vector<string> dispersalAbility_str = CommonFun::splitStr(
             string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_dispersal_ability))), ",");

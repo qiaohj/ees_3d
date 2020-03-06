@@ -25,7 +25,7 @@ using namespace std;
 #include "EnvironmentalISEA3H.h"
 #include "SpeciesObject3D.h"
 #include "IndividualOrganism3D.h"
-#include "../Universal/log.hpp"
+#include "../Universal/easylogging.h"
 #include "Neighbor3D.h"
 #include "DBField.h"
 
@@ -72,13 +72,6 @@ private:
 	 */
 	void cleanSpecies();
 
-	/**
-	 * @brief Create all the necessary folders for a species
-	 * @param p_species the species to create the folder
-	 * @param isRoot is a root species of the simulation?
-	 */
-
-	void createSpeciesFolder(SpeciesObject3D *p_species, bool isRoot);
 
 	/// @brief Burn-in year of the simulation
 	int burnInYear;
@@ -244,11 +237,6 @@ public:
 	void saveGroupmap(int year,
 			boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps);
 
-	void saveGroupmap_file(int year,
-			boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps);
-
-	void saveGroupmap_db(int year,
-			boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps);
 	//bool generateEnv();
 };
 

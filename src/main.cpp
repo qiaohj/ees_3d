@@ -16,7 +16,6 @@
  *
  */
 
-
 using namespace std;
 #include <gdal.h>
 #include <gdal_priv.h>
@@ -38,26 +37,25 @@ using namespace std;
 
 #include "ExpressionParser/parser.h"
 #include "Definitions/Scenario3D.h"
-#include "Universal/log.hpp"
+#include "Universal/easylogging.h"
 #include "Universal/CommonFun.h"
 #include "Definitions/IndividualOrganism.h"
 #include "Definitions/ISEA3H.h"
 #include "Definitions/Neighbor3D.h"
+INITIALIZE_EASYLOGGINGPP;
 
 void handler(int sig) {
-  void *array[10];
-  size_t size;
+    void *array[10];
+    size_t size;
 
-  // get void*'s for all entries on the stack
-  size = backtrace(array, 10);
+    // get void*'s for all entries on the stack
+    size = backtrace(array, 10);
 
-  // print out all the frames to stderr
-  fprintf(stderr, "Error: signal %d:\n", sig);
-  backtrace_symbols_fd(array, size, STDERR_FILENO);
-  exit(1);
+    // print out all the frames to stderr
+    fprintf(stderr, "Error: signal %d:\n", sig);
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    exit(1);
 }
-
-_INITIALIZE_EASYLOGGINGPP
 
 /*-----------------------------------------
  * Main entrance for the simulation application
@@ -72,58 +70,66 @@ _INITIALIZE_EASYLOGGINGPP
  * 7. with detail. An ZERO value means output the details of the simulation or not.
  *
  *-----------------------------------------*/
-int mainx(int argc, const char* argv[]) {
-	//ISEA3H* t = new ISEA3H("/home/huijieqiao/git/ees_3d_data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
-	//LOG(INFO) <<t->readByID(55);
-	sqlite3* env_db;
-	string env_db_str = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/SQLITE/env_Hadley3D.sqlite";
+int mainx(int argc, const char *argv[]) {
+    //ISEA3H* t = new ISEA3H("/home/huijieqiao/git/ees_3d_data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
+    //LOG(INFO) <<t->readByID(55);
+    sqlite3 *env_db;
+    string env_db_str = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/SQLITE/env_Hadley3D.sqlite";
     int rc = sqlite3_open(env_db_str.c_str(), &env_db);
     if (rc) {
-        LOG(INFO) << "Can't open environment database: "
-                << sqlite3_errmsg(env_db);
+        LOG(INFO) << "Can't open environment database: " << sqlite3_errmsg(env_db);
         exit(0);
     } else {
-        LOG(INFO) << "Opened environment database from <" << env_db_str;
+        LOG(INFO) << "Opened environment database from <" << env_db_str << "> successfully.";
     }
-	Neighbor3D* neighborInfo = new Neighbor3D(env_db);
-	set<int> neighbors;
-	set<int> handled_ids;
-	neighborInfo->getNeighborByID(10382, 2, &neighbors, &handled_ids);
-	for (unsigned id : neighbors){
-	    LOG(INFO) << id;
-	}
-	//LOG(INFO) <<"distance is "<< neighborInfo->distance(22, 50145);
-	//LOG(INFO) <<"distance is "<< neighborInfo->distance(31184, 31262, 10);
-	return 0;
+    Neighbor3D *neighborInfo = new Neighbor3D(env_db);
+    //exit(1);
+    set<int> neighbors;
+    set<int> handled_ids;
+    neighborInfo->getNeighborByID(10382, 2, &neighbors, &handled_ids);
+    for (unsigned id : neighbors) {
+        LOG(INFO) << id;
+    }
+    //LOG(INFO) <<"distance is "<< neighborInfo->distance(22, 50145);
+    //LOG(INFO) <<"distance is "<< neighborInfo->distance(31184, 31262, 10);
+    return 0;
 }
-int main(int argc, const char* argv[]) {
+int main(int argc, const char *argv[]) {
 
-	// Check the validity of the input
-	// If the length of parameters are not satisfied with the required number, the application will skip this simulation and show out a warning.
-	if (argc==1){
-		printf("env_db, conf_db, base_folder, id(-1=all), memory_limit(in M), is_overwrite\n");
-		exit(1);
-	}
-	// Set up the timer.
-	srand(static_cast<unsigned>(time(0)));
-	string env_db = argv[1];
-	string conf_db = argv[2];
-	string target = argv[3];
-	int id = atoi(argv[4]);
+    // Check the validity of the input
+    // If the length of parameters are not satisfied with the required number, the application will skip this simulation and show out a warning.
+    if (argc == 1) {
+        printf("env_db, conf_db, base_folder, id(-1=all), memory_limit(in M), is_overwrite\n");
+        exit(1);
+    }
+    // Set up the timer.
+    srand(static_cast<unsigned>(time(0)));
+    string env_db = argv[1];
+    string conf_db = argv[2];
+    string target = argv[3];
+    int id = atoi(argv[4]);
 
-	//initialize the logger
-    el::Configurations c;
-    c.setGlobally(el::ConfigurationType::Filename, target + "/runtime.log");
-    el::Loggers::setDefaultConfigurations(c);
-    el::Loggers::getLogger("default");
-    el::Loggers::setDefaultConfigurations(c, true);
+    //initialize the logger
 
-    unsigned long memory_limit = atoi(argv[4]);
-	bool is_overwrite = atoi(argv[6]);
-	//initialize the main scenario
+    string LOGFILE = target + "/runtime.log";
+    el::Configurations defaultConf;
 
-	new Scenario3D(env_db, conf_db, target, id, is_overwrite, memory_limit);
+    defaultConf.setToDefault();
+    defaultConf.set(el::Level::Global, el::ConfigurationType::Enabled, "true");
 
+    defaultConf.setGlobally(el::ConfigurationType::ToStandardOutput, "true");
+    defaultConf.setGlobally(el::ConfigurationType::ToFile, "true");
+    defaultConf.setGlobally(el::ConfigurationType::Filename, LOGFILE);
+
+    el::Loggers::reconfigureLogger("default", defaultConf);
+    el::Loggers::setDefaultConfigurations(defaultConf, true);
+
+    unsigned long memory_limit = atoi(argv[5]);
+    bool is_overwrite = atoi(argv[6]);
+    //initialize the main scenario
+
+    new Scenario3D(env_db, conf_db, target, is_overwrite, id, memory_limit);
+    el::Loggers::flushAll();
     return EXIT_SUCCESS;
 }
 

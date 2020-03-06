@@ -18,7 +18,7 @@ EnvironmentalISEA3H::EnvironmentalISEA3H(string p_env_name,
             CommonFun::readEnvInfo(p_env_db, p_env_name, true);
     string sql = "SELECT * FROM environments WHERE names='" + p_env_name + "'";
     sqlite3_stmt *stmt;
-    sqlite3_prepare(p_env_db, sql.c_str(), sizeof sql.c_str(), &stmt, NULL);
+    sqlite3_prepare(p_env_db, sql.c_str(), -1, &stmt, NULL);
     bool done = false;
     int begin_year = 0;
     int end_year = 0;
@@ -37,6 +37,7 @@ EnvironmentalISEA3H::EnvironmentalISEA3H(string p_env_name,
             break;
 
         default:
+            done = true;
             LOG(INFO) << "SQLITE ERROR: " << sqlite3_errmsg(p_env_db);
         }
     }

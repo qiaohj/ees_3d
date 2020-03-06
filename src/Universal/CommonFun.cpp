@@ -222,14 +222,11 @@ void CommonFun::executeSQL(string s, sqlite3 *db) {
 }
 boost::unordered_map<int, boost::unordered_map<int, float>> CommonFun::readEnvInfo(sqlite3 *db, string tablename, bool with_year) {
     boost::unordered_map<int, boost::unordered_map<int, float>> values;
-    char q[999];
+    string sql = "SELECT * FROM " + tablename;
     sqlite3_stmt *stmt;
+   //LOG(INFO) << "Query: "<< q;
 
-    sprintf(q, "SELECT * FROM %s;", tablename.c_str());
-
-    //LOG(INFO) << "Query: "<< q;
-
-    sqlite3_prepare(db, q, sizeof q, &stmt, NULL);
+    sqlite3_prepare(db, sql.c_str(), -1, &stmt, NULL);
     int year = 0;
     bool done = false;
     while (!done) {
@@ -318,6 +315,7 @@ vector<string> CommonFun::splitStr(string s, string delimiter){
         v.push_back(token);
         s.erase(0, pos + delimiter.length());
     }
+    v.push_back(s);
     return v;
 }
 /**

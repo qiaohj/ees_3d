@@ -17,7 +17,7 @@
 #include <string>
 #include <gdal.h>
 #include <gdal_priv.h>
-#include "../Universal/log.hpp"
+#include "../Universal/easylogging.h"
 
 /**
  * @brief A class to handle the raster files

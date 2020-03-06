@@ -15,25 +15,23 @@
 #include <iostream>
 #include <fstream>
 #include "../Universal/const.h"
-#include "../Universal/log.hpp"
+#include "../Universal/easylogging.h"
 
-Neighbor3D::Neighbor3D(sqlite3* env_db) {
-    string sql = "SELECT * FROM neighbor";
+Neighbor3D::Neighbor3D(sqlite3 *env_db) {
     sqlite3_stmt *stmt;
-
-    sqlite3_prepare(env_db, sql.c_str(), sizeof sql.c_str(), &stmt, NULL);
+    string sql = "SELECT * FROM neighbor";
+    sqlite3_prepare(env_db, sql.c_str(), -1, &stmt, NULL);
     bool done = false;
     while (!done) {
-        switch (sqlite3_step(stmt)) {
+        int status = sqlite3_step(stmt);
+        //LOG(INFO)<<"SQLITE3 status is :"<<status;
+        switch (status) {
         case SQLITE_ROW: {
             int key = (int) sqlite3_column_int(stmt, 0);
-            string neighbor =
-                    string(
-                            reinterpret_cast<const char*>(sqlite3_column_text(
-                                    stmt, 1)));
+            string neighbor = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
             vector<string> tokens = CommonFun::splitStr(neighbor, ",");
             set<int> values;
-            for (string token : tokens){
+            for (string token : tokens) {
                 values.insert(stoul(token));
             }
             neighbors[key] = values;
@@ -45,14 +43,14 @@ Neighbor3D::Neighbor3D(sqlite3* env_db) {
             break;
 
         default:
+            done = true;
             LOG(INFO) << "SQLITE ERROR: " << sqlite3_errmsg(env_db);
         }
     }
 
     sqlite3_finalize(stmt);
 }
-void Neighbor3D::getNeighborByID(int p_id, int distance,
-        set<int> *p_neighbors, set<int> *handled_ids) {
+void Neighbor3D::getNeighborByID(int p_id, int distance, set<int> *p_neighbors, set<int> *handled_ids) {
     //LOG(INFO)<<p_id<<" "<<distance;
     if (distance > 0) {
         set<int> v = neighbors[p_id];
@@ -76,10 +74,10 @@ int Neighbor3D::distance(int p_id1, int p_id2, int limited) {
         getNeighborByID(p_id1, distance, &neighbors, &handled_ids);
         if (find(neighbors.begin(), neighbors.end(), p_id2) == neighbors.end()) {
             getNeighborByID(p_id1, ++distance, &neighbors, &handled_ids);
-            if (distance>=limited){
+            if (distance >= limited) {
                 return distance;
             }
-        }else{
+        } else {
             return distance;
         }
     }
