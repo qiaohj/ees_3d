@@ -53,6 +53,7 @@ using namespace std;
 
 class CommonFun {
 public:
+    static bool checkKey();
     static int callback(void *NotUsed, int argc, char **argv, char **azColName);
     /**
      * @brief Convert the X, Y index to longitude and latitude.
@@ -277,6 +278,9 @@ public:
      */
     template<typename T> static void clearUnordered_map(T *v);
 };
+
+
+
 template<typename T> void CommonFun::clearUnordered_map(T *v) {
     vector<unsigned> erased_key;
     for (auto it : *v) {

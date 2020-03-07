@@ -28,6 +28,7 @@ using namespace std;
 #include "../Universal/easylogging.h"
 #include "Neighbor3D.h"
 #include "DBField.h"
+#include "Simulation3D.h"
 
 
 /**
@@ -36,28 +37,17 @@ using namespace std;
 class Scenario3D {
 private:
 	/// @brief a sqlite db connection to save the results.
-	sqlite3 *log_db;
-	int totalYears;
-	string target;
 	unsigned long memLimit;
-	ISEA3H* mask;
+
 	Neighbor3D* neighborInfo;
 	/// @brief If save the results to a sqlite database. Suggested to set it to true
 	/// @brief The environmental variables used in the simulation.
 	boost::unordered_map<string, EnvironmentalISEA3H*> environments_base;
-	boost::unordered_map<string, EnvironmentalISEA3H*> environments;
+	//boost::unordered_map<string, EnvironmentalISEA3H*> environments;
 
 	/// @brief The virtual species in the simulation, including the initial species, and new species after the speciation events.
-	vector<SpeciesObject3D*> species;
+	vector<Simulation3D*> initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite);
 
-	//useless
-	boost::unordered_map<int, boost::unordered_map<int, double>> distances;
-
-	/// @brief The time span per time step
-	int minSpeciesDispersalSpeed;
-
-	/// @brief The base folder of the simulation
-	string baseFolder;
 	/**
 	 * @brief Remove all the individual objects and release the resources.
 	 */
@@ -76,10 +66,7 @@ private:
 	/// @brief Burn-in year of the simulation
 	int burnInYear;
 
-	/// @brief A hash map to save all the living individual objects in the simulation.
-	boost::unordered_map<int,
-			boost::unordered_map<SpeciesObject3D*,
-					boost::unordered_map<int, vector<IndividualOrganism3D*> > > > all_individualOrganisms;
+
 
 	/**
 	 * @brief Get the potential distribution of a given individual in the next time step.
@@ -215,7 +202,8 @@ public:
 	 * @return Return the terminated reason. TRUE means the simulation is terminated because it finishes the simulation successfully.
 	 */
 	bool isTerminated();
-
+	void initEnvironments(sqlite3* env_db);
+	sqlite3* openDB(string p_db);
 	/**
 	 * @brief Return the environmental layers based on the given time step
 	 * @param p_year The time step to get the environmental layers.

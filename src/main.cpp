@@ -123,13 +123,16 @@ int main(int argc, const char *argv[]) {
 
     el::Loggers::reconfigureLogger("default", defaultConf);
     el::Loggers::setDefaultConfigurations(defaultConf, true);
+    el::Loggers::flushAll();
 
     unsigned long memory_limit = atoi(argv[5]);
     bool is_overwrite = atoi(argv[6]);
     //initialize the main scenario
 
-    new Scenario3D(env_db, conf_db, target, is_overwrite, id, memory_limit);
-    el::Loggers::flushAll();
+    Scenario3D* a = new Scenario3D(env_db, conf_db, target, is_overwrite, id, memory_limit);
+    //a->run();
+
+
     return EXIT_SUCCESS;
 }
 

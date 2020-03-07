@@ -14,6 +14,7 @@
 #include "EnvironmentalISEA3H.h"
 EnvironmentalISEA3H::EnvironmentalISEA3H(string p_env_name,
         sqlite3 *p_env_db) {
+    envName = p_env_name;
     boost::unordered_map<int, boost::unordered_map<int, float>> values =
             CommonFun::readEnvInfo(p_env_db, p_env_name, true);
     string sql = "SELECT * FROM environments WHERE names='" + p_env_name + "'";
@@ -26,9 +27,9 @@ EnvironmentalISEA3H::EnvironmentalISEA3H(string p_env_name,
     while (!done) {
         switch (sqlite3_step(stmt)) {
         case SQLITE_ROW: {
-            begin_year = sqlite3_column_int(stmt, 0);
-            end_year = sqlite3_column_int(stmt, 1);
-            step = sqlite3_column_int(stmt, 3);
+            begin_year = sqlite3_column_int(stmt, ENVIRONMENTS_begin_year);
+            end_year = sqlite3_column_int(stmt, ENVIRONMENTS_end_year);
+            step = sqlite3_column_int(stmt, ENVIRONMENTS_step);
             break;
         }
 
@@ -41,23 +42,21 @@ EnvironmentalISEA3H::EnvironmentalISEA3H(string p_env_name,
             LOG(INFO) << "SQLITE ERROR: " << sqlite3_errmsg(p_env_db);
         }
     }
-
-    for (int y = begin_year; y >= end_year; y -= step) {
-        int key = begin_year - y;
+    LOG(DEBUG) << "Begin year is " << begin_year << ". End year is " << end_year << ". Step is " << step << ".";
+    int y1 = (begin_year>end_year)?end_year:begin_year;
+    int y2 = (begin_year>end_year)?begin_year:end_year;
+    LOG(DEBUG) << "do it from " << y1 << " to " << y2;
+    for (int y = y1; y <=y2 ; y += step) {
+        int key = y;
         ISEA3H *v = new ISEA3H(values[y]);
-        //LOG(INFO)<<"Initial environments information size is "<<values[y].size()<<" to key "<<key;
+        LOG(DEBUG)<<"Initial environments information size is "<<values[y].size()<<" to key "<<key;
         layers[key] = v;
-        if (y == 0) {
-            break;
-        }
     }
     sqlite3_finalize(stmt);
 }
 
 ISEA3H* EnvironmentalISEA3H::getValues(int p_year) {
-    //LOG(INFO)<<"get:"<<p_year;
-    //LOG(INFO)<<" from "<<layers[p_year]->getFilename();
-
+    LOG(DEBUG) << "Layer name is " << envName << ". Layer Size is " << layers.size();
     return layers[p_year];
 }
 

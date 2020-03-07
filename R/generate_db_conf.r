@@ -67,7 +67,9 @@ for (i in c(1:nrow(mask))){
       item$group_extinction_threshold<-0
       item$initial_seeds<-id
       item$environments<-("Debiased_Mean_Annual_Temperature,Debiased_Mean_Annual_Precipitation")
-      item$total_years<-1200
+      item$from<-1200
+      item$to<-0
+      item$step<--1
       item$mask<-"mask"
       item$burn_in_year<-0
       if (is.null(simulations)){

@@ -16,6 +16,7 @@
 
 #include <boost/unordered_map.hpp>
 #include "ISEA3H.h"
+#include "DBField.h"
 
 /**
  * @brief A class to handle the environmental layers in ISEA3H format
@@ -27,7 +28,7 @@ private:
 	 */
     boost::unordered_map<int, ISEA3H*> layers;
 
-
+    string envName;
 public:
 
     /**

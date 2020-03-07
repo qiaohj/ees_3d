@@ -308,6 +308,19 @@ int SpeciesObject3D::getDisappearedYear() {
 int SpeciesObject3D::getAppearedYear() {
     return appearedYear;
 }
+int SpeciesObject3D::getFrom() {
+    return from;
+}
+int SpeciesObject3D::getTo() {
+    return to;
+}
+int SpeciesObject3D::getBurnInYear() {
+    return this->burninYear;
+}
+int SpeciesObject3D::getStep() {
+    return step;
+}
+
 SpeciesObject3D::~SpeciesObject3D() {
     //CommonFun::clearUnordered_map);
     seeds.clear();

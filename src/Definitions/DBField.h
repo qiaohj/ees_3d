@@ -31,7 +31,10 @@
 #define SIMULATION_mask    19
 #define SIMULATION_burn_in_year      20
 #define SIMULATION_is_run       21
-
+#define ENVIRONMENTS_names       0
+#define ENVIRONMENTS_begin_year       1
+#define ENVIRONMENTS_end_year       2
+#define ENVIRONMENTS_step       3
 /* end-of-error-codes */
 
 

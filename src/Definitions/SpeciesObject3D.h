@@ -40,6 +40,10 @@ private:
     int numberOfPath;
     int appearedYear;
     int disappearedYear;
+    int burninYear;
+    int from;
+    int to;
+    int step;
     unsigned speciesExtinctionThreshold;
     int groupExtinctionThreshold;
     int speciesExtinctionTimeSteps;
@@ -80,6 +84,10 @@ public:
      * @return
      */
     double* getDispersalAbility();
+    int getFrom();
+    int getTo();
+    int getBurnInYear();
+    int getStep();
     /**
 	 * @brief return the dispersal speed
 	 * @return

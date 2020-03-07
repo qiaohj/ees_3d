@@ -14,6 +14,7 @@
 #include "CommonFun.h"
 //static const double DEG_TO_RAD = 0.017453292519943295769236907684886;
 
+
 /**
  * @brief A class to implement the public functions common used in the application.
  */
