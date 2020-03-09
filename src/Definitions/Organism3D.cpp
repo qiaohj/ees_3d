@@ -22,13 +22,13 @@ Organism3D::Organism3D(int p_year_i, SpeciesObject3D* p_species, Organism3D* p_p
     tempSpeciesID = 0;
     dispersalAbility = 0;
 }
-void Organism3D::setGroupId(int short p_group_id){
+void Organism3D::setGroupId(int p_group_id){
     groupId = p_group_id;
 }
-int short Organism3D::getGroupId(){
+int Organism3D::getGroupId(){
     return groupId;
 }
-void Organism3D::setTempSpeciesId(int short p_species_id){
+void Organism3D::setTempSpeciesId(int p_species_id){
     tempSpeciesID = p_species_id;
 }
 int Organism3D::getTempSpeciesId(){
@@ -70,14 +70,14 @@ int Organism3D::getDispersalMethod() {
 int Organism3D::getNumOfPath() {
     return species->getNumOfPath();
 }
-int short Organism3D::getDispersalAbility() {
+int Organism3D::getDispersalAbility() {
     return dispersalAbility;
 }
 void Organism3D::setRandomDispersalAbility(){
 
 	double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
-	int short dispersal_ability = 1;
-	for (int short i = 1; i <= species->getDispersalAbilityLength(); i++) {
+	int dispersal_ability = 1;
+	for (int i = 1; i <= species->getDispersalAbilityLength(); i++) {
 		if (r <= species->getDispersalAbility()[i-1]) {
 			dispersal_ability = i - 1;
 			break;
@@ -88,7 +88,7 @@ void Organism3D::setRandomDispersalAbility(){
 	//dispersalAbility = 1;
 }
 
-void Organism3D::setDispersalAbility(int short p_dispersal_ability) {
+void Organism3D::setDispersalAbility(int p_dispersal_ability) {
     dispersalAbility = p_dispersal_ability;
 }
 int Organism3D::getSpeciationYears(){
@@ -97,14 +97,19 @@ int Organism3D::getSpeciationYears(){
 //void Organism3D::addChild(Organism3D* child){
 //    children.push_back(child);
 //}
-bool Organism3D::isSuitable(boost::unordered_map<string, ISEA3H*>* p_current_environments) {
+bool Organism3D::isSuitable(boost::unordered_map<string, ISEA3H*>* p_current_environments, ISEA3H* mask) {
     boost::unordered_map<string, NicheBreadth*> nicheBreadth = species->getNicheBreadth();
     for (auto item : nicheBreadth) {
     	//LOG(INFO)<<"Environments:"<<i<<" Size:"<<(*p_current_environments).size()<<" Address:"<<(*p_current_environments)[i];
-        float env_value = (*p_current_environments)[item.first]->readByID(id);
-        if ((int)env_value==NODATA){
+        float mask_value = mask->readByID(id);
+        if ((int) mask_value == NODATA) {
             return false;
         }
+        float env_value = (*p_current_environments)[item.first]->readByID(id);
+        if ((int) env_value == NODATA) {
+            return false;
+        }
+
         //LOG(INFO)<<env_value<<"FALSE";
         if ((env_value > item.second->getMax())
                 || (env_value < item.second->getMin())) {

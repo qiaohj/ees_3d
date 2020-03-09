@@ -33,7 +33,7 @@ private:
     int id;
     boost::unordered_map<string, NicheBreadth*> nicheBreadth;
     double* dispersalAbility;
-    int short dispersalAbilityLength;
+    int dispersalAbilityLength;
     int dispersalSpeed;
     int speciationYears;
     int dispersalMethod;
@@ -93,7 +93,7 @@ public:
 	 * @brief return the length of the dispersal ability array
 	 * @return
 	 */
-    int short getDispersalAbilityLength();
+    int getDispersalAbilityLength();
     /**
 	 * @brief return the species extinction threshold. If the area of the distribution (number of the pixels occupied by the species) is smaller than the threshold for some time steps (defined with SpeciesExtinctionTimeSteps), the species will go extinct.
 	 * @return

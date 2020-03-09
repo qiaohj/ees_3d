@@ -88,6 +88,17 @@ int mainx(int argc, const char *argv[]) {
     for (unsigned id : neighbors) {
         LOG(INFO) << id;
     }
+    for (auto it : neighborInfo->getNeighbors()){
+        set<int> n ;
+        set<int> h ;
+        neighborInfo->getNeighborByID(it.first, 1, &n, &h);
+        if (n.size()!=7){
+            LOG(INFO)<<it.first<<" has "<<n.size()<<" neighbors.";
+        }
+        n.clear();
+        //h.clear();
+
+    }
     //LOG(INFO) <<"distance is "<< neighborInfo->distance(22, 50145);
     //LOG(INFO) <<"distance is "<< neighborInfo->distance(31184, 31262, 10);
     return 0;

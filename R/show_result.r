@@ -17,20 +17,22 @@ shape <- readOGR(dsn = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/isea3hGen/outpu
 shape_t<-shape
 shape_t@coords<-subset(shape_t@coords, shape_t$global_id %in% suitable$ID)
 shape_t@data<-subset(shape_t@data, shape_t$global_id %in% suitable$ID)
-shape_t@data<-merge(shape_t@data, suitable, by.x="global_id", by.y="ID")
+shape_t@data$global_id<-as.numeric(as.character(shape_t@data$global_id))
+shape_t@data<-inner_join(shape_t@data, suitable, by=c("global_id"="ID"))
 writeOGR(shape_t, dsn = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/test", 
-         layer = "test2", driver="ESRI Shapefile", overwrite_layer=T)
+         layer = "1170", driver="ESRI Shapefile", overwrite_layer=T)
 table(map$YEAR)
-y<-1101
+y<-1170
 for (y in c(1199:0)){
   
   item <- map[which(map$YEAR==y),]
   shape_t<-shape
   shape_t@coords<-subset(shape_t@coords, shape_t$global_id %in% item$ID)
+  shape_t@data$global_id<-as.numeric(as.character(shape_t@data$global_id))
   shape_t@data<-subset(shape_t@data, shape_t$global_id %in% item$ID)
-  shape_t@data<-merge(shape_t@data, item, by.x="global_id", by.y="ID")
-  plot(shape_t, col=item$group_id, cex=0.2)
-  table(item$group_id)
+  shape_t@data<-inner_join(shape_t@data, item, by=c("global_id"="ID"))
+  plot(shape_t, col=rainbow(10)[item$group_id+1], cex=0.2)
+  print(table(item$group_id))
   x<-readline(prompt=sprintf("Year is %d, Found %d groups. (X=exit): ", y, length(unique(item$group_id))))
   if (tolower(x)=="x"){
     break()

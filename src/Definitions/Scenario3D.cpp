@@ -71,7 +71,10 @@ Scenario3D::Scenario3D(string p_env_db, string p_conf_db, string p_target, bool 
 
     LOG(INFO) << "Run the simulations. Simulation size is " << simulations.size();
     for (Simulation3D* simulation : simulations){
-        simulation->run();
+        bool status  = simulation->init(&environments_base, env_db, &masks);
+        if (status){
+            simulation->run();
+        }
     }
 
 
@@ -122,7 +125,7 @@ void Scenario3D::initEnvironments(sqlite3* env_db) {
 vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, string p_target, bool p_overwrite, Neighbor3D* neighborInfo) {
     vector<Simulation3D*> simulations;
     string sql;
-    boost::unordered_map<string, ISEA3H*> masks;
+
     if (p_id == -1) {
         sql = "SELECT * FROM simulations WHERE is_run=1";
     } else {
@@ -138,10 +141,16 @@ vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env
         case SQLITE_ROW: {
             int burn_in_year = sqlite3_column_int(stmt, SIMULATION_burn_in_year);
             string label = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_label)));
-            LOG(DEBUG) << "init Species";
+            //LOG(DEBUG) << "init Species";
             SpeciesObject3D *new_species = new SpeciesObject3D(stmt, burn_in_year, timeLine);
-            LOG(DEBUG) << "Finished to init Species";
-            Simulation3D *simulation = new Simulation3D(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, timeLine, neighborInfo);
+            //LOG(DEBUG) << "Finished to init Species";
+
+            string environments_str = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments)));
+            string mask_table = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_mask)));
+            vector<string> environment_labels = CommonFun::splitStr(environments_str, ",");
+
+            Simulation3D *simulation = new Simulation3D(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, timeLine, neighborInfo,
+                    environment_labels, mask_table);
 
             /*-------------------
              * If the target folder exists and the is_overwrite parameter is false, skip the simulation,
@@ -153,40 +162,6 @@ vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env
                 continue;
             }
 
-
-            string environments_str = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments)));
-
-            vector<string> env_labels = CommonFun::splitStr(environments_str, ",");
-
-            for (string env_label : env_labels) {
-                simulation->addEnvironmentLabel(env_label);
-                LOG(DEBUG) << "Trying to load environment " << env_label;
-                EnvironmentalISEA3H *env = environments_base[env_label];
-                if (env == NULL) {
-                    LOG(DEBUG) << "No environment found, load it from db";
-                    env = new EnvironmentalISEA3H(env_label, env_db, timeLine);
-                    environments_base[env_label] = env;
-                }
-                LOG(DEBUG) << "Finish to load the environment " << env_label;
-                simulation->addEnvironment(env_label, env);
-            }
-
-            const string mask_table = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_mask)));
-            LOG(DEBUG) << "Loading mask";
-
-            if (masks.find(mask_table) == masks.end()) {
-                boost::unordered_map<int, boost::unordered_map<int, float>> mask_v = CommonFun::readEnvInfo(env_db, mask_table, false);
-                ISEA3H *mask = new ISEA3H(mask_v[0]);
-                masks[mask_table] = mask;
-                simulation->setMask(mask);
-            } else {
-                simulation->setMask(masks[mask_table]);
-
-            }
-            LOG(DEBUG) << "Finished to load mask";
-
-            LOG(DEBUG) << "Init simulation";
-            simulation->init();
             simulations.push_back(simulation);
             break;
         }

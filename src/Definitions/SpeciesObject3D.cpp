@@ -314,7 +314,7 @@ SpeciesObject3D::~SpeciesObject3D() {
     //CommonFun::clearUnordered_map);
     seeds.clear();
 }
-int short SpeciesObject3D::getDispersalAbilityLength(){
+int SpeciesObject3D::getDispersalAbilityLength(){
 	return dispersalAbilityLength;
 }
 double* SpeciesObject3D::getDispersalAbility() {

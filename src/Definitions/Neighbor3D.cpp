@@ -65,6 +65,9 @@ void Neighbor3D::getNeighborByID(int p_id, int distance, set<int> *p_neighbors, 
     p_neighbors->insert(p_id);
 
 }
+boost::unordered_map<int, set<int>> Neighbor3D::getNeighbors(){
+    return this->neighbors;
+}
 int Neighbor3D::distance(int p_id1, int p_id2, int limited) {
     int distance = 0;
     while (true) {

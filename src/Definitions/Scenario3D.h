@@ -41,6 +41,7 @@ private:
 	unsigned long memLimit;
 	vector<int> timeLine;
 	Neighbor3D* neighborInfo;
+	boost::unordered_map<string, ISEA3H*> masks;
 	/// @brief If save the results to a sqlite database. Suggested to set it to true
 	/// @brief The environmental variables used in the simulation.
 	boost::unordered_map<string, EnvironmentalISEA3H*> environments_base;
@@ -93,7 +94,7 @@ private:
 	 * @param p_unmarked_organism The given individual object
 	 * @param organisms All the individuals
 	 */
-	void markJointOrganism(int short p_group_id,
+	void markJointOrganism(int p_group_id,
 			Organism3D *p_unmarked_organism,
 			boost::unordered_map<int, vector<Organism3D*> > *organisms);
 
@@ -106,7 +107,7 @@ private:
 	 * @param current_year Current time step.
 	 */
 	int getMinDividedYear(int speciation_year,
-			int short group_id_1, int short group_id_2,
+			int group_id_1, int group_id_2,
 			boost::unordered_map<int, vector<Organism3D*> > *organisms,
 			int current_year);
 
@@ -124,8 +125,8 @@ private:
 	 * @param temp_species_id species ID
 	 * @param organisms All the individuals
 	 */
-	void markedSpeciesID(int short group_id,
-			int short temp_species_id,
+	void markedSpeciesID(int group_id,
+			int temp_species_id,
 			boost::unordered_map<int, vector<Organism3D*> > *organisms);
 
 	/**
@@ -133,7 +134,7 @@ private:
 	 * @param group_id The population ID
 	 * @param organisms All the individuals
 	 */
-	int short getTempSpeciesID(int short group_id,
+	int getTempSpeciesID(int group_id,
 			boost::unordered_map<int, vector<Organism3D*> > *organisms);
 	/**
 	 * @brief Get the folder of the given species

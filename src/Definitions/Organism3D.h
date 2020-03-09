@@ -23,9 +23,9 @@ using namespace std;
 class Organism3D {
 private:
     int id;
-    int short groupId;
-    int short tempSpeciesID;
-    int short dispersalAbility;
+    int groupId;
+    int tempSpeciesID;
+    int dispersalAbility;
     SpeciesObject3D* species;
     int year_i;
     Organism3D* parent;
@@ -73,20 +73,20 @@ public:
     /**
      * @brief return the dispersal ability of the individual based on the dispersal ability array of the species.
      */
-    int short getDispersalAbility();
+    int getDispersalAbility();
 
     /**
      * @brief set the dispersal ability of the individual based on the dispersal ability array of the species.
      * @param p_dispersal_ability
      */
-    void setDispersalAbility(int short p_dispersal_ability);
+    void setDispersalAbility(int p_dispersal_ability);
 
     /**
      * @brief detect the area where the individual is living is suitable or not, based on the environmental values of the pixel that the individual is in and the niche breadth of the species.
      * @param p_current_environments
      * @return True: suitable False: unsuitable
      */
-    bool isSuitable(boost::unordered_map<string, ISEA3H*>* p_current_environments);
+    bool isSuitable(boost::unordered_map<string, ISEA3H*>* p_current_environments, ISEA3H* mask);
 
     /**
      * @brief return the species object of the individual
@@ -133,18 +133,18 @@ public:
      * @brief set the population ID of the individual
      * @param p_group_id
      */
-    void setGroupId(int short p_group_id);
+    void setGroupId(int p_group_id);
 
     /**
 	 * @brief return the population ID of the individual
 	 */
-    int short getGroupId();
+    int getGroupId();
 
     /**
      * @brief set a temporary species ID to the individual
      * @param p_species_id
      */
-    void setTempSpeciesId(int short p_species_id);
+    void setTempSpeciesId(int p_species_id);
     /**
      * @brief return the temporary species ID of the individual
      */

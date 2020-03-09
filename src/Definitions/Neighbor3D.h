@@ -53,7 +53,7 @@ public:
 	void getNeighborByID(int p_id, int distance, set<int>* neighbors, set<int> *handled_neighbors);
 
 	int distance(int p_id1, int p_id2, int limited);
-
+	boost::unordered_map<int, set<int>> getNeighbors();
 };
 
 #endif /* Neighbor3D_H */

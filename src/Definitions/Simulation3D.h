@@ -30,6 +30,7 @@ using namespace std;
 #include "ISEA3H.h"
 #include "Organism3D.h"
 #include "Neighbor3D.h"
+
 /**
  * @brief A class to handle the attributes and behaviors of a virtual species
  */
@@ -40,6 +41,7 @@ private:
     boost::unordered_map<string, EnvironmentalISEA3H*> environments;
     vector<int> timeLine;
     ISEA3H* mask;
+    string mask_table;
     string targetFolder;
     string logFile;
     sqlite3* log_db;
@@ -54,17 +56,16 @@ public:
      * @brief Constructor of Simulation3D
      */
     Simulation3D(SpeciesObject3D *species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
-            vector<int>& p_timeLine, Neighbor3D* neighborInfo);
+            vector<int>& p_timeLine, Neighbor3D* neighborInfo, vector<string> environment_labels, string mask_table);
     void setNeighbor(Neighbor3D *neighborInfo);
     void generateSuitable();
     bool getOverwrite();
     void saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps);
     int run();
     void addSpecies(SpeciesObject3D *species);
-    void addEnvironmentLabel(string environment_labels);
     void addEnvironment(string environment_label, EnvironmentalISEA3H *env);
     void setMask(ISEA3H* p_mask);
-    void init();
+    bool init(boost::unordered_map<string, EnvironmentalISEA3H*>* environments_base, sqlite3* env_db, boost::unordered_map<string, ISEA3H*>* masks);
     void setTargetFolder(string p_target);
     vector<SpeciesObject3D*> getSpecies();
     vector<string> getEnvironmentLabels();
@@ -78,14 +79,14 @@ public:
     void cleanActivedOrganisms();
     void cleanSpecies();
     boost::unordered_map<string, ISEA3H*> getEnvironmenMap(int p_year);
-    Organism3D* getUnmarkedOrganism(boost::unordered_map<int, vector<Organism3D*> > *organisms);
-    void markJointOrganism(int short p_group_id, Organism3D *p_unmarked_organism, boost::unordered_map<int, vector<Organism3D*> > *organisms);
+    int getUnmarkedID(boost::unordered_map<int, vector<Organism3D*> > *organisms);
+    void markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, boost::unordered_map<int, vector<Organism3D*> > *organisms);
     set<int> getNeighbors(int id, int distance);
     int getDividedYearI(Organism3D *o_1, Organism3D *o_2);
-    int getMinDividedYear(int speciation_year, int short group_id_1, int short group_id_2, boost::unordered_map<int, vector<Organism3D*> > *organisms, int current_year_i);
+    int getMinDividedYear(int speciation_year, int group_id_1, int group_id_2, boost::unordered_map<int, vector<Organism3D*> > *organisms, int current_year_i);
     int distance3D(int id1, int id2, int limited);
-    void markedSpeciesID(int short group_id, int short temp_species_id, boost::unordered_map<int, vector<Organism3D*> > *organisms);
-    int short getTempSpeciesID(int short group_id, boost::unordered_map<int, vector<Organism3D*> > *organisms);
+    void markedSpeciesID(int group_id, int temp_species_id, boost::unordered_map<int, vector<Organism3D*> > *organisms);
+    int getTempSpeciesID(int group_id, boost::unordered_map<int, vector<Organism3D*> > *organisms);
     void generateSpeciationInfo(int year_i);
     virtual ~Simulation3D();
 

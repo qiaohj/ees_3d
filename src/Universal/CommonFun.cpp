@@ -253,8 +253,8 @@ boost::unordered_map<int, boost::unordered_map<int, float>> CommonFun::readEnvIn
             break;
 
         default:
-            LOG(INFO)<<"SQLITE ERROR: "<<sqlite3_errmsg(db);
-            return values;
+            LOG(INFO) << "SQLITE ERROR: " << sqlite3_errmsg(db) << ". SQL is " << sql;
+            exit(1);
         }
     }
 
