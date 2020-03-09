@@ -39,7 +39,7 @@ bool Simulation3D::getOverwrite(){
 void Simulation3D::saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps) {
     LOG(DEBUG)<<"Save result to db";
     if (species_group_maps.size() == 0) {
-        LOG(DEBUG)<<"NO MAP, RETURN";
+        LOG(ERROR)<<"NO MAP, RETURN";
         return;
     }
     vector<string> output;
@@ -53,14 +53,14 @@ void Simulation3D::saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D
         if (map) {
             for (auto item : map->getValues()) {
                 int id = item.first;
-                int v = (int) item.second;
-                if (v > 0) {
+                int group_id = (int) item.second;
+                if (group_id > 0) {
                     string sp_id = sp->getIDWithParentID();
                     char line[sp_id.size() + 100];
                     if (i == 0) {
-                        sprintf(line, " (%u,%u,%u,%s) ", timeLine[year_i], id, v, sp_id.c_str());
+                        sprintf(line, " (%u,%u,%u,%s) ", timeLine[year_i], id, group_id, sp_id.c_str());
                     } else {
-                        sprintf(line, " ,(%u,%u,%u,%s) ", timeLine[year_i], id, v, sp_id.c_str());
+                        sprintf(line, " ,(%u,%u,%u,%s) ", timeLine[year_i], id, group_id, sp_id.c_str());
                     }
                     i = 1;
                     output.push_back(line);
@@ -70,9 +70,11 @@ void Simulation3D::saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D
         }
     }
     output.push_back("; COMMIT;");
-    if (output.size() > 0) {
+    if (i > 0) {
         CommonFun::executeSQL(output, log_db);
         output.clear();
+    }else{
+        LOG(ERROR)<<"No map found";
     }
 }
 
@@ -288,11 +290,11 @@ int Simulation3D::run() {
 
                 }
             }
-
+            //LOG(DEBUG) << "new_organisms size is "<<new_organisms.size();
             for (auto it : new_organisms) {
-                int index = it->getID();
+                int id = it->getID();
                 //species id, index
-                organisms_in_current_year[s_it.first][index].push_back(it);
+                organisms_in_current_year[s_it.first][id].push_back(it);
             }
             organism_count += new_organisms.size();
             new_organisms.clear();
@@ -331,7 +333,14 @@ int Simulation3D::run() {
             }
         }
         LOG(DEBUG)<<"after remove unsuitable, Count of all organisms is " << organism_count;
-
+        /**
+        for (auto sp_it : organisms_in_current_year) {
+            LOG(DEBUG)<<"1. Species is "<<sp_it.first->getIDWithParentID() <<". Orginasim size is "<<sp_it.second.size();
+            for (auto o_id : sp_it.second){
+                LOG(DEBUG)<<"1. Org size for cell "<<o_id.first <<" is "<<o_id.second.size();
+            }
+        }
+        **/
         boost::unordered_map<SpeciesObject3D*, vector<int>> erased_keys2;
         //Remove the species which distribution is smaller than X for Y time steps
         for (auto sp_it : organisms_in_current_year) {
@@ -373,8 +382,15 @@ int Simulation3D::run() {
             sp_it.first->setDisappearedYearI(year_i);
             organisms_in_current_year.erase(sp_it.first);
         }
-
-        LOG(DEBUG)<<"end to remove unsuitable organisms.";
+        /**
+        for (auto sp_it : organisms_in_current_year) {
+            LOG(DEBUG)<<"2. Species is "<<sp_it.first->getIDWithParentID() <<". Orginasim size is "<<sp_it.second.size();
+            for (auto o_id : sp_it.second){
+                LOG(DEBUG)<<"2. Org size for cell "<<o_id.first <<" is "<<o_id.second.size();
+            }
+        }
+        **/
+        LOG(DEBUG)<<"end to remove unsuitable organisms. organisms size is "<< organisms_in_current_year.size();
 
         //mark the group id for every organisms in this year, seperated by species id;
         LOG(DEBUG)<<"Begin to mark the group id, and detect the speciation.";
@@ -390,6 +406,7 @@ int Simulation3D::run() {
                     //LOG(INFO)<<"Unmarked organism is "<<unmarked_organism->getX() <<", "<<unmarked_organism->getY()
                     //      <<" dispersal ability is "<<unmarked_organism->getDispersalAbility()<<". current_group_id is "<<current_group_id;
                     markJointOrganism(current_group_id, unmarked_organism, &organisms);
+                    break;
                     current_group_id++;
                     unmarked_organism = getUnmarkedOrganism(&organisms);
                 }
@@ -444,12 +461,20 @@ int Simulation3D::run() {
             } else {
                 for (auto y_it : sp_it.second) {
                     for (auto o_it : y_it.second) {
-                        o_it->setGroupId(0);
+                        o_it->setGroupId(current_group_id);
                     }
                 }
             }
         }
-        LOG(DEBUG)<<"end to mark the group id, and detect the speciation.";
+        /**
+        for (auto sp_it : organisms_in_current_year) {
+            LOG(DEBUG)<<"3. Species is "<<sp_it.first->getIDWithParentID() <<". Orginasim size is "<<sp_it.second.size();
+            for (auto o_id : sp_it.second){
+                LOG(DEBUG)<<"3. Org size for cell "<<o_id.first <<" is "<<o_id.second.size();
+            }
+        }
+        **/
+        LOG(DEBUG)<<"end to mark the group id, and detect the speciation. organisms size is "<<organisms_in_current_year.size();
 
         LOG(DEBUG)<<"Begin to rebuild the organism structure in this year";
         boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > new_organisms_in_current_year;
@@ -489,8 +514,16 @@ int Simulation3D::run() {
             }
         }
         organisms_in_current_year = new_organisms_in_current_year;
+        /**
+        for (auto sp_it : organisms_in_current_year) {
+            LOG(DEBUG)<<"4. Species is "<<sp_it.first->getIDWithParentID() <<". Orginasim size is "<<sp_it.second.size();
+            for (auto o_id : sp_it.second){
+                LOG(DEBUG)<<"4. Org size for cell "<<o_id.first <<" is "<<o_id.second.size();
+            }
+        }
+        **/
 
-        LOG(DEBUG)<<"End to rebuild the organism structure in this year";
+        LOG(DEBUG)<<"End to rebuild the organism structure in this year. organisms size is "<<organisms_in_current_year.size();
         LOG(DEBUG)<<"begin to generate group maps";
         boost::unordered_map<SpeciesObject3D*, ISEA3H*> group_maps;
         for (auto sp_it : organisms_in_current_year) {

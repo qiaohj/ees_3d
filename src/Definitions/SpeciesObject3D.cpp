@@ -71,8 +71,7 @@ string SpeciesObject3D::getIDWithParentID(){
         return string(t_char);
     }
 }
-SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent,
-        int p_year_i) {
+SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year_i) {
     this->timeLine = p_parent->getTimeLine();
 	currentSpeciesExtinctionTimeSteps = 0;
 
