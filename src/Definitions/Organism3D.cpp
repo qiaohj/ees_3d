@@ -1,6 +1,6 @@
 /**
- * @file IndividualOrganism3D.cpp
- * @brief Class IndividualOrganism3D. A class to handle the behavior of an individual in the 3D simulation
+ * @file Organism3D.cpp
+ * @brief Class Organism3D. A class to handle the behavior of an individual in the 3D simulation
  * @author Huijie Qiao
  * @version 1.0
  * @date 3/3/2020
@@ -11,41 +11,40 @@
  *
  */
 
-#include "IndividualOrganism3D.h"
+#include "Organism3D.h"
 
-IndividualOrganism3D::IndividualOrganism3D(int p_year,
-        SpeciesObject3D* p_species, IndividualOrganism3D* p_parent, int p_id) {
+Organism3D::Organism3D(int p_year_i, SpeciesObject3D* p_species, Organism3D* p_parent, int p_id) {
     species = p_species;
-    year = p_year;
+    year_i = p_year_i;
     parent = p_parent;
     id = p_id;
     groupId = 0;
     tempSpeciesID = 0;
     dispersalAbility = 0;
 }
-void IndividualOrganism3D::setGroupId(int short p_group_id){
+void Organism3D::setGroupId(int short p_group_id){
     groupId = p_group_id;
 }
-int short IndividualOrganism3D::getGroupId(){
+int short Organism3D::getGroupId(){
     return groupId;
 }
-void IndividualOrganism3D::setTempSpeciesId(int short p_species_id){
+void Organism3D::setTempSpeciesId(int short p_species_id){
     tempSpeciesID = p_species_id;
 }
-int IndividualOrganism3D::getTempSpeciesId(){
+int Organism3D::getTempSpeciesId(){
     return tempSpeciesID;
 }
-void IndividualOrganism3D::setSpecies(SpeciesObject3D* p_species){
+void Organism3D::setSpecies(SpeciesObject3D* p_species){
     species = p_species;
 }
-void IndividualOrganism3D::setParent(IndividualOrganism3D* p_parent) {
+void Organism3D::setParent(Organism3D* p_parent) {
     parent = p_parent;
 }
-IndividualOrganism3D* IndividualOrganism3D::getParent() {
+Organism3D* Organism3D::getParent() {
     return parent;
 }
-//void IndividualOrganism3D::removeChild(IndividualOrganism3D* child) {
-//    vector<IndividualOrganism3D*>::iterator iter = children.begin();
+//void Organism3D::removeChild(Organism3D* child) {
+//    vector<Organism3D*>::iterator iter = children.begin();
 //    while (iter != children.end()) {
 //        if (*iter == child) {
 //            iter = children.erase(iter);
@@ -54,27 +53,27 @@ IndividualOrganism3D* IndividualOrganism3D::getParent() {
 //        }
 //    }
 //}
-//void IndividualOrganism3D::clearChildren(){
+//void Organism3D::clearChildren(){
 //    for (auto child : children){
 //        child->setParent(NULL);
 //    }
 //}
-IndividualOrganism3D::~IndividualOrganism3D() {
+Organism3D::~Organism3D() {
 
 }
-int IndividualOrganism3D::getNextRunYear() {
-    return year + species->getDispersalSpeed();
+int Organism3D::getNextRunYearI() {
+    return year_i + species->getDispersalSpeed();
 }
-int IndividualOrganism3D::getDispersalMethod() {
+int Organism3D::getDispersalMethod() {
     return species->getDispersalMethod();
 }
-int IndividualOrganism3D::getNumOfPath() {
+int Organism3D::getNumOfPath() {
     return species->getNumOfPath();
 }
-int short IndividualOrganism3D::getDispersalAbility() {
+int short Organism3D::getDispersalAbility() {
     return dispersalAbility;
 }
-void IndividualOrganism3D::setRandomDispersalAbility(){
+void Organism3D::setRandomDispersalAbility(){
 
 	double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
 	int short dispersal_ability = 1;
@@ -89,20 +88,23 @@ void IndividualOrganism3D::setRandomDispersalAbility(){
 	//dispersalAbility = 1;
 }
 
-void IndividualOrganism3D::setDispersalAbility(int short p_dispersal_ability) {
+void Organism3D::setDispersalAbility(int short p_dispersal_ability) {
     dispersalAbility = p_dispersal_ability;
 }
-int IndividualOrganism3D::getSpeciationYears(){
+int Organism3D::getSpeciationYears(){
     return species->getSpeciationYears();
 }
-//void IndividualOrganism3D::addChild(IndividualOrganism3D* child){
+//void Organism3D::addChild(Organism3D* child){
 //    children.push_back(child);
 //}
-bool IndividualOrganism3D::isSuitable(boost::unordered_map<string, ISEA3H*>* p_current_environments) {
+bool Organism3D::isSuitable(boost::unordered_map<string, ISEA3H*>* p_current_environments) {
     boost::unordered_map<string, NicheBreadth*> nicheBreadth = species->getNicheBreadth();
     for (auto item : nicheBreadth) {
     	//LOG(INFO)<<"Environments:"<<i<<" Size:"<<(*p_current_environments).size()<<" Address:"<<(*p_current_environments)[i];
         float env_value = (*p_current_environments)[item.first]->readByID(id);
+        if ((int)env_value==NODATA){
+            return false;
+        }
         //LOG(INFO)<<env_value<<"FALSE";
         if ((env_value > item.second->getMax())
                 || (env_value < item.second->getMin())) {
@@ -112,28 +114,28 @@ bool IndividualOrganism3D::isSuitable(boost::unordered_map<string, ISEA3H*>* p_c
 
     return true;
 }
-SpeciesObject3D* IndividualOrganism3D::getSpecies() {
+SpeciesObject3D* Organism3D::getSpecies() {
     return species;
 }
-int IndividualOrganism3D::getSpeciesID() {
+int Organism3D::getSpeciesID() {
     return species->getID();
 }
-int IndividualOrganism3D::getYear(){
-    return year;
+int Organism3D::getYearI(){
+    return year_i;
 }
-int IndividualOrganism3D::getID(){
+int Organism3D::getID(){
     return id;
 }
 
-void IndividualOrganism3D::setYear(int p_year){
-    year = p_year;
+void Organism3D::setYearI(int p_year_i){
+    year_i = p_year_i;
 }
-int long IndividualOrganism3D::getMemoryUsage(){
+int long Organism3D::getMemoryUsage(){
 	int long mem = 0;
 	mem += sizeof(unsigned short) * 4;
 	mem += sizeof(unsigned);
 	mem += sizeof(SpeciesObject3D*);
-	mem += sizeof(vector<IndividualOrganism3D*>);
-//	mem += sizeof(IndividualOrganism3D*) * children.size();
+	mem += sizeof(vector<Organism3D*>);
+//	mem += sizeof(Organism3D*) * children.size();
 	return mem;
 }

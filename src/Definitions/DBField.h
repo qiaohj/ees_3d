@@ -27,14 +27,16 @@
 #define SIMULATION_group_extinction_threshold    15
 #define SIMULATION_initial_seeds       16
 #define SIMULATION_environments      17
-#define SIMULATION_total_years  18
-#define SIMULATION_mask    19
-#define SIMULATION_burn_in_year      20
-#define SIMULATION_is_run       21
+#define SIMULATION_from  18
+#define SIMULATION_to  19
+#define SIMULATION_step  20
+#define SIMULATION_mask    21
+#define SIMULATION_burn_in_year      22
+#define SIMULATION_is_run       23
 #define ENVIRONMENTS_names       0
-#define ENVIRONMENTS_begin_year       1
-#define ENVIRONMENTS_end_year       2
-#define ENVIRONMENTS_step       3
+#define TIMELINE_from       0
+#define TIMELINE_to       1
+#define TIMELINE_step       2
 /* end-of-error-codes */
 
 

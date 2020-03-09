@@ -35,11 +35,9 @@ public:
      * @brief Constructor of EnvironmentalISEA3H class
      * @param p_env_name The table name of the environment in the database.
      * @param p_env_db database
-     * @param p_begin_year Start time step of the simulation
-     * @param p_end_year End time step of the simulation
-     * @param p_step The step length of the simulation
+     * @param timeLine timeline the simulation
      */
-	EnvironmentalISEA3H(string p_env_name, sqlite3* p_env_db);
+	EnvironmentalISEA3H(string p_env_name, sqlite3* p_env_db, vector<int> timeLine);
 
 	/**
 	 * @brief Destructor of EnvironmentalISEA3H class
@@ -53,7 +51,7 @@ public:
      * @param p_year time step
      * @return A ISEA3H object of the environmental layer of the given time step.
      */
-    ISEA3H* getValues(int p_year);
+    ISEA3H* getValues(int p_year_i);
 
     /**
      * @brief Get the value based on the id of the face
@@ -61,7 +59,7 @@ public:
      * @param p_id face id
      * @return the value on the id
      */
-	float readByID(int p_year, int p_id);
+	float readByID(int p_year_i, int p_id);
 
 };
 

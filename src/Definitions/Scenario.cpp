@@ -896,12 +896,11 @@ unsigned Scenario::getMinDividedYear(unsigned speciation_year,
 				return current_year - nearest_divided_year;
 			}
 		}
-		//printf("%u/%u\n", i++, group_1.size() * group_2.size());
+
 	}
 	return current_year - nearest_divided_year;
 }
-unsigned Scenario::getDividedYear(IndividualOrganism* o_1,
-		IndividualOrganism* o_2) {
+unsigned Scenario::getDividedYear(IndividualOrganism* o_1, IndividualOrganism* o_2) {
 	IndividualOrganism* parent_1 = o_1->getParent();
 	IndividualOrganism* parent_2 = o_2->getParent();
 	if ((parent_1 == NULL) || (parent_2 == NULL)) {

@@ -44,19 +44,17 @@ using namespace std;
 #include "Definitions/Neighbor3D.h"
 INITIALIZE_EASYLOGGINGPP;
 
-void handler(int sig) {
-    void *array[10];
-    size_t size;
+int mainy(int argc, const char *argv[]) {
+    int f = stoi(argv[1]);
+    std::set<int> example = { 1};
 
-    // get void*'s for all entries on the stack
-    size = backtrace(array, 10);
-
-    // print out all the frames to stderr
-    fprintf(stderr, "Error: signal %d:\n", sig);
-    backtrace_symbols_fd(array, size, STDERR_FILENO);
-    exit(1);
+    if (example.find(f) != example.end()) {
+        std::cout << "Found\n";
+    } else {
+        std::cout << "Not found\n";
+    }
+    return 0;
 }
-
 /*-----------------------------------------
  * Main entrance for the simulation application
  * Parameters
@@ -86,7 +84,7 @@ int mainx(int argc, const char *argv[]) {
     //exit(1);
     set<int> neighbors;
     set<int> handled_ids;
-    neighborInfo->getNeighborByID(10382, 2, &neighbors, &handled_ids);
+    neighborInfo->getNeighborByID(240, 2, &neighbors, &handled_ids);
     for (unsigned id : neighbors) {
         LOG(INFO) << id;
     }
@@ -108,21 +106,30 @@ int main(int argc, const char *argv[]) {
     string conf_db = argv[2];
     string target = argv[3];
     int id = atoi(argv[4]);
-
+    int is_debug = atoi(argv[7]);
     //initialize the logger
 
     string LOGFILE = target + "/runtime.log";
     el::Configurations defaultConf;
-
     defaultConf.setToDefault();
     defaultConf.set(el::Level::Global, el::ConfigurationType::Enabled, "true");
-
     defaultConf.setGlobally(el::ConfigurationType::ToStandardOutput, "true");
     defaultConf.setGlobally(el::ConfigurationType::ToFile, "true");
     defaultConf.setGlobally(el::ConfigurationType::Filename, LOGFILE);
-
     el::Loggers::reconfigureLogger("default", defaultConf);
     el::Loggers::setDefaultConfigurations(defaultConf, true);
+
+    el::Loggers::addFlag(el::LoggingFlag::HierarchicalLogging);
+    if (is_debug == 1) {
+        printf("Debug mode\n");
+        el::Loggers::setLoggingLevel(el::Level::Global);
+    } else {
+        printf("Release mode\n");
+        defaultConf.setGlobally(el::ConfigurationType::ToFile, "false");
+        el::Loggers::reconfigureLogger("default", defaultConf);
+        el::Loggers::setDefaultConfigurations(defaultConf, true);
+        el::Loggers::setLoggingLevel(el::Level::Error);
+    }
     el::Loggers::flushAll();
 
     unsigned long memory_limit = atoi(argv[5]);

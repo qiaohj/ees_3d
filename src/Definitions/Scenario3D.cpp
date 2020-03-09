@@ -15,6 +15,7 @@
 
 Scenario3D::Scenario3D(string p_env_db, string p_conf_db, string p_target, bool p_overwrite, int p_id, unsigned long p_mem_limit) {
 
+
     //initialize the required parameters for the simulation.
     memLimit = p_mem_limit;
 
@@ -27,8 +28,48 @@ Scenario3D::Scenario3D(string p_env_db, string p_conf_db, string p_target, bool 
     neighborInfo = new Neighbor3D(env_db);
 
     sqlite3* conf_db = openDB(p_conf_db);
-    vector<Simulation3D*> simulations = initSimulations(conf_db, env_db, p_id, p_target, p_overwrite);
 
+    string sql = "SELECT * FROM timeline;";
+    sqlite3_stmt *stmt;
+    sqlite3_prepare(conf_db, sql.c_str(), -1, &stmt, NULL);
+    bool done = false;
+    int from = 0;
+    int to = 0;
+    int step = 0;
+    while (!done) {
+        switch (sqlite3_step(stmt)) {
+        case SQLITE_ROW: {
+            from = sqlite3_column_int(stmt, TIMELINE_from);
+            to = sqlite3_column_int(stmt, TIMELINE_to);
+            step = sqlite3_column_int(stmt, TIMELINE_step);
+            break;
+        }
+
+        case SQLITE_DONE:
+            done = true;
+            break;
+
+        default:
+            done = true;
+            LOG(INFO) << "SQLITE ERROR: " << sqlite3_errmsg(conf_db);
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    if (from < to) {
+        for (int i = from; i <= to; i += step) {
+            this->timeLine.push_back(i);
+        }
+    } else {
+        for (int i = from; i >= to; i += step) {
+            this->timeLine.push_back(i);
+        }
+    }
+
+    LOG(INFO) << "Init the simulations";
+    vector<Simulation3D*> simulations = initSimulations(conf_db, env_db, p_id, p_target, p_overwrite, neighborInfo);
+
+    LOG(INFO) << "Run the simulations. Simulation size is " << simulations.size();
     for (Simulation3D* simulation : simulations){
         simulation->run();
     }
@@ -78,7 +119,7 @@ void Scenario3D::initEnvironments(sqlite3* env_db) {
 }
 
 
-vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, string p_target, bool p_overwrite) {
+vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, string p_target, bool p_overwrite, Neighbor3D* neighborInfo) {
     vector<Simulation3D*> simulations;
     string sql;
     boost::unordered_map<string, ISEA3H*> masks;
@@ -95,29 +136,18 @@ vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env
         int status = sqlite3_step(stmt);
         switch (status) {
         case SQLITE_ROW: {
-            Simulation3D *simulation = new Simulation3D();
-            simulation->setOverwrite(p_overwrite);
-
-            //simulation->setMemLimit(memLimit);
-            int total_years = sqlite3_column_int(stmt, SIMULATION_total_years);
-            simulation->setTotalYears(total_years);
-
+            int burn_in_year = sqlite3_column_int(stmt, SIMULATION_burn_in_year);
+            string label = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_label)));
             LOG(DEBUG) << "init Species";
-            SpeciesObject3D *new_species = new SpeciesObject3D(stmt);
-            simulation->addSpecies(new_species);
+            SpeciesObject3D *new_species = new SpeciesObject3D(stmt, burn_in_year, timeLine);
             LOG(DEBUG) << "Finished to init Species";
-            simulation->addSpecies(new_species);
-
-            string target = p_target + "/" + new_species->getLabel();
-            simulation->setTargetFolder(target);
-
-            bool isFinished = boost::filesystem::exists(target);
+            Simulation3D *simulation = new Simulation3D(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, timeLine, neighborInfo);
 
             /*-------------------
              * If the target folder exists and the is_overwrite parameter is false, skip the simulation,
              * or overwrite the existing result with the new simulation.
              -------------------------*/
-
+            bool isFinished = boost::filesystem::exists(simulation->getTargetFolder());
             if ((isFinished) && (!p_overwrite)) {
                 LOG(INFO) << "Result folder is exist, skip this simulation!";
                 continue;
@@ -134,7 +164,7 @@ vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env
                 EnvironmentalISEA3H *env = environments_base[env_label];
                 if (env == NULL) {
                     LOG(DEBUG) << "No environment found, load it from db";
-                    env = new EnvironmentalISEA3H(env_label, env_db);
+                    env = new EnvironmentalISEA3H(env_label, env_db, timeLine);
                     environments_base[env_label] = env;
                 }
                 LOG(DEBUG) << "Finish to load the environment " << env_label;
@@ -157,7 +187,7 @@ vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env
 
             LOG(DEBUG) << "Init simulation";
             simulation->init();
-            //simulation->run();
+            simulations.push_back(simulation);
             break;
         }
 
@@ -167,7 +197,7 @@ vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env
 
         default:
             done = true;
-            LOG(INFO) << "SQLITE ERROR: " << sqlite3_errmsg(env_db) << ". ERROR CODE IS " << status;
+            LOG(ERROR) << "SQLITE ERROR: " << sqlite3_errmsg(env_db) << ". ERROR CODE IS " << status;
         }
     }
 

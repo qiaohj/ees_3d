@@ -65,7 +65,7 @@ for (i in c(1:nrow(mask))){
       item$species_extinction_time_steps<-1
       item$species_extinction_threahold_percentage<-0.8
       item$group_extinction_threshold<-0
-      item$initial_seeds<-id
+      item$initial_seeds<-item$global_id
       item$environments<-("Debiased_Mean_Annual_Temperature,Debiased_Mean_Annual_Precipitation")
       item$from<-1200
       item$to<-0
@@ -88,6 +88,24 @@ simulations[which(simulations$is_run==1),]
 mydb <- dbConnect(RSQLite::SQLite(), "/home/huijieqiao/git/ees_3d_data/TEST/conf.sqlite")
 dbWriteTable(mydb, "simulations", simulations, overwrite=T)
 dbDisconnect(mydb)
+
+mydb <- dbConnect(RSQLite::SQLite(), "/home/huijieqiao/git/ees_3d_data/TEST/conf.sqlite")
+timeLine<-data.frame(from=1200, to=0, step=-1)
+dbWriteTable(mydb, "timeline", timeLine, overwrite=T)
+dbDisconnect(mydb)
+
+if (F){
+  mydb <- dbConnect(RSQLite::SQLite(), "/home/huijieqiao/git/ees_3d_data/TEST/conf.sqlite")
+  simulations<-dbReadTable(mydb, "simulations")
+  dbDisconnect(mydb)  
+  simulations_run<-simulations[which(simulations$is_run==1),]
+  shape <- readOGR(dsn = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/isea3hGen/outputfiles", layer = "isea3h8p")
+  shape_t<-shape
+  shape_t@coords<-subset(shape_t@coords, shape_t$global_id %in% simulations_run$global_id)
+  shape_t@data<-subset(shape_t@data, shape_t$global_id %in% simulations_run$global_id)
+  writeOGR(shape_t, dsn = "/home/huijieqiao/git/ees_3d_data/ISEA3H8", 
+           layer = "seeds", driver="ESRI Shapefile", overwrite_layer=T)
+}
 if (F){
   field.types=list(global_id="INTEGER",
                    random_index="INTEGER",

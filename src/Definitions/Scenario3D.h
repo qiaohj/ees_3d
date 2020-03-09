@@ -13,6 +13,7 @@
 
 #ifndef DEFINITIONS_SCENARIO3D_H_
 #define DEFINITIONS_SCENARIO3D_H_
+
 using namespace std;
 #include <string>
 #include <boost/unordered_map.hpp>
@@ -24,7 +25,7 @@ using namespace std;
 #include "ISEA3H.h"
 #include "EnvironmentalISEA3H.h"
 #include "SpeciesObject3D.h"
-#include "IndividualOrganism3D.h"
+#include "Organism3D.h"
 #include "../Universal/easylogging.h"
 #include "Neighbor3D.h"
 #include "DBField.h"
@@ -38,7 +39,7 @@ class Scenario3D {
 private:
 	/// @brief a sqlite db connection to save the results.
 	unsigned long memLimit;
-
+	vector<int> timeLine;
 	Neighbor3D* neighborInfo;
 	/// @brief If save the results to a sqlite database. Suggested to set it to true
 	/// @brief The environmental variables used in the simulation.
@@ -46,12 +47,12 @@ private:
 	//boost::unordered_map<string, EnvironmentalISEA3H*> environments;
 
 	/// @brief The virtual species in the simulation, including the initial species, and new species after the speciation events.
-	vector<Simulation3D*> initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite);
+	vector<Simulation3D*> initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite, Neighbor3D* neighborInfo);
 
 	/**
 	 * @brief Remove all the individual objects and release the resources.
 	 */
-	void cleanActivedIndividualOrganism3Ds();
+	void cleanActivedOrganism3Ds();
 	/**
 	 * @brief Remove all the environmental variable objects and release the resources.
 	 */
@@ -75,7 +76,7 @@ private:
 	 * @param year Time step
 	 * @return Return the potential distribution in pixel.
 	 */
-	set<int>  getDispersalMap_2(IndividualOrganism3D *individualOrganism,
+	set<int>  getDispersalMap_2(Organism3D *individualOrganism,
 			string species_folder, int year);
 
 	/**
@@ -83,8 +84,8 @@ private:
 	 * @param organisms All the individuals
 	 * @return The first individual object
 	 */
-	IndividualOrganism3D* getUnmarkedOrganism(
-			boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
+	Organism3D* getUnmarkedOrganism(
+			boost::unordered_map<int, vector<Organism3D*> > *organisms);
 
 	/**
 	 * @brief Allocate a population ID to the individuals which connect with the given individual.
@@ -93,8 +94,8 @@ private:
 	 * @param organisms All the individuals
 	 */
 	void markJointOrganism(int short p_group_id,
-			IndividualOrganism3D *p_unmarked_organism,
-			boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
+			Organism3D *p_unmarked_organism,
+			boost::unordered_map<int, vector<Organism3D*> > *organisms);
 
 	/**
 	 * @brief Get the minimal separating time length of two populations
@@ -106,7 +107,7 @@ private:
 	 */
 	int getMinDividedYear(int speciation_year,
 			int short group_id_1, int short group_id_2,
-			boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms,
+			boost::unordered_map<int, vector<Organism3D*> > *organisms,
 			int current_year);
 
 	/**
@@ -114,8 +115,8 @@ private:
 	 * @param o_1 individual 1
 	 * @param o_2 individual 2
 	 */
-	int getDividedYear(IndividualOrganism3D *o_1,
-			IndividualOrganism3D *o_2);
+	int getDividedYear(Organism3D *o_1,
+			Organism3D *o_2);
 
 	/**
 	 * @brief Give a new species ID to all the individuals in a population when a speciation event happens.
@@ -125,7 +126,7 @@ private:
 	 */
 	void markedSpeciesID(int short group_id,
 			int short temp_species_id,
-			boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
+			boost::unordered_map<int, vector<Organism3D*> > *organisms);
 
 	/**
 	 * @brief Get a temporary species ID based on the parent species ID and population ID
@@ -133,7 +134,7 @@ private:
 	 * @param organisms All the individuals
 	 */
 	int short getTempSpeciesID(int short group_id,
-			boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
+			boost::unordered_map<int, vector<Organism3D*> > *organisms);
 	/**
 	 * @brief Get the folder of the given species
 	 * @param p_species The species to return the folder

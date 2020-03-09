@@ -205,15 +205,18 @@ void CommonFun::executeSQL(const vector<string> s, sqlite3 *db) {
     string joined = boost::algorithm::join(s, " ");
     CommonFun::executeSQL(joined, db);
 }
+string CommonFun::quoteSql(const string &s) {
+    return string("'") + s + string("'");
+}
 void CommonFun::executeSQL(string s, sqlite3 *db) {
     char *zErr;
     string data("CALLBACK FUNCTION");
-    //LOG(INFO) << "Query: "<< s;
+    LOG(DEBUG) << "Query: "<< s;
     int rc = sqlite3_exec(db, s.c_str(), callback, (void*)data.c_str() , &zErr);
 
     if (rc != SQLITE_OK) {
         if (zErr != NULL) {
-            LOG(INFO) << "SQL error: " << zErr;
+            LOG(ERROR) << "SQL error: " << zErr;
             sqlite3_free(zErr);
         }
     } else {

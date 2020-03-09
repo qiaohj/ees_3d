@@ -11,16 +11,24 @@
  *
  */
 #include "Simulation3D.h"
-Simulation3D::Simulation3D() {
-
+Simulation3D::Simulation3D(SpeciesObject3D *species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
+        vector<int> &p_timeLine, Neighbor3D* neighborInfo) {
+    this->species.push_back(species);
+    this->burnInYear = burnInYear;
+    this->overwrite = p_overwrite;
+    this->memLimit = memLimit;
+    this->label = label;
+    this->timeLine = p_timeLine;
+    log_db = NULL;
+    this->neighborInfo = neighborInfo;
+    mask = NULL;
+    targetFolder = target + "/" + label;
 }
 
 void Simulation3D::setNeighbor(Neighbor3D *neighborInfo){
     this->neighborInfo = neighborInfo;
 }
-void Simulation3D::setOverwrite(bool p_overwrite){
-    this->overwrite = p_overwrite;
-}
+
 bool Simulation3D::getOverwrite(){
     return this->overwrite;
 }
@@ -28,14 +36,14 @@ bool Simulation3D::getOverwrite(){
 /*-------------------------
  * Save the population information for a specific time step to a db
  *-----------------------*/
-void Simulation3D::saveGroupmap(int year, boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps) {
+void Simulation3D::saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps) {
     LOG(DEBUG)<<"Save result to db";
     if (species_group_maps.size() == 0) {
+        LOG(DEBUG)<<"NO MAP, RETURN";
         return;
     }
     vector<string> output;
     char line[100];
-    // Note: The old version has only 5 columns without lon and lat columns.
     sprintf(line, "BEGIN TRANSACTION; insert into map (YEAR, ID, group_id, sp_id ) values ");
     output.push_back(line);
     int i = 0;
@@ -50,9 +58,9 @@ void Simulation3D::saveGroupmap(int year, boost::unordered_map<SpeciesObject3D*,
                     string sp_id = sp->getIDWithParentID();
                     char line[sp_id.size() + 100];
                     if (i == 0) {
-                        sprintf(line, " (%u,%u,%u,%s) ", year, id, v, sp_id.c_str());
+                        sprintf(line, " (%u,%u,%u,%s) ", timeLine[year_i], id, v, sp_id.c_str());
                     } else {
-                        sprintf(line, " ,(%u,%u,%u,%s) ", year, id, v, sp_id.c_str());
+                        sprintf(line, " ,(%u,%u,%u,%s) ", timeLine[year_i], id, v, sp_id.c_str());
                     }
                     i = 1;
                     output.push_back(line);
@@ -68,16 +76,7 @@ void Simulation3D::saveGroupmap(int year, boost::unordered_map<SpeciesObject3D*,
     }
 }
 
-void Simulation3D::setTotalYears(int p_total_years){
-    this->total_years = p_total_years;
-}
-int Simulation3D::getTotalYears(){
-    return this->total_years;
-}
-void Simulation3D::setTargetFolder(string p_target){
-    this->targetFolder = p_target;
 
-}
 string Simulation3D::getTargetFolder(){
     return this->targetFolder;
 }
@@ -90,34 +89,25 @@ void Simulation3D::addEnvironmentLabel(string environment_label) {
 void Simulation3D::addSpecies(SpeciesObject3D *species) {
     this->species.push_back(species);
 }
-void Simulation3D::setTimeLine(int from, int to, int step) {
-    if (from < to) {
-        for (int i = from; i <= to; i+=step) {
-            this->timeLine.push_back(i);
-        }
-    } else {
-        for (int i = from; i >= to; i+=step) {
-            this->timeLine.push_back(i);
-        }
-    }
-}
+
 void Simulation3D::createLogDB() {
-    this->logFile = targetFolder + "/" + this->species.front()->getLabel() + ".sqlite";
-    int rc;
-    rc = sqlite3_open(logFile.c_str(), &log_db);
+
+    this->logFile = targetFolder + "/" + label + ".sqlite";
+    CommonFun::deleteFile(logFile.c_str());
+    int rc = sqlite3_open(logFile.c_str(), &log_db);
     if (rc) {
-        LOG(INFO) << "Can't open log database: " << sqlite3_errmsg(log_db) << " at " << logFile;
+        LOG(ERROR) << "Can't open log database: " << sqlite3_errmsg(log_db) << " at " << logFile;
         exit(0);
     } else {
         LOG(INFO) << "Create LOG Database at " << logFile << " successfully";
     }
     //char *zErrMsg = 0;
-    //Create a table to save the log // year,x,y,lon,lat,group,sp_id
-    string sql = "CREATE TABLE map("
-            "YEAR       INT             NOT NULL,"
-            "ID         INT             NOT NULL,"
-            "group_id   INT             NOT NULL,"
-            "sp_id      CHAR(50)                );";
+    //Create a table to save the log
+    string sql = "CREATE TABLE map(YEAR INT NOT NULL, ID INT NOT NULL, group_id INT NOT NULL, sp_id CHAR(255));";
+    CommonFun::executeSQL(sql, log_db);
+    sql = "CREATE TABLE suitable(ID INT NOT NULL, is_seed INT NOT NULL);";
+    CommonFun::executeSQL(sql, log_db);
+    sql = "CREATE TABLE trees(TYPE CHAR(255) NOT NULL, CONTENT TEXT NOT NULL);";
     CommonFun::executeSQL(sql, log_db);
 
 }
@@ -126,15 +116,14 @@ void Simulation3D::init(){
     LOG(DEBUG) << "Save result to " << targetFolder;
     //Create the necessary folders.
     CommonFun::createFolder(targetFolder.c_str());
-    CommonFun::deleteFile(logFile.c_str());
+
     createLogDB();
 
-    int minSpeciesDispersalSpeed = this->total_years;
 
     //Load the species parameters.
 
     set<int> seeds = ancestor->getSeeds();
-    boost::unordered_map<int, vector<IndividualOrganism3D*> > t_o;
+    boost::unordered_map<int, vector<Organism3D*> > t_o;
     /* -----------------
      * Create the individual organism(s) based on the seeds in the species' configuration.
      * All the individual organism(s) has(have) the same parameters inherited from the species and the different localities.
@@ -143,23 +132,14 @@ void Simulation3D::init(){
      * because it hasn't be tested strictly.
      *-------------------------*/
     for (int seed : seeds) {
-        IndividualOrganism3D *individualOrganism = new IndividualOrganism3D(0, ancestor, NULL, seed);
-        boost::unordered_map<int, IndividualOrganism3D*> t;
-        t[seed] = individualOrganism;
-        t_o[seed].push_back(individualOrganism);
+        Organism3D *organism = new Organism3D(0, ancestor, NULL, seed);
+        boost::unordered_map<int, Organism3D*> t;
+        t[seed] = organism;
+        t_o[seed].push_back(organism);
 
     }
-    all_individualOrganisms[0][ancestor] = t_o;
-    /*---------------------
-     *
-     * get the minimal dispersal speed from all the species in the simulation.
-     * It is unused parameter now, because there is only one species per scenario.
-     * It might be used later.
-     *
-     -----------------------*/
-
-    minSpeciesDispersalSpeed = (ancestor->getDispersalSpeed() < minSpeciesDispersalSpeed) ? ancestor->getDispersalSpeed() : minSpeciesDispersalSpeed;
-
+    LOG(DEBUG) << "ADD ROOT SPECIES TO all_organisms WIHT the id is " << ancestor->getIDWithParentID() << " and SIZE is " << t_o.size();
+    all_organisms[0][ancestor] = t_o;
 }
 vector<SpeciesObject3D*> Simulation3D::getSpecies() {
     return this->species;
@@ -180,6 +160,54 @@ void Simulation3D::setMask(ISEA3H* p_mask){
 ISEA3H* Simulation3D::getMask(){
     return this->mask;
 }
+void Simulation3D::generateSuitable() {
+    boost::unordered_map<string, NicheBreadth*> nicheBreadth = species.front()->getNicheBreadth();
+    boost::unordered_map<string, ISEA3H*> current_environments = getEnvironmenMap(0);
+    set<int> values;
+    LOG(DEBUG) << "Begin to generate the suitable area";
+    auto it = current_environments.begin();
+    for (auto item : it->second->getValues()) {
+        int id = item.first;
+        int short v = 0;
+        for (auto item : nicheBreadth) {
+            float env_value = current_environments[item.first]->readByID(id);
+            if ((env_value > item.second->getMax()) || (env_value < item.second->getMin())) {
+                v = 0;
+                break;
+            } else {
+                v = 1;
+            }
+        }
+        if (v == 1) {
+            values.insert(id);
+        }
+    }
+
+    vector<string> output;
+    char line[100];
+    // Note: The old version has only 5 columns without lon and lat columns.
+    sprintf(line, "BEGIN TRANSACTION; insert into suitable (ID, is_seed) values ");
+    output.push_back(line);
+    int i = 0;
+    for (int item : values) {
+        //LOG(DEBUG)<<this->species.front()->getSeeds().count(item.first);
+        bool is_seed = this->species.front()->getSeeds().count(item) > 0;
+        char line[50];
+        if (i == 0) {
+            sprintf(line, " (%u,%u)", item, is_seed);
+        } else {
+            sprintf(line, ", (%u,%u)", item, is_seed);
+        }
+        output.push_back(line);
+        i++;
+    }
+    output.push_back("; COMMIT;");
+    if (output.size() > 0) {
+        CommonFun::executeSQL(output, log_db);
+        output.clear();
+    }
+    LOG(DEBUG) << "END to generate the suitable area";
+}
 /*---------------------------
  * Run a simulation on a scenario with the species in the scenario.
  *---------------------*/
@@ -196,84 +224,54 @@ int Simulation3D::run() {
         return 0;
     }
     boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps;
-    vector<string> stat_output;
+
+    LOG(DEBUG)<<"Total timeLine is "<<timeLine.size();
     for (unsigned year_i = 1; year_i<timeLine.size(); year_i++) {
-        int year = timeLine[year_i];
-        LOG(INFO) << "Current year:" << year << " @ " << targetFolder << " Memory usage:" << CommonFun::getCurrentRSS();
+        LOG(INFO) << "Current year:" << timeLine[year_i] << " @ " << targetFolder << " Memory usage:" << CommonFun::getCurrentRSS();
 
-        boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<IndividualOrganism3D*> > > individual_organisms_in_current_year;
-        LOG(DEBUG) << "Load environments of year "<<year;
-        boost::unordered_map<string, ISEA3H*> current_environments = getEnvironmenMap(year);
-
-        char line[100];
-
+        boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > organisms_in_current_year;
+        //LOG(DEBUG) << "Load environments of year " << timeLine[year_i] << " via index " << year_i;
+        boost::unordered_map<string, ISEA3H*> current_environments = getEnvironmenMap(year_i);
         //Create the active individual organisms via cloning the individual organisms from the previous time step.
-        boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, IndividualOrganism3D*> > actived_individualOrganisms;
-        for (auto sp_it : all_individualOrganisms[timeLine[year_i - 1]]) {
-
+        boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, Organism3D*> > actived_organisms;
+        //LOG(DEBUG) << "Found " << all_organisms[year_i - 1].size() << " species at time " << timeLine[year_i - 1] << ".";
+        for (auto sp_it : all_organisms[year_i - 1]) {
             SpeciesObject3D *sp = sp_it.first;
             for (auto c_it : sp_it.second) {
+                //LOG(DEBUG)<<"Found "<<c_it.second.size()<< " individual from species "<<sp->getIDWithParentID()<<" at pixel "<<c_it.first;
                 if (c_it.second.size() > 0) {
-                    actived_individualOrganisms[sp][c_it.first] = c_it.second.front();
+                    actived_organisms[sp][c_it.first] = c_it.second.front();
                 }
             }
+        }
+        //If it is the beginning of the simulation, generate a suitable layer for the species;
+        //LOG(DEBUG) << "Current year is " << year << " and timeline[1] is " << timeLine[1];
+        if (year_i == 1) {
+            generateSuitable();
         }
 
         int organism_count = 0;
 
         //Handle the active individual organisms one by one.
-        LOG(DEBUG)<<"start to simulate organism by species. Count of species is " << actived_individualOrganisms.size();
-        for (auto s_it : actived_individualOrganisms) {
-            //If it is the beginning of the simulation, generate a suitable layer for the species;
-            if (year == 1) {
-                string speciesFolder = "";
-                //todo: save to db;
-                boost::unordered_map<string, NicheBreadth*> nicheBreadth = s_it.first->getNicheBreadth();
-                char tiffName[speciesFolder.length() + 28];
-                sprintf(tiffName, "%s/suitable.csv", speciesFolder.c_str());
-                boost::unordered_map<string, ISEA3H*> current_environments = getEnvironmenMap(year);
-                ISEA3H *map = new ISEA3H();
-                LOG(DEBUG)<<"Begin to generate the suitable area";
-                auto it = current_environments.begin();
-                for (auto item : it->second->getValues()) {
-                    int id = item.first;
-                    int short v = 0;
-                    for (auto item : nicheBreadth) {
-                        float env_value = current_environments[item.first]->readByID(id);
-                        if ((env_value > item.second->getMax()) || (env_value < item.second->getMin())) {
-                            v = 0;
-                            break;
-                        } else {
-                            v = 1;
-                        }
-                    }
-                    if (v == 1) {
-                        map->setValue(id, v);
-                    }
-                }
-                map->save(tiffName);
-                LOG(DEBUG)<<"END to generate the suitable area";
-                exit(1);
-            }
-            //LOG(INFO)<<"start to simulate organism by organism. Current species is "<< s_it.first << ". Count of organisms is " << s_it.second.size();
-
-            vector<IndividualOrganism3D*> new_individual_organisms;
+        LOG(DEBUG)<<"start to simulate organism by species. Count of species is " << actived_organisms.size();
+        for (auto s_it : actived_organisms) {
+            //LOG(DEBUG)<<"start to simulate organism by organism. Current species is "<< s_it.first->getIDWithParentID() << ". Count of organisms is " << s_it.second.size();
+            vector<Organism3D*> new_organisms;
             for (auto o_it : s_it.second) {
-                IndividualOrganism3D *individualOrganism = o_it.second;
+                Organism3D *organism = o_it.second;
                 //if current year no smaller than individual organism's next run year, then move this organism.
-                //LOG(INFO)<<"Organism index is "<< individualOrganism->getID()<<". Current year is "<<year<<". Next year is "<<individualOrganism->getNextRunYear();
-                if (year >= individualOrganism->getNextRunYear()) {
+                //LOG(DEBUG)<<"Organism index is "<< organism->getID()<<". Current year is "<<year_i<<". Next year is "<<organism->getNextRunYearI();
+                if ((int)year_i >= organism->getNextRunYearI()) {
                     set<int> next_cells;
-                    switch (individualOrganism->getDispersalMethod()) {
+                    switch (organism->getDispersalMethod()) {
                     //only the new individual organisms can move
                     case 1:
                         ;
                         break;
                         //all the individual organisms can move
                     case 2:
-                        individualOrganism->setRandomDispersalAbility();
-                        //LOG(INFO)<<"CALL getDispersalMap_2";
-                        next_cells = getDispersalMap_2(individualOrganism, year);
+                        organism->setRandomDispersalAbility();
+                        next_cells = getDispersalMap_2(organism);
                         break;
                     default:
                         ;
@@ -281,37 +279,34 @@ int Simulation3D::run() {
                     for (auto it : next_cells) {
 
                         //create a new organism
-                        IndividualOrganism3D *new_individualOrganism = new IndividualOrganism3D(year, individualOrganism->getSpecies(), individualOrganism, it);
-                        new_individualOrganism->setRandomDispersalAbility();
-                        new_individual_organisms.push_back(new_individualOrganism);
+                        Organism3D *new_organism = new Organism3D(year_i, organism->getSpecies(), organism, it);
+                        new_organism->setRandomDispersalAbility();
+                        new_organisms.push_back(new_organism);
                     }
 
                     next_cells.clear();
 
-                } else {
-//                  LOG(INFO) << "Didn't run, for current year is "<<year<< " and organism run year is " << individualOrganism->getNextRunYear();
                 }
             }
 
-            for (auto it : new_individual_organisms) {
+            for (auto it : new_organisms) {
                 int index = it->getID();
                 //species id, index
-                individual_organisms_in_current_year[s_it.first][index].push_back(it);
+                organisms_in_current_year[s_it.first][index].push_back(it);
             }
-            organism_count += new_individual_organisms.size();
-            new_individual_organisms.clear();
-            //LOG(INFO)<<"end to simulate organism by organism.";
+            organism_count += new_organisms.size();
+            new_organisms.clear();
+            //LOG(DEBUG)<<"end to simulate organism by organism.";
         }
 
-        //LOG(INFO)<<"end to simulate organism by species. Count of species is " << actived_individualOrganisms.size() << ". Count of all organisms is " << organism_count;
-        //LOG(INFO)<<"end to simulate cell by cell";
+        LOG(DEBUG)<<"end to simulate organism by species. Count of species is " << actived_organisms.size() << ". Count of all organisms is " << organism_count;
 
         //remove the unsuitable organisms
-        //LOG(INFO)<<"begin to remove the unsuitable organisms.";
+        LOG(DEBUG)<<"begin to remove the unsuitable organisms.";
         boost::unordered_map<SpeciesObject3D*, vector<int>> erased_keys;
 
-        for (auto s_it : individual_organisms_in_current_year) {
-            //LOG(INFO)<<"start to remove unsuitable organisms.";
+        for (auto s_it : organisms_in_current_year) {
+            //LOG(DEBUG)<<"start to remove unsuitable organisms.";
             vector<int> erased_key;
             for (auto it : s_it.second) {
                 if (it.second.size() > 0) {
@@ -322,25 +317,24 @@ int Simulation3D::run() {
                 }
             }
             erased_keys[s_it.first] = erased_key;
-            //LOG(INFO)<<"end to remove unsuitable organisms.";
+            //LOG(DEBUG)<<"end to remove unsuitable organisms.";
         }
         for (auto sp_it : erased_keys) {
             for (auto key : sp_it.second) {
-                for (vector<IndividualOrganism3D*>::iterator it = individual_organisms_in_current_year[sp_it.first][key].begin(); it != individual_organisms_in_current_year[sp_it.first][key].end(); ++it) {
-//                    (*it)->getParent()->removeChild(*it);
+                for (vector<Organism3D*>::iterator it = organisms_in_current_year[sp_it.first][key].begin(); it != organisms_in_current_year[sp_it.first][key].end(); ++it) {
                     delete *it;
                     organism_count--;
                 }
-                individual_organisms_in_current_year[sp_it.first][key].clear();
-                vector<IndividualOrganism3D*>().swap(individual_organisms_in_current_year[sp_it.first][key]);
-                individual_organisms_in_current_year[sp_it.first].erase(key);
+                organisms_in_current_year[sp_it.first][key].clear();
+                vector<Organism3D*>().swap(organisms_in_current_year[sp_it.first][key]);
+                organisms_in_current_year[sp_it.first].erase(key);
             }
         }
-        //LOG(INFO)<<"after remove unsuitable, Count of all organisms is " << organism_count;
+        LOG(DEBUG)<<"after remove unsuitable, Count of all organisms is " << organism_count;
 
         boost::unordered_map<SpeciesObject3D*, vector<int>> erased_keys2;
         //Remove the species which distribution is smaller than X for Y time steps
-        for (auto sp_it : individual_organisms_in_current_year) {
+        for (auto sp_it : organisms_in_current_year) {
             SpeciesObject3D *species = sp_it.first;
             /*LOG(INFO)<<"Group map size"<<sp_it.second.size()<<" CurrentSpeciesExtinctionTimeSteps"<<
              species->getCurrentSpeciesExtinctionTimeSteps()<<"/"<<species->getSpeciesExtinctionTimeSteps()<<
@@ -350,12 +344,11 @@ int Simulation3D::run() {
             if ((sp_it.second.size() > 0) && ((species->getCurrentSpeciesExtinctionTimeSteps() < species->getSpeciesExtinctionTimeSteps())) && (sp_it.second.size() >= (species->getMaxSpeciesDistribution() * species->getSpeciesExtinctionThreaholdPercentage()))) {
 
                 species->setMaxSpeciesDistribution((sp_it.second.size() > species->getMaxSpeciesDistribution()) ? sp_it.second.size() : species->getMaxSpeciesDistribution());
-                if ((sp_it.second.size() <= species->getSpeciesExtinctionThreshold()) && (year >= 1000)) {
+                if ((sp_it.second.size() <= species->getSpeciesExtinctionThreshold()) && (year_i >= 10)) {
                     species->addCurrentSpeciesExtinctionTimeSteps();
                 } else {
                     species->setCurrentSpeciesExtinctionTimeSteps(0);
                 }
-                //LOG(INFO)<<"1";
             } else {
                 vector<int> erased_key;
                 for (auto it : sp_it.second) {
@@ -364,38 +357,35 @@ int Simulation3D::run() {
                     }
                 }
                 erased_keys2[sp_it.first] = erased_key;
-                //LOG(INFO)<<"2";
             }
         }
         for (auto sp_it : erased_keys2) {
             for (auto key : sp_it.second) {
-                for (vector<IndividualOrganism3D*>::iterator it = individual_organisms_in_current_year[sp_it.first][key].begin(); it != individual_organisms_in_current_year[sp_it.first][key].end(); ++it) {
+                for (vector<Organism3D*>::iterator it = organisms_in_current_year[sp_it.first][key].begin(); it != organisms_in_current_year[sp_it.first][key].end(); ++it) {
 //                    (*it)->getParent()->removeChild(*it);
                     delete *it;
                 }
-                individual_organisms_in_current_year[sp_it.first][key].clear();
-                vector<IndividualOrganism3D*>().swap(individual_organisms_in_current_year[sp_it.first][key]);
-                individual_organisms_in_current_year[sp_it.first].erase(key);
+                organisms_in_current_year[sp_it.first][key].clear();
+                vector<Organism3D*>().swap(organisms_in_current_year[sp_it.first][key]);
+                organisms_in_current_year[sp_it.first].erase(key);
             }
             sp_it.second.clear();
-            sp_it.first->setDisappearedYear(year);
-            individual_organisms_in_current_year.erase(sp_it.first);
+            sp_it.first->setDisappearedYearI(year_i);
+            organisms_in_current_year.erase(sp_it.first);
         }
 
-        //LOG(INFO)<<"end to remove unsuitable organisms.";
+        LOG(DEBUG)<<"end to remove unsuitable organisms.";
 
         //mark the group id for every organisms in this year, seperated by species id;
-        //LOG(INFO)<<"Begin to mark the group id, and detect the speciation.";
-        for (auto sp_it : individual_organisms_in_current_year) {
+        LOG(DEBUG)<<"Begin to mark the group id, and detect the speciation.";
+        for (auto sp_it : organisms_in_current_year) {
             //printf("Species ID:%u\n", sp_it.first->getID());
-            boost::unordered_map<int, vector<IndividualOrganism3D*> > organisms = sp_it.second;
+            boost::unordered_map<int, vector<Organism3D*> > organisms = sp_it.second;
             SpeciesObject3D *species = sp_it.first;
             int short current_group_id = 1;
-            if (year >= (species->getBurnInYear() + species->getSpeciationYears())) {
-                //if (year>=(burnInYear + species->getSpeciationYears())) {
-                //LOG(INFO)<<"Begin to mark the organism.";
-                IndividualOrganism3D *unmarked_organism = getUnmarkedOrganism(&organisms);
-                //LOG(INFO)<<"111";
+            if ((int)year_i >= (species->getBurnInYear() + species->getSpeciationYears())) {
+                LOG(DEBUG)<<"Begin to mark the organism.";
+                Organism3D *unmarked_organism = getUnmarkedOrganism(&organisms);
                 while (unmarked_organism != NULL) {
                     //LOG(INFO)<<"Unmarked organism is "<<unmarked_organism->getX() <<", "<<unmarked_organism->getY()
                     //      <<" dispersal ability is "<<unmarked_organism->getDispersalAbility()<<". current_group_id is "<<current_group_id;
@@ -403,16 +393,11 @@ int Simulation3D::run() {
                     current_group_id++;
                     unmarked_organism = getUnmarkedOrganism(&organisms);
                 }
-
-                /*if (current_group_id>1000){
-                 LOG(INFO)<<"current_group_id is "<<current_group_id;
-                 exit(1);
-                 }*/
-                //LOG(INFO)<<"End to mark the organism.";
+                LOG(DEBUG)<<"End to mark the organism. " << current_group_id-1<<" groups were found.";
                 //detect the speciation
                 int short temp_species_id = 1;
 //              vector<string> group_output;
-                //LOG(INFO)<<"Begin to detect speciation.";
+                LOG(DEBUG)<<"Begin to detect speciation.";
                 for (int short group_id_1 = 1; group_id_1 < current_group_id - 1; group_id_1++) {
                     //LOG(INFO)<<"getTempSpeciesID 1 for group "<<group_id_1 <<" current_group_id is "<<current_group_id;
                     int short temp_species_id_1 = getTempSpeciesID(group_id_1, &organisms);
@@ -421,30 +406,21 @@ int Simulation3D::run() {
                         int short temp_species_id_2 = getTempSpeciesID(group_id_2, &organisms);
                         //if both groups were marked, and they have the same id, skip it.
                         if ((temp_species_id_1 != 0) && (temp_species_id_2 != 0) && (temp_species_id_1 == temp_species_id_2)) {
-//                          char line[100];
-//                          sprintf(line, "%u,%u,%u,%u,%u,%u,%s", year, group_id_1, group_id_2, temp_species_id_1, temp_species_id_2, 0, "skip");
-//                          group_output.push_back(line);
                             continue;
                         }
                         //LOG(INFO)<<"get min_divided_year.";
-                        int min_divided_year = getMinDividedYear(sp_it.first->getSpeciationYears(), group_id_1, group_id_2, &organisms, year);
+                        int min_divided_year = getMinDividedYear(sp_it.first->getSpeciationYears(), group_id_1, group_id_2, &organisms, year_i);
                         //LOG(INFO)<<"get min_divided_year is "<<min_divided_year;
 
                         if (min_divided_year >= species->getSpeciationYears()) {
                             //LOG(INFO)<<"mark species id with new id.";
                             //if a speciation happened, marked them with two ids if they were not marked.
                             if (temp_species_id_1 == 0) {
-//                              char line[100];
-//                              sprintf(line, "%u,%u,%u,%u,%u,%u,%s", year, group_id_1, group_id_2, temp_species_id, 0, min_divided_year, "new species, mark group 1");
-//                              group_output.push_back(line);
                                 markedSpeciesID(group_id_1, temp_species_id, &organisms);
                                 temp_species_id_1 = temp_species_id;
                                 temp_species_id++;
                             }
                             if (temp_species_id_2 == 0) {
-//                              char line[100];
-//                              sprintf(line, "%u,%u,%u,%u,%u,%u,%s", year, group_id_1, group_id_2, temp_species_id, 0, min_divided_year, "new species, mark group 2");
-//                              group_output.push_back(line);
                                 markedSpeciesID(group_id_2, temp_species_id, &organisms);
                                 temp_species_id_2 = temp_species_id;
                                 temp_species_id++;
@@ -457,40 +433,34 @@ int Simulation3D::run() {
                             t_id = (t_id == 0) ? temp_species_id : t_id;
                             markedSpeciesID(group_id_1, t_id, &organisms);
                             temp_species_id_1 = t_id;
-//                            char line1[100];
-//                            sprintf(line1, "%u,%u,%u,%u,%u,%u,%s", year, group_id_1, group_id_2, t_id, 0, min_divided_year, "same species, mark group 1");
-//                            group_output.push_back(line1);
                             markedSpeciesID(group_id_2, t_id, &organisms);
                             temp_species_id_2 = t_id;
                             //LOG(INFO)<<"end to mark species id with old id.";
-//                            char line2[100];
-//                            sprintf(line2, "%u,%u,%u,%u,%u,%u,%s", year, group_id_1, group_id_2, t_id, 0, min_divided_year, "same species, mark group 2");
-//                            group_output.push_back(line2);
                         }
                     }
                 }
-                //LOG(INFO)<<"End to detect speciation.";
+                LOG(DEBUG)<<"End to detect speciation.";
 
             } else {
                 for (auto y_it : sp_it.second) {
                     for (auto o_it : y_it.second) {
-                        o_it->setGroupId(current_group_id);
+                        o_it->setGroupId(0);
                     }
                 }
             }
         }
-        //LOG(INFO)<<"end to mark the group id, and detect the speciation.";
+        LOG(DEBUG)<<"end to mark the group id, and detect the speciation.";
 
-        //LOG(INFO)<<"Begin to rebuild the organism structure in this year";
-        boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<IndividualOrganism3D*> > > new_individual_organisms_in_current_year;
-        for (auto sp_it : individual_organisms_in_current_year) {
-            boost::unordered_map<int, vector<IndividualOrganism3D*> > organisms = sp_it.second;
+        LOG(DEBUG)<<"Begin to rebuild the organism structure in this year";
+        boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > new_organisms_in_current_year;
+        for (auto sp_it : organisms_in_current_year) {
+            boost::unordered_map<int, vector<Organism3D*> > organisms = sp_it.second;
             //count all the species
             boost::unordered_map<int short, int short> species_ids;
             boost::unordered_set<int short> temp_species_ids;
             for (auto c_it : sp_it.second) {
                 if (c_it.second.size() > 0) {
-                    IndividualOrganism3D *organism_item = c_it.second.front();
+                    Organism3D *organism_item = c_it.second.front();
                     temp_species_ids.insert(organism_item->getTempSpeciesId());
                 }
             }
@@ -501,13 +471,13 @@ int Simulation3D::run() {
 
             if (species_ids.size() > 1) {
                 for (auto sp_id_it : species_ids) {
-                    SpeciesObject3D *new_species = new SpeciesObject3D(sp_id_it.second, sp_it.first, year);
+                    SpeciesObject3D *new_species = new SpeciesObject3D(sp_id_it.second, sp_it.first, year_i);
                     //createSpeciesFolder(new_species, false);
                     species.push_back(new_species);
                     for (auto c_it : sp_it.second) {
                         for (auto o_it : c_it.second) {
                             if (o_it->getTempSpeciesId() == sp_id_it.first) {
-                                new_individual_organisms_in_current_year[new_species][c_it.first].push_back(o_it);
+                                new_organisms_in_current_year[new_species][c_it.first].push_back(o_it);
                                 o_it->setSpecies(new_species);
                             }
                         }
@@ -515,15 +485,15 @@ int Simulation3D::run() {
 
                 }
             } else {
-                new_individual_organisms_in_current_year[sp_it.first] = sp_it.second;
+                new_organisms_in_current_year[sp_it.first] = sp_it.second;
             }
         }
-        individual_organisms_in_current_year = new_individual_organisms_in_current_year;
+        organisms_in_current_year = new_organisms_in_current_year;
 
-        //LOG(INFO)<<"End to rebuild the organism structure in this year";
-        //LOG(INFO)<<"begin to generate group maps";
+        LOG(DEBUG)<<"End to rebuild the organism structure in this year";
+        LOG(DEBUG)<<"begin to generate group maps";
         boost::unordered_map<SpeciesObject3D*, ISEA3H*> group_maps;
-        for (auto sp_it : individual_organisms_in_current_year) {
+        for (auto sp_it : organisms_in_current_year) {
             SpeciesObject3D *species = sp_it.first;
             if (group_maps.find(species) == group_maps.end()) {
                 group_maps[sp_it.first] = new ISEA3H();
@@ -541,43 +511,42 @@ int Simulation3D::run() {
 
         }
 
-        saveGroupmap(year, group_maps);
+        saveGroupmap(year_i, group_maps);
 
-        all_individualOrganisms.insert(make_pair(year, individual_organisms_in_current_year));
+        all_organisms.insert(make_pair(year_i, organisms_in_current_year));
 
         //remove the useless organism
-        //LOG(INFO)<<"Remove the useless organisms. Before removing, Memory usage:"<<CommonFun::getCurrentRSS();
+        LOG(DEBUG)<<"Remove the useless organisms. Before removing, Memory usage:"<<CommonFun::getCurrentRSS();
         for (auto sp_it : species) {
-            if (year < sp_it->getDispersalSpeed()) {
+            if ((int)year_i < sp_it->getDispersalSpeed()) {
                 continue;
             }
             int speciation_year = sp_it->getSpeciationYears();
             bool is_remove_previous_span = false;
             bool is_remove_previous_speciation = false;
-            //todo: double check the logic here.
-            if (year < (sp_it->getBurnInYear() - sp_it->getSpeciationYears())) {
+            if ((int)year_i < (sp_it->getBurnInYear() - sp_it->getSpeciationYears())) {
                 is_remove_previous_span = true;
             }
-            if (year > sp_it->getBurnInYear()) {
+            if ((int)year_i > sp_it->getBurnInYear()) {
                 is_remove_previous_speciation = true;
             }
-            int removed_year = -1;
+            int removed_year_i = -1;
             if (is_remove_previous_span) {
-                removed_year = year - sp_it->getDispersalSpeed();
+                removed_year_i = (int)year_i - sp_it->getDispersalSpeed();
             }
             if (is_remove_previous_speciation) {
-                removed_year = (year - sp_it->getDispersalSpeed()) - speciation_year;
+                removed_year_i = (int)year_i - sp_it->getDispersalSpeed() - speciation_year;
             }
-            if (removed_year >= 0) {
+            if (removed_year_i >= 0) {
                 //LOG(INFO)<<"Current year is "<<year<<". Remove organisms at year "<< removed_year<<".";
-                boost::unordered_map<int, vector<IndividualOrganism3D*> > temp_o = all_individualOrganisms[removed_year][sp_it];
+                boost::unordered_map<int, vector<Organism3D*> > temp_o = all_organisms[removed_year_i][sp_it];
                 for (auto it1 : temp_o) {
                     CommonFun::clearVector(&it1.second);
                 }
-//              all_individualOrganisms.erase(removed_year);
+//              all_organisms.erase(removed_year);
 
 //              LOG(INFO)<<"Set the parent to NULL for year "<<removed_year + sp_it->getDispersalSpeed();
-                temp_o = all_individualOrganisms[removed_year + sp_it->getDispersalSpeed()][sp_it];
+                temp_o = all_organisms[removed_year_i + sp_it->getDispersalSpeed()][sp_it];
                 for (auto it1 : temp_o) {
                     for (auto it2 : it1.second) {
                         it2->setParent(NULL);
@@ -588,53 +557,37 @@ int Simulation3D::run() {
 
             }
         }
-        //LOG(INFO)<<"Remove the useless organisms. After  removing, Memory usage:"<<CommonFun::getCurrentRSS();
-
-        //LOG(INFO)<<"Generate speciation information.";
-        generateSpeciationInfo(year, false);
-        //LOG(INFO)<<"Save stat information.";
-        int long o_size = 0;
-        int long c_size = 0;
-        int long mem_size = 0;
-        int long species_size = 0;
-
-        sprintf(line, "%u,%lu,%lu,%lu,%lu,%lu,%lu", year, CommonFun::getCurrentRSS(), c_size, o_size, mem_size, species_size, all_individualOrganisms[year].size());
-        stat_output.push_back(line);
+        LOG(DEBUG)<<"Remove the useless organisms. After  removing, Memory usage:"<<CommonFun::getCurrentRSS();
 
         if ((CommonFun::getCurrentRSS() > memLimit)) {
             return 1;
         }
     }
 
-    generateSpeciationInfo(this->total_years, true);
+    generateSpeciationInfo(timeLine.size() - 1);
     return 0;
 }
-void Simulation3D::generateSpeciationInfo(int year, bool is_tree) {
+void Simulation3D::generateSpeciationInfo(int year_i) {
     vector<SpeciesObject3D*> roots;
     for (auto sp_it : species) {
-        if (sp_it->getAppearedYear() == 0) {
-            sp_it->markNode(year);
+        if (sp_it->getAppearedYearI() == 0) {
+            sp_it->markNode(year_i);
             roots.push_back(sp_it);
         }
     }
 
     for (auto sp_it : roots) {
-        string folder = this->targetFolder;
-        if (is_tree) {
-            string newick = folder + "/tree.new";
-            CommonFun::writeFile(sp_it->getNewickTree(true, false, year),
-                    newick.c_str());
-            string html = folder + "/Phylogram.html";
-            CommonFun::writeFile(sp_it->getHTMLTree(year), html.c_str());
-        }
+        string tree = sp_it->getNewickTree(true, false, year_i);
+        string sql = "INSERT INTO trees (TYPE, CONTENT) VALUES ('NEWICK', " + CommonFun::quoteSql(tree) + ");";
+        CommonFun::executeSQL(sql, log_db);
 
-        string stat = folder + "/stats/stat.csv";
-        CommonFun::writeFile(sp_it->getSpeciationExtinction(true, year),
-                stat.c_str());
+        tree = boost::algorithm::join(sp_it->getHTMLTree(year_i), " ");
+        sql = "INSERT INTO trees (TYPE, CONTENT) VALUES ('HTML', " + CommonFun::quoteSql(tree) + ");";
+        CommonFun::executeSQL(sql, log_db);
 
     }
 }
-int short Simulation3D::getTempSpeciesID(int short group_id, boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms) {
+int short Simulation3D::getTempSpeciesID(int short group_id, boost::unordered_map<int, vector<Organism3D*> > *organisms) {
     for (auto c_it : (*organisms)) {
         for (auto o_it : c_it.second) {
             if (o_it->getGroupId() == group_id) {
@@ -646,7 +599,7 @@ int short Simulation3D::getTempSpeciesID(int short group_id, boost::unordered_ma
 }
 void Simulation3D::markedSpeciesID(int short group_id,
         int short temp_species_id,
-        boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms) {
+        boost::unordered_map<int, vector<Organism3D*> > *organisms) {
     /// @todo Here can improve the efficiency a lot! We need a new algorithm!
     //LOG(INFO)<<"Size of organism 1 is "<<organisms->size();
     for (auto c_it : (*organisms)) {
@@ -663,16 +616,17 @@ int Simulation3D::distance3D(int id1, int id2, int limited) {
     return neighborInfo->distance(id1, id2, limited);
 }
 
-int Simulation3D::getMinDividedYear(int speciation_year, int short group_id_1, int short group_id_2, boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms, int current_year) {
-    int nearest_divided_year = 0;
+int Simulation3D::getMinDividedYear(int speciation_year, int short group_id_1, int short group_id_2,
+        boost::unordered_map<int, vector<Organism3D*> > *organisms, int current_year_i) {
+    int nearest_divided_year_i = 0;
     vector<int> group_c_1;
     vector<int> group_c_2;
     int group_1_index = 0;
     int group_2_index = 0;
 
     //save all the organisms in that two groups
-    vector<IndividualOrganism3D*> group_1 = (*organisms)[group_1_index];
-    vector<IndividualOrganism3D*> group_2 = (*organisms)[group_2_index];
+    vector<Organism3D*> group_1 = (*organisms)[group_1_index];
+    vector<Organism3D*> group_2 = (*organisms)[group_2_index];
 
     for (auto c_it : (*organisms)) {
         for (auto o_it : c_it.second) {
@@ -686,28 +640,26 @@ int Simulation3D::getMinDividedYear(int speciation_year, int short group_id_1, i
 
     for (auto o_it_1 : group_1) {
         for (auto o_it_2 : group_2) {
-            int divided_year = getDividedYear(o_it_1, o_it_2);
-            nearest_divided_year =
-                    (divided_year > nearest_divided_year) ?
-                            divided_year : nearest_divided_year;
-            if ((current_year - nearest_divided_year) < speciation_year) {
-                return current_year - nearest_divided_year;
+            int divided_year_i = getDividedYearI(o_it_1, o_it_2);
+            nearest_divided_year_i = (divided_year_i > nearest_divided_year_i) ? divided_year_i : nearest_divided_year_i;
+            if (nearest_divided_year_i < speciation_year) {
+                return current_year_i - nearest_divided_year_i;
             }
         }
         //printf("%u/%u\n", i++, group_1.size() * group_2.size());
     }
-    return current_year - nearest_divided_year;
+    return current_year_i - nearest_divided_year_i;
 }
-int Simulation3D::getDividedYear(IndividualOrganism3D *o_1, IndividualOrganism3D *o_2) {
-    IndividualOrganism3D *parent_1 = o_1->getParent();
-    IndividualOrganism3D *parent_2 = o_2->getParent();
+int Simulation3D::getDividedYearI(Organism3D *o_1, Organism3D *o_2) {
+    Organism3D *parent_1 = o_1->getParent();
+    Organism3D *parent_2 = o_2->getParent();
     if ((parent_1 == NULL) || (parent_2 == NULL)) {
         return 0;
     }
     if (parent_1->getGroupId() == parent_2->getGroupId()) {
-        return parent_1->getYear();
+        return parent_1->getYearI();
     } else {
-        return getDividedYear(parent_1, parent_2);
+        return getDividedYearI(parent_1, parent_2);
     }
 }
 set<int> Simulation3D::getNeighbors(int id, int distance) {
@@ -717,28 +669,24 @@ set<int> Simulation3D::getNeighbors(int id, int distance) {
     handled_ids.clear();
     return neighbors;
 }
-void Simulation3D::markJointOrganism(int short p_group_id, IndividualOrganism3D *p_unmarked_organism, boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms) {
+void Simulation3D::markJointOrganism(int short p_group_id, Organism3D *p_unmarked_organism, boost::unordered_map<int, vector<Organism3D*> > *organisms) {
 
     int short id = p_unmarked_organism->getID();
 
-    int short p_dispersal_ability =
-            p_unmarked_organism->getDispersalAbility();
+    int short p_dispersal_ability = p_unmarked_organism->getDispersalAbility();
     if (p_dispersal_ability == 0) {
         p_dispersal_ability = 1;
     }
-    //LOG(INFO)<<"id="<<id<<" p_dispersal_ability="<<p_dispersal_ability;
+    //LOG(DEBUG)<<"id="<<id<<" p_dispersal_ability="<<p_dispersal_ability;
     set<int> neighbors = getNeighbors(id, p_dispersal_ability);
-    //LOG(INFO)<<"2222";
     for (int n_id : neighbors) {
-        // LOG(INFO)<<"Neighbor is "<<n_id;
+        //LOG(DEBUG)<<"Neighbor is "<<n_id;
         if (organisms->find(n_id) == organisms->end()) {
-            //LOG(INFO) << "skip 2";
             continue;
         }
         int short group_id = (*organisms)[n_id].front()->getGroupId();
-        //LOG(INFO)<<"GROUP ID OF '"<<n_id<<"' IS: "<<group_id;
+        //LOG(DEBUG)<<"GROUP ID OF '"<<n_id<<"' IS: "<<group_id;
         if (group_id != 0) {
-            //LOG(INFO) << "skip 3";
             continue;
         }
         for (auto it : (*organisms)[n_id]) {
@@ -748,11 +696,11 @@ void Simulation3D::markJointOrganism(int short p_group_id, IndividualOrganism3D 
             }
         }
     }
+    //LOG(DEBUG)<<"End to marked a group, which is "<<p_group_id;
     neighbors.clear();
 }
 
-IndividualOrganism3D* Simulation3D::getUnmarkedOrganism(
-        boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms) {
+Organism3D* Simulation3D::getUnmarkedOrganism(boost::unordered_map<int, vector<Organism3D*> > *organisms) {
     for (auto p_it : (*organisms)) {
         for (auto it : p_it.second) {
             if (it->getGroupId() == 0) {
@@ -773,18 +721,18 @@ boost::unordered_map<string, ISEA3H*> Simulation3D::getEnvironmenMap(int p_year)
 void Simulation3D::cleanSpecies() {
     //CommonFun::clearVector(&species);
 }
-void Simulation3D::cleanActivedIndividualOrganism3Ds() {
-//    CommonFun::clearUnordered_map(all_individualOrganisms);
+void Simulation3D::cleanActivedOrganisms() {
+//    CommonFun::clearUnordered_map(all_organisms);
 
-    for (auto y_it : all_individualOrganisms) {
+    for (auto y_it : all_organisms) {
         for (auto s_it : y_it.second) {
             for (auto l_it : s_it.second) {
                 CommonFun::clearVector(&l_it.second);
             }
         }
     }
-//    CommonFun::clearUnordered_map(&all_individualOrganisms);
-//    CommonFun::clearUnordered_map(&actived_individualOrganisms);
+//    CommonFun::clearUnordered_map(&all_organisms);
+//    CommonFun::clearUnordered_map(&actived_organisms);
 }
 void Simulation3D::cleanEnvironments() {
 //    CommonFun::clearVector(&environments);
@@ -795,16 +743,14 @@ void Simulation3D::cleanEnvironments() {
 //    }
 //    environment_maps.clear();
 }
-set<int> Simulation3D::getDispersalMap_2(IndividualOrganism3D *individualOrganism, int year) {
+set<int> Simulation3D::getDispersalMap_2(Organism3D *organism) {
     set<int> new_cells;
-
-    int short p_dispersal_ability = individualOrganism->getDispersalAbility();
-    if (individualOrganism->getNumOfPath() == -1) {
-        int id = individualOrganism->getID();
-        set<int> neighbors = getNeighbors(id, p_dispersal_ability);
-        for (int nei_id : neighbors) {
-            new_cells.insert(nei_id);
-        }
+    int short p_dispersal_ability = organism->getDispersalAbility();
+    if (organism->getNumOfPath() == -1) {
+        int id = organism->getID();
+        //LOG(DEBUG) << "Looking for neighbors for " << id << ", which dispersal ability is " << p_dispersal_ability << ".";
+        new_cells = getNeighbors(id, p_dispersal_ability);
+        //LOG(DEBUG)<<new_cells.size() <<" neighbors were found.";
     }
     return new_cells;
 }
@@ -813,7 +759,7 @@ Simulation3D::~Simulation3D() {
     CommonFun::executeSQL("CREATE INDEX idx_year ON map (year)", log_db);
     sqlite3_close(log_db);
 //  cleanEnvironments();
-//  cleanActivedIndividualOrganism3Ds();
+//  cleanActivedOrganism3Ds();
 //  cleanSpecies();
 }
 

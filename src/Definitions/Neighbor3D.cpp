@@ -51,12 +51,12 @@ Neighbor3D::Neighbor3D(sqlite3 *env_db) {
     sqlite3_finalize(stmt);
 }
 void Neighbor3D::getNeighborByID(int p_id, int distance, set<int> *p_neighbors, set<int> *handled_ids) {
-    //LOG(INFO)<<p_id<<" "<<distance;
+    //LOG(DEBUG)<<"ID is "<<p_id<<" and distance is "<<distance;
     if (distance > 0) {
         set<int> v = neighbors[p_id];
         handled_ids->insert(p_id);
         for (int nei_id : v) {
-            if (find(handled_ids->begin(), handled_ids->end(), nei_id) == handled_ids->end()) {
+            if (handled_ids->find(nei_id) == handled_ids->end()) {
                 getNeighborByID(nei_id, distance - 1, p_neighbors, handled_ids);
             }
         }

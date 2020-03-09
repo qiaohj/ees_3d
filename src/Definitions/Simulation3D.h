@@ -28,7 +28,7 @@ using namespace std;
 #include "SpeciesObject3D.h"
 #include "EnvironmentalISEA3H.h"
 #include "ISEA3H.h"
-#include "IndividualOrganism3D.h"
+#include "Organism3D.h"
 #include "Neighbor3D.h"
 /**
  * @brief A class to handle the attributes and behaviors of a virtual species
@@ -43,29 +43,26 @@ private:
     string targetFolder;
     string logFile;
     sqlite3* log_db;
-    int total_years;
     bool overwrite;
+    int burnInYear;
+    string label;
     Neighbor3D* neighborInfo;
     unsigned long memLimit;
-    boost::unordered_map<int, boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<IndividualOrganism3D*> > > > all_individualOrganisms;
+    boost::unordered_map<int, boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > > all_organisms;
 public:
     /**
      * @brief Constructor of Simulation3D
-     * @param json_path the path to configuration file in JSON format
      */
-    Simulation3D();
+    Simulation3D(SpeciesObject3D *species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
+            vector<int>& p_timeLine, Neighbor3D* neighborInfo);
     void setNeighbor(Neighbor3D *neighborInfo);
-    void setOverwrite(bool p_overwrite);
-    void setMemLimit(unsigned long memLimit);
+    void generateSuitable();
     bool getOverwrite();
-    void saveGroupmap(int year, boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps);
-    void setTotalYears(int p_total_years);
-    int getTotalYears();
+    void saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps);
     int run();
     void addSpecies(SpeciesObject3D *species);
     void addEnvironmentLabel(string environment_labels);
     void addEnvironment(string environment_label, EnvironmentalISEA3H *env);
-    void setTimeLine(int from, int to, int step);
     void setMask(ISEA3H* p_mask);
     void init();
     void setTargetFolder(string p_target);
@@ -76,20 +73,20 @@ public:
     ISEA3H* getMask();
     string getTargetFolder();
     void createLogDB();
-    set<int> getDispersalMap_2(IndividualOrganism3D *individualOrganism, int year);
+    set<int> getDispersalMap_2(Organism3D *organism);
     void cleanEnvironments();
-    void cleanActivedIndividualOrganism3Ds();
+    void cleanActivedOrganisms();
     void cleanSpecies();
     boost::unordered_map<string, ISEA3H*> getEnvironmenMap(int p_year);
-    IndividualOrganism3D* getUnmarkedOrganism(boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
-    void markJointOrganism(int short p_group_id, IndividualOrganism3D *p_unmarked_organism, boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
+    Organism3D* getUnmarkedOrganism(boost::unordered_map<int, vector<Organism3D*> > *organisms);
+    void markJointOrganism(int short p_group_id, Organism3D *p_unmarked_organism, boost::unordered_map<int, vector<Organism3D*> > *organisms);
     set<int> getNeighbors(int id, int distance);
-    int getDividedYear(IndividualOrganism3D *o_1, IndividualOrganism3D *o_2);
-    int getMinDividedYear(int speciation_year, int short group_id_1, int short group_id_2, boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms, int current_year);
+    int getDividedYearI(Organism3D *o_1, Organism3D *o_2);
+    int getMinDividedYear(int speciation_year, int short group_id_1, int short group_id_2, boost::unordered_map<int, vector<Organism3D*> > *organisms, int current_year_i);
     int distance3D(int id1, int id2, int limited);
-    void markedSpeciesID(int short group_id, int short temp_species_id, boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
-    int short getTempSpeciesID(int short group_id, boost::unordered_map<int, vector<IndividualOrganism3D*> > *organisms);
-    void generateSpeciationInfo(int year, bool is_tree);
+    void markedSpeciesID(int short group_id, int short temp_species_id, boost::unordered_map<int, vector<Organism3D*> > *organisms);
+    int short getTempSpeciesID(int short group_id, boost::unordered_map<int, vector<Organism3D*> > *organisms);
+    void generateSpeciationInfo(int year_i);
     virtual ~Simulation3D();
 
 

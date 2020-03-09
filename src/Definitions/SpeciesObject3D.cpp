@@ -13,18 +13,20 @@
 
 #include "SpeciesObject3D.h"
 
-SpeciesObject3D::SpeciesObject3D(sqlite3_stmt *stmt) {
+SpeciesObject3D::SpeciesObject3D(sqlite3_stmt *stmt, int burn_in_year, vector<int>& timeLine) {
+    this->timeLine = timeLine;
 	currentSpeciesExtinctionTimeSteps = 0;
 	newSpecies = true;
     id = sqlite3_column_int(stmt, SIMULATION_id);
     vector<string> dispersalAbility_str = CommonFun::splitStr(
             string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_dispersal_ability))), ",");
-    label = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_label)));
+
     dispersalAbilityLength = dispersalAbility_str.size();
     dispersalAbility = new double[dispersalAbilityLength];
 	for (int index = 0; index < dispersalAbilityLength; ++index) {
 		dispersalAbility[index] = stod(dispersalAbility_str[index]);
 	}
+	this->burninYear = burn_in_year;
 
     dispersalSpeed = sqlite3_column_int(stmt, SIMULATION_dispersal_speed);
     dispersalMethod = sqlite3_column_int(stmt, SIMULATION_dispersal_method);
@@ -37,8 +39,8 @@ SpeciesObject3D::SpeciesObject3D(sqlite3_stmt *stmt) {
     speciesExtinctionThreaholdPercentage = 1 - sqlite3_column_double(stmt, SIMULATION_species_extinction_threahold_percentage);;
     //LOG(INFO)<<"speciesExtinctionThreaholdPercentage"<<speciesExtinctionThreaholdPercentage;
     maxSpeciesDistribution = 0;
-    appearedYear = 0;
-    disappearedYear = 0;
+    appearedYearI = 0;
+    disappearedYearI = 0;
     parent = NULL;
     clade_extinction_status = 0;
     number_of_clade_extinction = 0;
@@ -55,11 +57,8 @@ SpeciesObject3D::SpeciesObject3D(sqlite3_stmt *stmt) {
 
     int initial_seed = sqlite3_column_int(stmt, SIMULATION_initial_seeds);;
     seeds.insert(initial_seed);
-    LOG(INFO)<<"finished";
 }
-string SpeciesObject3D::getLabel(){
-    return label;
-}
+
 string SpeciesObject3D::getIDWithParentID(){
     if (parent==NULL){
         char t_char[5];
@@ -73,7 +72,8 @@ string SpeciesObject3D::getIDWithParentID(){
     }
 }
 SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent,
-        int p_year) {
+        int p_year_i) {
+    this->timeLine = p_parent->getTimeLine();
 	currentSpeciesExtinctionTimeSteps = 0;
 
 
@@ -91,9 +91,9 @@ SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent,
     numberOfPath = parent->getNumOfPath();
     speciationYears = parent->getSpeciationYears();
     nicheBreadth = parent->getNicheBreadth();
-    parent->setDisappearedYear(p_year);
-    appearedYear = p_year;
-    disappearedYear = 0;
+    parent->setDisappearedYearI(p_year_i);
+    appearedYearI = p_year_i;
+    disappearedYearI = 0;
     parent->addChild(this);
     clade_extinction_status = 0;
     number_of_clade_extinction = 0;
@@ -121,7 +121,7 @@ bool SpeciesObject3D::isAllLeafExtinction(int total_years) {
     bool is_extinction = true;
     for (auto child : children) {
         if (child->getChildren().size() == 0) {
-            if (child->getDisappearedYear() == total_years) {
+            if (child->getDisappearedYearI() == total_years) {
                 return false;
             }
         } else {
@@ -168,13 +168,12 @@ void SpeciesObject3D::markNode(int total_years) {
     if (children.size() == 0) {
         number_of_clade_extinction = 0;
         number_of_speciation = 0;
-        number_of_species_extinction = ((disappearedYear==0)||(disappearedYear == total_years)) ? 0 : 1;
+        number_of_species_extinction = ((disappearedYearI == 0) || (disappearedYearI == total_years)) ? 0 : 1;
     } else {
         for (auto child : children) {
             number_of_clade_extinction += child->getNumberOfCladeExtinction();
             number_of_speciation += child->getNumberOfSpeciation();
-            number_of_species_extinction +=
-                    child->getNumberOfSpeciesExtinction();
+            number_of_species_extinction += child->getNumberOfSpeciesExtinction();
         }
         number_of_speciation++;
     }
@@ -182,19 +181,19 @@ void SpeciesObject3D::markNode(int total_years) {
 vector<string> SpeciesObject3D::getHTMLTree(int p_year) {
     vector<string> html_output;
     html_output.push_back(
-            "<!DOCTYPE html><html lang='en' xml:lang='en' xmlns='http://www.w3.org/1999/xhtml'>");
+            "<!DOCTYPE html><html lang=\"en\" xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">");
     html_output.push_back(
-            "<head><meta content='text/html;charset=UTF-8' http-equiv='content-type'><title>Phylogram Tree</title>");
+            "<head><meta content=\"text/html;charset=UTF-8\" http-equiv=\"content-type\"><title>Phylogram Tree</title>");
     html_output.push_back(
-            "<script src='d3.v3.min.js' type='text/javascript'></script>");
+            "<script src=\"d3.v3.min.js\" type=\"text/javascript\"></script>");
     html_output.push_back(
-            "<script src='newick.js' type='text/javascript'></script>");
+            "<script src=\"newick.js\" type=\"text/javascript\"></script>");
     html_output.push_back(
-            "<script src='d3.phylogram.js' type='text/javascript'></script>");
+            "<script src=\"d3.phylogram.js\" type=\"text/javascript\"></script>");
     html_output.push_back("<script>");
     html_output.push_back("function load() {");
     html_output.push_back(
-            "var newick = Newick.parse('" + getNewickTree(true, true, p_year) + "');");
+            "var newick = Newick.parse(\"" + getNewickTree(true, true, p_year) + "\");");
     html_output.push_back("var newickNodes = [];");
     html_output.push_back("function buildNewickNodes(node, callback) {");
     html_output.push_back("newickNodes.push(node);");
@@ -206,24 +205,24 @@ vector<string> SpeciesObject3D::getHTMLTree(int p_year) {
     html_output.push_back("};");
     html_output.push_back("buildNewickNodes(newick);");
     html_output.push_back(
-            "          d3.phylogram.build('#phylogram', newick, {");
+            "          d3.phylogram.build(\"#phylogram\", newick, {");
     html_output.push_back("width: 1200,");
     html_output.push_back("height: 300");
     html_output.push_back("});");
     html_output.push_back("}");
     html_output.push_back("</script>");
-    html_output.push_back("<style type='text/css' media='screen'>");
+    html_output.push_back("<style type=\"text/css\" media=\"screen\">");
     html_output.push_back(
-            "body { font-family: 'Helvetica Neue', Helvetica, sans-serif; }");
+            "body { font-family: \"Helvetica Neue\", Helvetica, sans-serif; }");
     html_output.push_back("td { vertical-align: top; }");
     html_output.push_back("</style>");
     html_output.push_back("</head>");
-    html_output.push_back("<body onload='load()'>");
+    html_output.push_back("<body onload=\"load()\">");
     html_output.push_back("<table>");
     html_output.push_back("<tr>");
     html_output.push_back("<td>");
     html_output.push_back("<h2>Phylogram tree</h2>");
-    html_output.push_back("<div id='phylogram'></div>");
+    html_output.push_back("<div id=\"phylogram\"></div>");
     html_output.push_back("</td>");
 
     html_output.push_back("      </tr>");
@@ -232,14 +231,14 @@ vector<string> SpeciesObject3D::getHTMLTree(int p_year) {
     html_output.push_back("</html>");
     return html_output;
 }
-string SpeciesObject3D::getNewickTree(bool isroot, bool iscolor, int p_year) {
+string SpeciesObject3D::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
     string output = "";
     unsigned i = 0;
     if (children.size() > 0) {
         output += "(";
         for (auto child : children) {
             i++;
-            output += child->getNewickTree(false, iscolor, p_year);
+            output += child->getNewickTree(false, iscolor, p_year_i);
             if (i < children.size()) {
                 output += ",";
             }
@@ -259,32 +258,32 @@ string SpeciesObject3D::getNewickTree(bool isroot, bool iscolor, int p_year) {
     if ((clade_extinction_status == 1) || (clade_extinction_status == 3)) {
         linecolor = "red";
     }
-    int t_disappearedYear = (disappearedYear==0)?p_year:disappearedYear;
-    int parent_year = (parent == NULL) ? 0 : parent->getDisappearedYear();
-    if (appearedYear == t_disappearedYear) {
+    int t_disappearedYear = (disappearedYearI==0)?p_year_i:disappearedYearI;
+    int parent_year = (parent == NULL) ? 0 : parent->getDisappearedYearI();
+    if (appearedYearI == t_disappearedYear) {
         if (iscolor) {
             char t_char[40];
-            sprintf(t_char, "SP%u[%u]:%u@%s~%s", id, appearedYear,
-                    t_disappearedYear - parent_year, color.c_str(),
+            sprintf(t_char, "SP%u[%u]:%u@%s~%s", id, timeLine[appearedYearI],
+                    timeLine[t_disappearedYear - parent_year], color.c_str(),
                     linecolor.c_str());
             output += string(t_char);
         } else {
             char t_char[40];
-            sprintf(t_char, "SP%u[%u]:%u", id, appearedYear,
-                    t_disappearedYear - parent_year);
+            sprintf(t_char, "SP%u[%u]:%u", id, timeLine[appearedYearI],
+                    timeLine[t_disappearedYear - parent_year]);
             output += string(t_char);
         }
     } else {
         if (iscolor) {
             char t_char[40];
-            sprintf(t_char, "SP%u[%u-%u]:%u@%s~%s", id, appearedYear,
-                    t_disappearedYear, t_disappearedYear - parent_year,
+            sprintf(t_char, "SP%u[%u-%u]:%u@%s~%s", id, timeLine[appearedYearI],
+                    timeLine[t_disappearedYear], timeLine[t_disappearedYear - parent_year],
                     color.c_str(), linecolor.c_str());
             output += string(t_char);
         } else {
             char t_char[40];
-            sprintf(t_char, "SP%u[%u-%u]:%u", id, appearedYear, t_disappearedYear,
-                    t_disappearedYear - parent_year);
+            sprintf(t_char, "SP%u[%u-%u]:%u", id, timeLine[appearedYearI], timeLine[t_disappearedYear],
+                    timeLine[t_disappearedYear - parent_year]);
             output += string(t_char);
         }
     }
@@ -299,26 +298,17 @@ vector<SpeciesObject3D*> SpeciesObject3D::getChildren() {
 void SpeciesObject3D::addChild(SpeciesObject3D* child) {
     children.push_back(child);
 }
-void SpeciesObject3D::setDisappearedYear(int p_disappeared_year) {
-    disappearedYear = p_disappeared_year;
+void SpeciesObject3D::setDisappearedYearI(int p_disappeared_year_i) {
+    disappearedYearI = p_disappeared_year_i;
 }
-int SpeciesObject3D::getDisappearedYear() {
-    return disappearedYear;
+int SpeciesObject3D::getDisappearedYearI() {
+    return disappearedYearI;
 }
-int SpeciesObject3D::getAppearedYear() {
-    return appearedYear;
-}
-int SpeciesObject3D::getFrom() {
-    return from;
-}
-int SpeciesObject3D::getTo() {
-    return to;
+int SpeciesObject3D::getAppearedYearI() {
+    return appearedYearI;
 }
 int SpeciesObject3D::getBurnInYear() {
     return this->burninYear;
-}
-int SpeciesObject3D::getStep() {
-    return step;
 }
 
 SpeciesObject3D::~SpeciesObject3D() {
@@ -330,6 +320,9 @@ int short SpeciesObject3D::getDispersalAbilityLength(){
 }
 double* SpeciesObject3D::getDispersalAbility() {
     return dispersalAbility;
+}
+vector<int> SpeciesObject3D::getTimeLine(){
+    return this->timeLine;
 }
 
 unsigned SpeciesObject3D::getSpeciesExtinctionThreshold(){

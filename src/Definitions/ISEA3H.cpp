@@ -45,25 +45,15 @@ int* ISEA3H::getIDs() {
 	return array;
 }
 float ISEA3H::readByID(int p_id) {
-	return values[p_id];
+    if (values.find(p_id)==values.end()){
+        return ((float)NODATA);
+    }else{
+        return values[p_id];
+    }
 }
 
 void ISEA3H::save(const string fileName) {
-	vector<string> output;
-	char line[50];
-	// Note: The old version has only 5 columns without lon and lat columns.
-	sprintf(line, "global_id,v");
-	output.push_back(line);
-	for (auto item : values) {
-		char line[50];
-		sprintf(line, "%u,%f", item.first, item.second);
-		output.push_back(line);
-	}
 
-	if (output.size() > 0) {
-		CommonFun::writeFile(output, fileName.c_str());
-		output.clear();
-	}
 }
 ISEA3H::~ISEA3H() {
 

@@ -53,6 +53,7 @@ using namespace std;
 
 class CommonFun {
 public:
+    static string quoteSql(const string &s);
     static bool checkKey();
     static int callback(void *NotUsed, int argc, char **argv, char **azColName);
     /**

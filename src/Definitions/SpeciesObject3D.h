@@ -3,9 +3,9 @@
  * @brief Class SpeciesObject3D. A class to handle the attributes and behaviors of a virtual species
  * @author Huijie Qiao
  * @version 1.0
- * @date 11/25/2018
+ * @date 3/3/2020
  * @details
- * Copyright 2014-2019 Huijie Qiao
+ * Copyright 2014-2020 Huijie Qiao
  * Distributed under GNU license
  * See file LICENSE for detail or copy at https://www.gnu.org/licenses/gpl-3.0.en.html
  *
@@ -38,12 +38,9 @@ private:
     int speciationYears;
     int dispersalMethod;
     int numberOfPath;
-    int appearedYear;
-    int disappearedYear;
+    int appearedYearI;
+    int disappearedYearI;
     int burninYear;
-    int from;
-    int to;
-    int step;
     unsigned speciesExtinctionThreshold;
     int groupExtinctionThreshold;
     int speciesExtinctionTimeSteps;
@@ -56,23 +53,23 @@ private:
     int number_of_clade_extinction;
     int number_of_speciation;
     int number_of_species_extinction;
-    string label;
     /// @brief 0: unknown, 1: extincted, 2: unextincted 3: parent_extincted
     int clade_extinction_status;
     vector<string> environment_labels;
+    vector<int> timeLine;
 public:
     /**
      * @brief Constructor of SpeciesObject3D class No.1 (Create a species object based on the configuration in JSON format)
      * @param json_path the path to configuration file in JSON format
      */
-    SpeciesObject3D(sqlite3_stmt *stmt);
+    SpeciesObject3D(sqlite3_stmt *stmt, int burn_in_year, vector<int>& timeLine);
     /**
      * @brief Constructor of SpeciesObject3D class No.2 (Create a species object based on the parent species)
      * @param p_id species ID
      * @param p_parent the parent species object
      * @param p_year time step
      */
-    SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year);
+    SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year_i);
     /**
 	 * @brief Destructor of SpeciesObject3D class
 	 *
@@ -84,10 +81,9 @@ public:
      * @return
      */
     double* getDispersalAbility();
-    int getFrom();
-    int getTo();
+    vector<int> getTimeLine();
     int getBurnInYear();
-    int getStep();
+
     /**
 	 * @brief return the dispersal speed
 	 * @return
@@ -178,15 +174,15 @@ public:
      * @brief set the time step when the species goes extinct.
      * @param p_disappeared_year
      */
-    void setDisappearedYear(int p_disappeared_year);
+    void setDisappearedYearI(int p_disappeared_year_I);
     /**
      * @brief get the time step when the species goes extinct.
      */
-    int getDisappearedYear();
+    int getDisappearedYearI();
     /**
 	 * @brief get the time step that the species appears.
 	 */
-    int getAppearedYear();
+    int getAppearedYearI();
     /**
      * @brief get all the children species
      * @return
@@ -265,7 +261,6 @@ public:
      * @return
      */
     string getIDWithParentID();
-    string getLabel();
 };
 
 #endif /* DEFINITIONS_SPECIESOBJECT_H_ */
