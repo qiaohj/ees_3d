@@ -120,13 +120,13 @@ public:
      * @param s the string array contains the SQL commend
      * @param db the database to execute the command
      */
-    static void executeSQL(const vector<string> s, sqlite3 *db);
+    static void executeSQL(const vector<string> s, sqlite3 *db, bool output);
     /**
      * @brief execute a sql command
      * @param s the string contains the SQL commend
      * @param db the database to execute the command
      */
-    static void executeSQL(string s, sqlite3 *db);
+    static void executeSQL(string s, sqlite3 *db, bool output);
     /**
      * @brief load the env information from db
      * @param s the string array contains the SQL commend

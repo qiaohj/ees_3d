@@ -201,14 +201,14 @@ void CommonFun::writeFile(const vector<string> s, const char *path) {
     string joined = boost::algorithm::join(s, "\n");
     writeFile(joined, path);
 }
-void CommonFun::executeSQL(const vector<string> s, sqlite3 *db) {
+void CommonFun::executeSQL(const vector<string> s, sqlite3 *db, bool output) {
     string joined = boost::algorithm::join(s, " ");
-    CommonFun::executeSQL(joined, db);
+    CommonFun::executeSQL(joined, db, output);
 }
 string CommonFun::quoteSql(const string &s) {
     return string("'") + s + string("'");
 }
-void CommonFun::executeSQL(string s, sqlite3 *db) {
+void CommonFun::executeSQL(string s, sqlite3 *db, bool output) {
     char *zErr;
     string data("CALLBACK FUNCTION");
     //LOG(DEBUG) << "Query: "<< s;
@@ -217,7 +217,9 @@ void CommonFun::executeSQL(string s, sqlite3 *db) {
     if (rc != SQLITE_OK) {
         if (zErr != NULL) {
             LOG(ERROR) << "SQL error: " << zErr;
-            LOG(ERROR) << "SQL is : " << s;
+            if (output){
+                LOG(ERROR) << "SQL is : " << s;
+            }
             sqlite3_free(zErr);
             exit(1);
         }

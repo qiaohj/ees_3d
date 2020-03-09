@@ -36,6 +36,7 @@ using namespace std;
  */
 class Simulation3D {
 private:
+    vector<string> logs;
     vector<SpeciesObject3D*> species;
     vector<string> environment_labels;
     boost::unordered_map<string, EnvironmentalISEA3H*> environments;
@@ -51,12 +52,14 @@ private:
     Neighbor3D* neighborInfo;
     unsigned long memLimit;
     boost::unordered_map<int, boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > > all_organisms;
+
 public:
     /**
      * @brief Constructor of Simulation3D
      */
     Simulation3D(SpeciesObject3D *species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
             vector<int>& p_timeLine, Neighbor3D* neighborInfo, vector<string> environment_labels, string mask_table);
+    void commitLog();
     void setNeighbor(Neighbor3D *neighborInfo);
     void generateSuitable();
     bool getOverwrite();

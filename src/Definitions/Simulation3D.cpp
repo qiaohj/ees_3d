@@ -58,10 +58,7 @@ void Simulation3D::saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D
         LOG(ERROR)<<"NO MAP, RETURN";
         return;
     }
-    vector<string> output;
-    char line[100];
-    sprintf(line, "BEGIN TRANSACTION; insert into map (YEAR, ID, group_id, sp_id ) values ");
-    output.push_back(line);
+    //logs.push_back("insert into map (YEAR, ID, group_id, sp_id ) values ");
     int i = 0;
     for (auto sp_it : species_group_maps) {
         SpeciesObject3D *sp = sp_it.first;
@@ -74,21 +71,22 @@ void Simulation3D::saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D
                     string sp_id = sp->getIDWithParentID();
                     char line[sp_id.size() + 100];
                     if (i == 0) {
-                        sprintf(line, " (%u,%u,%u,%s) ", timeLine[year_i], id, group_id, sp_id.c_str());
+                        //sprintf(line, " (%u,%u,%u,%s) ", timeLine[year_i], id, group_id, sp_id.c_str());
                     } else {
-                        sprintf(line, " ,(%u,%u,%u,%s) ", timeLine[year_i], id, group_id, sp_id.c_str());
+                        //sprintf(line, " ,(%u,%u,%u,%s) ", timeLine[year_i], id, group_id, sp_id.c_str());
                     }
                     i = 1;
-                    output.push_back(line);
+                    sprintf(line, "%u,%u,%u,%s", timeLine[year_i], id, group_id, sp_id.c_str());
+                    logs.push_back(line);
                 }
             }
 
         }
     }
-    output.push_back("; COMMIT;");
+    //logs.push_back(";");
+
     if (i > 0) {
-        CommonFun::executeSQL(output, log_db);
-        output.clear();
+
     }else{
         LOG(ERROR)<<"No map found";
     }
@@ -119,14 +117,25 @@ void Simulation3D::createLogDB() {
     //char *zErrMsg = 0;
     //Create a table to save the log
     string sql = "CREATE TABLE map(YEAR INT NOT NULL, ID INT NOT NULL, group_id INT NOT NULL, sp_id CHAR(255));";
-    CommonFun::executeSQL(sql, log_db);
+    CommonFun::executeSQL(sql, log_db, true);
     sql = "CREATE TABLE suitable(ID INT NOT NULL, is_seed INT NOT NULL);";
-    CommonFun::executeSQL(sql, log_db);
+    CommonFun::executeSQL(sql, log_db, true);
     sql = "CREATE TABLE trees(TYPE CHAR(255) NOT NULL, CONTENT TEXT NOT NULL);";
-    CommonFun::executeSQL(sql, log_db);
+    CommonFun::executeSQL(sql, log_db, true);
 
 }
+void Simulation3D::commitLog(){
+
+    //logs.push_back("COMMIT;");
+    LOG(INFO)<<"Outputting log file";
+    string logFile = this->targetFolder + "/" + label + ".log";
+    CommonFun::writeFile(logs, logFile.c_str());
+    //LOG(INFO)<<"Outputting log db";
+    //CommonFun::executeSQL(logs, log_db, true);
+    logs.clear();
+}
 bool Simulation3D::init(boost::unordered_map<string, EnvironmentalISEA3H*>* environments_base, sqlite3* env_db, boost::unordered_map<string, ISEA3H*>* masks){
+    //logs.push_back("BEGIN TRANSACTION;");
     bool isFinished = boost::filesystem::exists(this->targetFolder);
 
     /*-------------------
@@ -262,7 +271,7 @@ void Simulation3D::generateSuitable() {
     }
     output.push_back("; COMMIT;");
     if (output.size() > 0) {
-        CommonFun::executeSQL(output, log_db);
+        CommonFun::executeSQL(output, log_db, false);
         output.clear();
     }
     LOG(DEBUG) << "END to generate the suitable area";
@@ -670,11 +679,11 @@ void Simulation3D::generateSpeciationInfo(int year_i) {
     for (auto sp_it : roots) {
         string tree = sp_it->getNewickTree(true, false, year_i);
         string sql = "INSERT INTO trees (TYPE, CONTENT) VALUES ('NEWICK', " + CommonFun::quoteSql(tree) + ");";
-        CommonFun::executeSQL(sql, log_db);
+        CommonFun::executeSQL(sql, log_db, true);
 
         tree = boost::algorithm::join(sp_it->getHTMLTree(year_i), " ");
         sql = "INSERT INTO trees (TYPE, CONTENT) VALUES ('HTML', " + CommonFun::quoteSql(tree) + ");";
-        CommonFun::executeSQL(sql, log_db);
+        CommonFun::executeSQL(sql, log_db, true);
 
     }
 }

@@ -74,6 +74,7 @@ Scenario3D::Scenario3D(string p_env_db, string p_conf_db, string p_target, bool 
         bool status  = simulation->init(&environments_base, env_db, &masks);
         if (status){
             simulation->run();
+            simulation->commitLog();
         }
     }
 

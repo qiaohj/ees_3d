@@ -249,7 +249,7 @@ void Scenario::saveGroupmap_db(unsigned year, boost::unordered_map<SpeciesObject
 	}
 	output.push_back(";");
 	if (output.size()>0){
-		CommonFun::executeSQL(output, db);
+		CommonFun::executeSQL(output, db, false);
 		output.clear();
 	}
 }
@@ -272,7 +272,7 @@ void Scenario::createDB(const char* path) {
 			 "LAT		REAL			NOT NULL," \
 			 "group_id	INT				NOT NULL," \
 	         "sp_id		CHAR(50)				);";
-	CommonFun::executeSQL(sql, db);
+	CommonFun::executeSQL(sql, db, true);
 
 }
 /*-------------------------
@@ -1167,7 +1167,7 @@ vector<CoodLocation*> Scenario::getDispersalMap_2(
 Scenario::~Scenario() {
 	delete[] geoTrans;
 	delete mask;
-	CommonFun::executeSQL("CREATE INDEX idx_year ON map (year)", db);
+	CommonFun::executeSQL("CREATE INDEX idx_year ON map (year)", db, true);
 	sqlite3_close(db);
 //	cleanEnvironments();
 //	cleanActivedIndividualOrganisms();
