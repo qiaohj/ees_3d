@@ -51,6 +51,8 @@ private:
     string label;
     Neighbor3D* neighborInfo;
     unsigned long memLimit;
+    int indexSimulation;
+    int totalSimulation;
     boost::unordered_map<int, boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > > all_organisms;
 
 public:
@@ -59,6 +61,8 @@ public:
      */
     Simulation3D(SpeciesObject3D *species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
             vector<int>& p_timeLine, Neighbor3D* neighborInfo, vector<string> environment_labels, string mask_table);
+    void setIndexSimulation(int indexSimulation);
+    void setTotalSimulation(int totalSimulation);
     void commitLog();
     void setNeighbor(Neighbor3D *neighborInfo);
     void generateSuitable();

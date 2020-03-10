@@ -70,15 +70,18 @@ Scenario3D::Scenario3D(string p_env_db, string p_conf_db, string p_target, bool 
     vector<Simulation3D*> simulations = initSimulations(conf_db, env_db, p_id, p_target, p_overwrite, neighborInfo);
 
     LOG(INFO) << "Run the simulations. Simulation size is " << simulations.size();
+    int i = 1;
     for (Simulation3D* simulation : simulations){
         bool status  = simulation->init(&environments_base, env_db, &masks);
         if (status){
+            simulation->setIndexSimulation(i++);
+            simulation->setTotalSimulation(simulations.size());
             simulation->run();
             simulation->commitLog();
         }
+        delete simulation;
     }
-
-
+    simulations.clear();
     sqlite3_close(env_db);
     sqlite3_close(conf_db);
     LOG(INFO) << "Finished";
@@ -136,6 +139,7 @@ vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env
     LOG(DEBUG) << "Execute sql <" << sql << ">";
     sqlite3_prepare(conf_db, sql.c_str(), -1, &stmt, NULL);
     bool done = false;
+
     while (!done) {
         int status = sqlite3_step(stmt);
         switch (status) {

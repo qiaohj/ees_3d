@@ -6,12 +6,13 @@ library(RSQLite)
 library(DBI)
 
 
-logdb<-"/home/huijieqiao/git/ees_3d_data/TEST/Results/259_GOOD_BROAD/259_GOOD_BROAD.sqlite"
+logdb<-"/home/huijieqiao/git/ees_3d_data/TEST/Results/259_GOOD_MODERATE/259_GOOD_MODERATE.sqlite"
 mydb <- dbConnect(RSQLite::SQLite(), logdb)
-
+trees<-dbReadTable(mydb, "trees")
 suitable<-dbReadTable(mydb, "suitable")
 
-map<-dbReadTable(mydb, "map")
+map<-read.table(gsub("sqlite", "log", logdb), head=F, sep=",")
+colnames(map)<-c("YEAR", "ID", "group_id", "sp_id")
 dbDisconnect(mydb)
 shape <- readOGR(dsn = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/isea3hGen/outputfiles", layer = "isea3h8p")
 shape_t<-shape
@@ -39,44 +40,15 @@ for (y in c(1199:0)){
   }
 }
 
-if (F){
-        
-        
-        suitable<-read.csv("/home/huijieqiao/git/ees_3d_data/TEST/Results/31832_GOOD_BROAD/suitable.csv", head=T, sep=",")
-        
-        ids<-c(10218
-               ,10219
-               ,10220
-               ,10299
-               ,10300
-               ,10301
-               ,10302
-               ,10380
-               ,10381
-               ,10382
-               ,10383
-               ,10384
-               ,10462
-               ,10463
-               ,10464
-               ,10465
-               ,10544
-               ,10545
-               ,10546)
-        shape_t<-shape
-        shape_t@polygons<-subset(shape_t@polygons, shape_t$global_id %in% ids)
-        shape_t@data<-subset(shape_t@data, shape_t$global_id %in% ids)
-        writeOGR(shape_t, dsn = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/test", 
-                 layer = "test", driver="ESRI Shapefile", overwrite_layer=T)
-        
-        
-        mydb <- dbConnect(RSQLite::SQLite(), "/home/huijieqiao/git/ees_3d_data/TEST/Results/31832_GOOD_BROAD/log.db")
-        map<-dbReadTable(mydb, "map")
-        dbDisconnect(mydb)
-        ids<-map[which(map$YEAR==400), "ID"]
-        shape_t<-shape
-        shape_t@polygons<-subset(shape_t@polygons, shape_t$global_id %in% ids)
-        shape_t@data<-subset(shape_t@data, shape_t$global_id %in% ids)
-        writeOGR(shape_t, dsn = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/test", 
-                 layer = "test2", driver="ESRI Shapefile", overwrite_layer=T)
-}
+library("ape")
+library("phangorn")
+library("phytools")
+library("geiger")
+library("stringr")
+text.string<-trees[1,2]
+text.string<-gsub("\\]", "#", gsub("\\[", "#", text.string))
+vert.tree<-read.tree(text=text.string)
+
+plotTree(vert.tree, ftype="i")
+#tiplabels(vert.tree$tip.label)
+nodelabels(vert.tree$node.label)

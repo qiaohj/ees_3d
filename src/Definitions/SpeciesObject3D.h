@@ -261,6 +261,7 @@ public:
      * @return
      */
     string getIDWithParentID();
+    vector<string> getEnvironmentLabels();
 };
 
 #endif /* DEFINITIONS_SPECIESOBJECT_H_ */

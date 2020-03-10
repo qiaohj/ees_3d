@@ -19,6 +19,8 @@ Simulation3D::Simulation3D(SpeciesObject3D *species, string label, int burnInYea
     this->memLimit = memLimit;
     this->label = label;
     this->timeLine = p_timeLine;
+    this->indexSimulation = indexSimulation;
+    this->totalSimulation = totalSimulation;
     log_db = NULL;
     this->neighborInfo = neighborInfo;
     this->environment_labels = environment_labels;
@@ -40,7 +42,12 @@ Simulation3D::Simulation3D(SpeciesObject3D *species, string label, int burnInYea
     mask = NULL;
     targetFolder = target + "/" + label;
 }
-
+void Simulation3D::setIndexSimulation(int indexSimulation){
+    this->indexSimulation = indexSimulation;
+}
+void Simulation3D::setTotalSimulation(int totalSimulation){
+    this->totalSimulation = totalSimulation;
+}
 void Simulation3D::setNeighbor(Neighbor3D *neighborInfo){
     this->neighborInfo = neighborInfo;
 }
@@ -147,7 +154,10 @@ bool Simulation3D::init(boost::unordered_map<string, EnvironmentalISEA3H*>* envi
         LOG(INFO) << "Result folder is exist, skip this simulation!";
         return false;
     }
+    LOG(DEBUG) << "Save result to " << targetFolder;
 
+    //Create the necessary folders.
+    CommonFun::createFolder(targetFolder.c_str());
     for (string env_label : this->environment_labels) {
         LOG(DEBUG) << "Trying to load environment " << env_label;
         EnvironmentalISEA3H *env = (*environments_base)[env_label];
@@ -180,9 +190,7 @@ bool Simulation3D::init(boost::unordered_map<string, EnvironmentalISEA3H*>* envi
     LOG(DEBUG) << "Init simulation";
 
     SpeciesObject3D* ancestor = this->species.front();
-    LOG(DEBUG) << "Save result to " << targetFolder;
-    //Create the necessary folders.
-    CommonFun::createFolder(targetFolder.c_str());
+
 
     createLogDB();
 
@@ -285,7 +293,7 @@ int Simulation3D::run() {
 
     LOG(DEBUG)<<"Total timeLine is "<<timeLine.size();
     for (unsigned year_i = 1; year_i<timeLine.size(); year_i++) {
-        LOG(INFO) << "Current year:" << timeLine[year_i] << " @ " << targetFolder << " Memory usage:" << CommonFun::getCurrentRSS();
+        LOG(INFO) << "Current year:" << timeLine[year_i] << " @ " << label << "("<<indexSimulation<<"/"<<totalSimulation<<") Memory usage:" << CommonFun::getCurrentRSS();
 
         boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > organisms_in_current_year;
         //LOG(DEBUG) << "Load environments of year " << timeLine[year_i] << " via index " << year_i;
@@ -479,21 +487,21 @@ int Simulation3D::run() {
 //              vector<string> group_output;
                 LOG(DEBUG)<<"Begin to detect speciation.";
                 for (int  group_id_1 = 1; group_id_1 < current_group_id - 1; group_id_1++) {
-                    //LOG(INFO)<<"getTempSpeciesID 1 for group "<<group_id_1 <<" current_group_id is "<<current_group_id;
+                    LOG(DEBUG)<<"getTempSpeciesID 1 for group "<<group_id_1 <<" current_group_id is "<<current_group_id;
                     int  temp_species_id_1 = getTempSpeciesID(group_id_1, &organisms);
                     for (int  group_id_2 = group_id_1 + 1; group_id_2 < current_group_id; group_id_2++) {
-                        //LOG(INFO)<<"getTempSpeciesID 2 for group "<<group_id_2 <<" current_group_id is "<<current_group_id;
+                        LOG(DEBUG)<<"getTempSpeciesID 2 for group "<<group_id_2 <<" current_group_id is "<<current_group_id;
                         int  temp_species_id_2 = getTempSpeciesID(group_id_2, &organisms);
                         //if both groups were marked, and they have the same id, skip it.
                         if ((temp_species_id_1 != 0) && (temp_species_id_2 != 0) && (temp_species_id_1 == temp_species_id_2)) {
                             continue;
                         }
-                        //LOG(INFO)<<"get min_divided_year.";
+                        LOG(DEBUG)<<"get min_divided_year.";
                         int min_divided_year = getMinDividedYear(sp_it.first->getSpeciationYears(), group_id_1, group_id_2, &organisms, year_i);
-                        //LOG(INFO)<<"get min_divided_year is "<<min_divided_year;
+                        LOG(DEBUG)<<"min_divided_year is "<<min_divided_year;
 
                         if (min_divided_year >= species->getSpeciationYears()) {
-                            //LOG(INFO)<<"mark species id with new id.";
+                            LOG(DEBUG)<<"mark species id with new id.";
                             //if a speciation happened, marked them with two ids if they were not marked.
                             if (temp_species_id_1 == 0) {
                                 markedSpeciesID(group_id_1, temp_species_id, &organisms);
@@ -505,9 +513,9 @@ int Simulation3D::run() {
                                 temp_species_id_2 = temp_species_id;
                                 temp_species_id++;
                             }
-                            //LOG(INFO)<<"end mark species id with new id.";
+                            LOG(DEBUG)<<"end mark species id with new id.";
                         } else {
-                            //LOG(INFO)<<"mark species id with old id.";
+                            LOG(DEBUG)<<"mark species id with old id.";
                             //if there is not speciation, marked them with the same id
                             int  t_id = (temp_species_id_1 == 0) ? temp_species_id_2 : temp_species_id_1;
                             t_id = (t_id == 0) ? temp_species_id : t_id;
@@ -515,7 +523,7 @@ int Simulation3D::run() {
                             temp_species_id_1 = t_id;
                             markedSpeciesID(group_id_2, t_id, &organisms);
                             temp_species_id_2 = t_id;
-                            //LOG(INFO)<<"end to mark species id with old id.";
+                            LOG(DEBUG)<<"end to mark species id with old id.";
                         }
                     }
                 }
@@ -723,13 +731,15 @@ int Simulation3D::getMinDividedYear(int speciation_year, int  group_id_1, int  g
     vector<int> group_c_2;
     int group_1_index = 0;
     int group_2_index = 0;
-
+    /// @todo improve here
     //save all the organisms in that two groups
     vector<Organism3D*> group_1 = (*organisms)[group_1_index];
     vector<Organism3D*> group_2 = (*organisms)[group_2_index];
-
+    //LOG(DEBUG)<<"1";
     for (auto c_it : (*organisms)) {
+        //LOG(DEBUG)<<"5";
         for (auto o_it : c_it.second) {
+            //LOG(DEBUG)<<"6";
             if (o_it->getGroupId() == group_id_1) {
                 group_1.push_back(o_it);
             } else if (o_it->getGroupId() == group_id_2) {
@@ -737,9 +747,11 @@ int Simulation3D::getMinDividedYear(int speciation_year, int  group_id_1, int  g
             }
         }
     }
-
+    //LOG(DEBUG)<<"2";
     for (auto o_it_1 : group_1) {
+        //LOG(DEBUG)<<"7";
         for (auto o_it_2 : group_2) {
+            //LOG(DEBUG)<<"8";
             int divided_year_i = getDividedYearI(o_it_1, o_it_2);
             nearest_divided_year_i = (divided_year_i > nearest_divided_year_i) ? divided_year_i : nearest_divided_year_i;
             if (nearest_divided_year_i < speciation_year) {

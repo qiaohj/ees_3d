@@ -72,9 +72,8 @@ string SpeciesObject3D::getIDWithParentID(){
     }
 }
 SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year_i) {
-    this->timeLine = p_parent->getTimeLine();
+    timeLine = p_parent->getTimeLine();
 	currentSpeciesExtinctionTimeSteps = 0;
-
 
     newSpecies = true;
     parent = p_parent;
@@ -90,6 +89,9 @@ SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year
     numberOfPath = parent->getNumOfPath();
     speciationYears = parent->getSpeciationYears();
     nicheBreadth = parent->getNicheBreadth();
+    dispersalAbilityLength = parent->getDispersalAbilityLength();
+    burninYear = parent->getBurnInYear();
+
     parent->setDisappearedYearI(p_year_i);
     appearedYearI = p_year_i;
     disappearedYearI = 0;
@@ -98,6 +100,10 @@ SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year
     number_of_clade_extinction = 0;
     number_of_speciation = 0;
     number_of_species_extinction = 0;
+    environment_labels = parent->getEnvironmentLabels();
+}
+vector<string> SpeciesObject3D::getEnvironmentLabels(){
+    return this->environment_labels;
 }
 void SpeciesObject3D::setCladeExtinctionStatus(int status) {
     clade_extinction_status = status;
