@@ -67,7 +67,7 @@ public:
     void setNeighbor(Neighbor3D *neighborInfo);
     void generateSuitable();
     bool getOverwrite();
-    void saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps);
+    void saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D*, ISEA3H*> *species_group_maps);
     int run();
     void addSpecies(SpeciesObject3D *species);
     void addEnvironment(string environment_label, EnvironmentalISEA3H *env);

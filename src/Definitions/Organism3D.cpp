@@ -59,7 +59,7 @@ Organism3D* Organism3D::getParent() {
 //    }
 //}
 Organism3D::~Organism3D() {
-
+    delete species;
 }
 int Organism3D::getNextRunYearI() {
     return year_i + species->getDispersalSpeed();

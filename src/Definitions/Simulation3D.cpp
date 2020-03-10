@@ -59,15 +59,15 @@ bool Simulation3D::getOverwrite(){
 /*-------------------------
  * Save the population information for a specific time step to a db
  *-----------------------*/
-void Simulation3D::saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps) {
+void Simulation3D::saveGroupmap(int year_i, boost::unordered_map<SpeciesObject3D*, ISEA3H*> *species_group_maps) {
     LOG(DEBUG)<<"Save result to db";
-    if (species_group_maps.size() == 0) {
+    if (species_group_maps->size() == 0) {
         LOG(ERROR)<<"NO MAP, RETURN";
         return;
     }
     //logs.push_back("insert into map (YEAR, ID, group_id, sp_id ) values ");
     int i = 0;
-    for (auto sp_it : species_group_maps) {
+    for (auto sp_it : (*species_group_maps)) {
         SpeciesObject3D *sp = sp_it.first;
         ISEA3H *map = sp_it.second;
         if (map) {
@@ -293,7 +293,8 @@ int Simulation3D::run() {
 
     LOG(DEBUG)<<"Total timeLine is "<<timeLine.size();
     for (unsigned year_i = 1; year_i<timeLine.size(); year_i++) {
-        LOG(INFO) << "Current year:" << timeLine[year_i] << " @ " << label << "("<<indexSimulation<<"/"<<totalSimulation<<") Memory usage:" << CommonFun::getCurrentRSS();
+        LOG(INFO) << "Current year:" << timeLine[year_i] << " @ " << label << "("<<indexSimulation<<"/"<<totalSimulation<<") N sp:"<<
+                all_organisms[year_i - 1].size()<< ". Memory usage:" << CommonFun::getCurrentRSS();
 
         boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > organisms_in_current_year;
         //LOG(DEBUG) << "Load environments of year " << timeLine[year_i] << " via index " << year_i;
@@ -873,7 +874,23 @@ set<int> Simulation3D::getDispersalMap_2(Organism3D *organism) {
     return new_cells;
 }
 Simulation3D::~Simulation3D() {
-    delete mask;
+    LOG(INFO)<<"MEMORY USAGE BEFORE RELEASE: "<<CommonFun::getCurrentRSS();
+    for (auto it1 : all_organisms){
+        for (auto it2 : it1.second){
+            for (auto it3 : it2.second){
+                for (auto it4 : it3.second){
+                    delete it4;
+                }
+                it3.second.clear();
+
+            }
+            it2.second.clear();
+            delete it2.first;
+        }
+        it1.second.clear();
+    }
+    LOG(INFO)<<"MEMORY USAGE AFTER RELEASE: "<<CommonFun::getCurrentRSS();
+    //delete mask;
 
 //  cleanEnvironments();
 //  cleanActivedOrganism3Ds();
