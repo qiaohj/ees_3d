@@ -108,7 +108,7 @@ int main(int argc, const char *argv[]) {
     // Check the validity of the input
     // If the length of parameters are not satisfied with the required number, the application will skip this simulation and show out a warning.
     if (argc == 1) {
-        printf("env_db, conf_db, base_folder, id(-1=all), memory_limit(in M), is_overwrite\n");
+        printf("env_db, conf_db, base_folder, id(-1=all), memLimit(in GB), Overwrite\n");
         exit(1);
     }
     // Set up the timer.

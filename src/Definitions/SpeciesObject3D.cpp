@@ -318,10 +318,9 @@ int SpeciesObject3D::getBurnInYear() {
 
 SpeciesObject3D::~SpeciesObject3D() {
     CommonFun::clearUnorderedMapObjString(&nicheBreadth);
+    CommonFun::freeContainer(environment_labels);
+    CommonFun::freeContainer(seeds);
 
-    this->environment_labels.clear();
-
-    this->seeds.clear();
 }
 int SpeciesObject3D::getDispersalAbilityLength(){
 	return dispersalAbilityLength;

@@ -297,7 +297,7 @@ unsigned Scenario::run() {
 
 	for (unsigned year = minSpeciesDispersalSpeed; year <= totalYears; year +=
 			minSpeciesDispersalSpeed) {
-		LOG(INFO)<<"Current year:"<<year << " @ " << target <<" Memory usage:"<<CommonFun::getCurrentRSS();
+		LOG(INFO)<<"Current year:"<<year << " @ " << target <<" Memory usage:"<<CommonFun::getCurrentRSS(1024*1024);
 
 		boost::unordered_map<SpeciesObject*, boost::unordered_map<unsigned, vector<IndividualOrganism*> > >
 			individual_organisms_in_current_year;
@@ -662,7 +662,7 @@ unsigned Scenario::run() {
 		all_individualOrganisms.insert(make_pair(year, individual_organisms_in_current_year));
 
 		//remove the useless organism
-		//LOG(INFO)<<"Remove the useless organisms. Before removing, Memory usage:"<<CommonFun::getCurrentRSS();
+		//LOG(INFO)<<"Remove the useless organisms. Before removing, Memory usage:"<<CommonFun::getCurrentRSS(1024*1024);
 		for (auto sp_it : species) {
 			if (year<sp_it->getDispersalSpeed()) {
 				continue;
@@ -703,7 +703,7 @@ unsigned Scenario::run() {
 
 			}
 		}
-		//LOG(INFO)<<"Remove the useless organisms. After  removing, Memory usage:"<<CommonFun::getCurrentRSS();
+		//LOG(INFO)<<"Remove the useless organisms. After  removing, Memory usage:"<<CommonFun::getCurrentRSS(1024*1024);
 
 		//LOG(INFO)<<"Generate speciation information.";
 		generateSpeciationInfo(year, false);
@@ -714,11 +714,11 @@ unsigned Scenario::run() {
 		unsigned long mem_size = 0;
 		unsigned long species_size = 0;
 
-		sprintf(line, "%u,%lu,%lu,%lu,%lu,%lu,%lu", year, CommonFun::getCurrentRSS(),
+		sprintf(line, "%u,%lu,%lu,%lu,%lu,%lu,%lu", year, CommonFun::getCurrentRSS(1024*1024),
 				c_size, o_size, mem_size, species_size, all_individualOrganisms[year].size());
 		stat_output.push_back(line);
 
-		if ((CommonFun::getCurrentRSS()>memLimit)&&(year<100000)) {
+		if ((CommonFun::getCurrentRSS(1024*1024)>memLimit)&&(year<100000)) {
 			char filepath[target.length() + 16];
 			sprintf(filepath, "%s/stat_curve.csv", target.c_str());
 			CommonFun::writeFile(stat_output, filepath);

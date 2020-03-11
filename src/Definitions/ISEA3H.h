@@ -28,14 +28,14 @@
  */
 class ISEA3H {
 private:
-	boost::unordered_map<int, float> *values;
+	boost::unordered_map<int, float> values;
 public:
 	/**
 	 * @brief Constructor of ISEA3H class No.2 (Create a blank map)
 	 */
 	ISEA3H();
 
-	ISEA3H(boost::unordered_map<int, float> *p_values);
+	ISEA3H(boost::unordered_map<int, float> p_values);
 	/**
 	 * @brief Constructor of ISEA3H class No.1 (load an ISEA3H from a file)
 	 * @param p_filename the file to load the map info
@@ -76,7 +76,7 @@ public:
 	 * @brief return the face/value map.
 	 * @return
 	 */
-	boost::unordered_map<int, float>* getValues();
+	boost::unordered_map<int, float> getValues();
 
 	void save(const string fileName);
 };

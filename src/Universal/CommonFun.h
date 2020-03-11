@@ -133,7 +133,7 @@ public:
      * @param db the database to execute the command
      * @param year the year to read, -1 means all data.
      */
-    static boost::unordered_map<int, boost::unordered_map<int, float>*>* readEnvInfo(sqlite3 *db, string tablename, bool with_year);
+    static boost::unordered_map<int, boost::unordered_map<int, float>> readEnvInfo(sqlite3 *db, string tablename, bool with_year);
     /**
      * @brief convert longitude and latitude to X, Y index
      * @param adfGeoTransform The GeoTransform matrix of the raster layers
@@ -207,7 +207,7 @@ public:
      * @breif return the current used memory
      * @return
      */
-    static size_t getCurrentRSS();
+    static size_t getCurrentRSS(int unit);
     /**
      * @brief output the current memory usage for the application
      * @param line

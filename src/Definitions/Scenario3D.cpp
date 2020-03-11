@@ -80,7 +80,7 @@ Scenario3D::Scenario3D(string p_env_db, string p_conf_db, string p_target, bool 
             simulation->commitLog();
         }
         ///@todo: release all resource
-        delete simulation;
+        //delete simulation;
     }
     simulations.clear();
     sqlite3_close(env_db);

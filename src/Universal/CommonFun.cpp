@@ -228,8 +228,8 @@ void CommonFun::executeSQL(string s, sqlite3 *db, bool output) {
         //LOG(INFO)<<"success insert ";
     }
 }
-boost::unordered_map<int, boost::unordered_map<int, float>*>* CommonFun::readEnvInfo(sqlite3 *db, string tablename, bool with_year) {
-    boost::unordered_map<int, boost::unordered_map<int, float>*> *values = new boost::unordered_map<int, boost::unordered_map<int, float>*>();
+boost::unordered_map<int, boost::unordered_map<int, float>> CommonFun::readEnvInfo(sqlite3 *db, string tablename, bool with_year) {
+    boost::unordered_map<int, boost::unordered_map<int, float>> values;
     string sql = "SELECT * FROM " + tablename;
     sqlite3_stmt *stmt;
    //LOG(INFO) << "Query: "<< q;
@@ -243,13 +243,10 @@ boost::unordered_map<int, boost::unordered_map<int, float>*>* CommonFun::readEnv
             if (with_year){
                 year = sqlite3_column_int(stmt, 2);
             }
-            if ((*values)[year]->find(year)==(*values)[year]->end()){
-                (*values)[year] = new boost::unordered_map<int, float>();
-            }
             int id = sqlite3_column_int(stmt, 0);
             float v = (float)sqlite3_column_double(stmt, 1);
             //LOG(INFO)<<"year "<<year<<" id "<<id<<" v "<<v;
-            (*(*values)[year])[id] = v;
+            values[year][id] = v;
             break;
         }
 
@@ -344,7 +341,7 @@ size_t CommonFun::getPeakRSS() {
  * Returns the current resident set size (physical memory use) measured
  * in bytes, or zero if the value cannot be determined on this OS.
  */
-size_t CommonFun::getCurrentRSS() {
+size_t CommonFun::getCurrentRSS(int unit) {
     long rss = 0L;
     FILE *fp = NULL;
     if ((fp = fopen("/proc/self/statm", "r")) == NULL)
@@ -354,13 +351,14 @@ size_t CommonFun::getCurrentRSS() {
         return (size_t) 0L; /* Can't read? */
     }
     fclose(fp);
-    return (size_t) rss * (size_t) sysconf( _SC_PAGESIZE) / (1024 * 1024);
+    return (size_t) rss * (size_t) sysconf( _SC_PAGESIZE) / unit;
 
 }
+
 size_t CommonFun::writeMemoryUsage(unsigned line, bool is, size_t last) {
     if (is) {
         boost::this_thread::sleep(boost::posix_time::milliseconds(1));
-        size_t current = getCurrentRSS();
+        size_t current = getCurrentRSS(1024*1024);
         if ((current - last) != 0) {
             LOG(INFO) << "Memory usage " << fixedLength(line, 3) << ": "
                     << (current - last);

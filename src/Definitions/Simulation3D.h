@@ -53,7 +53,7 @@ private:
     unsigned long memLimit;
     int indexSimulation;
     int totalSimulation;
-    boost::unordered_map<int, boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*>*>*>*> *all_organisms;
+    boost::unordered_map<int, boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > > all_organisms;
 
 public:
     /**
@@ -85,7 +85,7 @@ public:
     void cleanEnvironments();
     void cleanActivedOrganisms();
     void cleanSpecies();
-    boost::unordered_map<string, ISEA3H*>* getEnvironmenMap(int p_year);
+    boost::unordered_map<string, ISEA3H*> getEnvironmenMap(int p_year);
     int getUnmarkedID(boost::unordered_map<int, vector<Organism3D*> > *organisms);
     void markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, boost::unordered_map<int, vector<Organism3D*> > *organisms);
     set<int> getNeighbors(int id, int distance);
