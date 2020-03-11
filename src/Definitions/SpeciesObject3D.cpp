@@ -317,7 +317,8 @@ int SpeciesObject3D::getBurnInYear() {
 }
 
 SpeciesObject3D::~SpeciesObject3D() {
-    CommonFun::clearUnordered_map(&nicheBreadth);
+    CommonFun::clearUnorderedMapObjString(&nicheBreadth);
+
     this->environment_labels.clear();
 
     this->seeds.clear();

@@ -79,6 +79,7 @@ Scenario3D::Scenario3D(string p_env_db, string p_conf_db, string p_target, bool 
             simulation->run();
             simulation->commitLog();
         }
+        ///@todo: release all resource
         delete simulation;
     }
     simulations.clear();

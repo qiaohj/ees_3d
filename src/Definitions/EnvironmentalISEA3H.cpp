@@ -14,9 +14,9 @@
 #include "EnvironmentalISEA3H.h"
 EnvironmentalISEA3H::EnvironmentalISEA3H(string p_env_name, sqlite3 *p_env_db, vector<int> timeLine) {
     envName = p_env_name;
-    boost::unordered_map<int, boost::unordered_map<int, float>> values = CommonFun::readEnvInfo(p_env_db, p_env_name, true);
+    boost::unordered_map<int, boost::unordered_map<int, float>*> *values = CommonFun::readEnvInfo(p_env_db, p_env_name, true);
     for (unsigned year_i = 0; year_i<timeLine.size() ; year_i++) {
-        ISEA3H *v = new ISEA3H(values[timeLine[year_i]]);
+        ISEA3H *v = new ISEA3H((*values)[timeLine[year_i]]);
         //LOG(DEBUG)<<"Initial environments information size is "<<values[y].size()<<" to key "<<key;
         layers[year_i] = v;
     }

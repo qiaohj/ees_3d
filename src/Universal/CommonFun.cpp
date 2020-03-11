@@ -228,8 +228,8 @@ void CommonFun::executeSQL(string s, sqlite3 *db, bool output) {
         //LOG(INFO)<<"success insert ";
     }
 }
-boost::unordered_map<int, boost::unordered_map<int, float>> CommonFun::readEnvInfo(sqlite3 *db, string tablename, bool with_year) {
-    boost::unordered_map<int, boost::unordered_map<int, float>> values;
+boost::unordered_map<int, boost::unordered_map<int, float>*>* CommonFun::readEnvInfo(sqlite3 *db, string tablename, bool with_year) {
+    boost::unordered_map<int, boost::unordered_map<int, float>*> *values = new boost::unordered_map<int, boost::unordered_map<int, float>*>();
     string sql = "SELECT * FROM " + tablename;
     sqlite3_stmt *stmt;
    //LOG(INFO) << "Query: "<< q;
@@ -243,10 +243,13 @@ boost::unordered_map<int, boost::unordered_map<int, float>> CommonFun::readEnvIn
             if (with_year){
                 year = sqlite3_column_int(stmt, 2);
             }
+            if ((*values)[year]->find(year)==(*values)[year]->end()){
+                (*values)[year] = new boost::unordered_map<int, float>();
+            }
             int id = sqlite3_column_int(stmt, 0);
             float v = (float)sqlite3_column_double(stmt, 1);
             //LOG(INFO)<<"year "<<year<<" id "<<id<<" v "<<v;
-            values[year][id] = v;
+            (*(*values)[year])[id] = v;
             break;
         }
 

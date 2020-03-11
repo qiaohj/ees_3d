@@ -687,7 +687,7 @@ unsigned Scenario::run() {
 				//LOG(INFO)<<"Current year is "<<year<<". Remove organisms at year "<< removed_year<<".";
 				boost::unordered_map<unsigned, vector<IndividualOrganism*> > temp_o = all_individualOrganisms[removed_year][sp_it];
 				for (auto it1 : temp_o) {
-					CommonFun::clearVector(&it1.second);
+					CommonFun::clearVectorObj(&it1.second);
 				}
 //				all_individualOrganisms.erase(removed_year);
 
@@ -707,7 +707,7 @@ unsigned Scenario::run() {
 
 		//LOG(INFO)<<"Generate speciation information.";
 		generateSpeciationInfo(year, false);
-		CommonFun::clearVector(&current_environments);
+		CommonFun::clearVectorObj(&current_environments);
 		//LOG(INFO)<<"Save stat information.";
 		unsigned long o_size = 0;
 		unsigned long c_size = 0;
@@ -1076,7 +1076,7 @@ vector<SparseMap*> Scenario::getEnvironmenMap(unsigned p_year) {
 	return result;
 }
 void Scenario::cleanSpecies() {
-	CommonFun::clearVector(&species);
+	CommonFun::clearVectorObj(&species);
 }
 void Scenario::cleanActivedIndividualOrganisms() {
 //    CommonFun::clearUnordered_map(all_individualOrganisms);
@@ -1084,7 +1084,7 @@ void Scenario::cleanActivedIndividualOrganisms() {
 	for (auto y_it : all_individualOrganisms) {
 		for (auto s_it : y_it.second) {
 			for (auto l_it : s_it.second) {
-				CommonFun::clearVector(&l_it.second);
+				CommonFun::clearVectorObj(&l_it.second);
 			}
 		}
 	}

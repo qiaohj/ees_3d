@@ -133,7 +133,7 @@ public:
      * @param db the database to execute the command
      * @param year the year to read, -1 means all data.
      */
-    static boost::unordered_map<int, boost::unordered_map<int, float>> readEnvInfo(sqlite3 *db, string tablename, bool with_year);
+    static boost::unordered_map<int, boost::unordered_map<int, float>*>* readEnvInfo(sqlite3 *db, string tablename, bool with_year);
     /**
      * @brief convert longitude and latitude to X, Y index
      * @param adfGeoTransform The GeoTransform matrix of the raster layers
@@ -242,9 +242,7 @@ public:
      * @param resolution
      * @return
      */
-    static double GreatCirleDistanceFast(int x1, int y1, int x2, int y2,
-            OGRCoordinateTransformation *poCT, const double *geoTrans,
-            double resolution);
+    static double GreatCirleDistanceFast(int x1, int y1, int x2, int y2, OGRCoordinateTransformation *poCT, const double *geoTrans, double resolution);
     /**
      * @brief calculate the Euclidean distance between to points.
      * @param x1
@@ -272,18 +270,24 @@ public:
      * @brief clear a vector and release the memory
      * @param v
      */
-    template<typename T> static void clearVector(T *v);
+    template<typename T> static void clearVectorObj(T *v);
     /**
      * @brief clear a hash map and release the memory
      * @param v
      */
-    template<typename T> static void clearUnordered_map(T *v);
+    template<typename T> static void clearUnorderedMapObjInt(T *v);
+    template<typename T> static void clearUnorderedMapObjString(T *v);
+    template<typename T> static void clearUnorderedMapKey(T *v);
+    template<typename T> static void freeContainer(T& p_container);
+    static void clearUnorderedMap(vector<string> *v);
+
 };
-
-
-
-template<typename T> void CommonFun::clearUnordered_map(T *v) {
-    vector<unsigned> erased_key;
+template<typename T> void CommonFun::freeContainer(T &p_container) {
+    T empty;
+    swap(p_container, empty);
+}
+template<typename T> void CommonFun::clearUnorderedMapObjString(T *v) {
+    vector<string> erased_key;
     for (auto it : *v) {
         erased_key.push_back(it.first);
     }
@@ -293,11 +297,30 @@ template<typename T> void CommonFun::clearUnordered_map(T *v) {
         }
         v->erase(key);
     }
-    v->clear();
-    erased_key.clear();
+    freeContainer(erased_key);
+    freeContainer(v);
+}
+template<typename T> void CommonFun::clearUnorderedMapObjInt(T *v) {
+    vector<int> erased_key;
+    for (auto it : *v) {
+        erased_key.push_back(it.first);
+    }
+    for (auto key : erased_key) {
+        if ((*v)[key] != NULL) {
+            delete (*v)[key];
+        }
+        v->erase(key);
+    }
+    freeContainer(erased_key);
+    freeContainer(v);
+}
+template<typename T> void CommonFun::clearUnorderedMapKey(T *v) {
+    for (auto it : *v) {
+        delete it;
+    }
 }
 
-template<typename T> void CommonFun::clearVector(T *v) {
+template<typename T> void CommonFun::clearVectorObj(T *v) {
     for (typename T::iterator it = v->begin(); it != v->end(); ++it) {
         delete *it;
         *it = NULL;
@@ -305,8 +328,7 @@ template<typename T> void CommonFun::clearVector(T *v) {
     v->clear();
     T().swap(*v);
 }
-template<typename T> double CommonFun::EuclideanDistance(T x1, T y1, T x2,
-        T y2) {
+template<typename T> double CommonFun::EuclideanDistance(T x1, T y1, T x2, T y2) {
     T x = x1 - x2;
     T y = y1 - y2;
     double dist;

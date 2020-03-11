@@ -312,8 +312,8 @@ unsigned SpeciesObject::getAppearedYear() {
     return appearedYear;
 }
 SpeciesObject::~SpeciesObject() {
-    CommonFun::clearVector(&nicheBreadth);
-    CommonFun::clearVector(&seeds);
+    CommonFun::clearVectorObj(&nicheBreadth);
+    CommonFun::clearVectorObj(&seeds);
 }
 unsigned short SpeciesObject::getDispersalAbilityLength(){
 	return dispersalAbilityLength;
