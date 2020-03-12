@@ -623,7 +623,9 @@ int Simulation3D::run() {
                 //LOG(INFO)<<"Current year is "<<year<<". Remove organisms at year "<< removed_year<<".";
                 boost::unordered_map<int, vector<Organism3D*> > temp_o = all_organisms[removed_year_i][sp_it];
                 for (auto it1 : temp_o) {
-                    CommonFun::clearVectorObj(&it1.second);
+                    for (auto it2 : it1.second){
+                        delete it2;
+                    }
                 }
                 all_organisms.erase(removed_year_i);
 
@@ -852,26 +854,32 @@ Simulation3D::~Simulation3D() {
     LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE: "<<CommonFun::getCurrentRSS(1);
     sqlite3_close(log_db);
     //boost::unordered_map<int, boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > >
-    set<SpeciesObject3D*> species;
+    LOG(DEBUG)<<1;
     for (auto it1 : all_organisms){
+        LOG(DEBUG)<<2;
         for (auto it2 : it1.second){
+            LOG(DEBUG)<<3;
             for (auto it3 : it2.second){
+                LOG(DEBUG)<<4;
                 for (unsigned i = 0; i < it3.second.size(); i++) {
+                    LOG(DEBUG)<<5;
                     if (it3.second[i]){
+                        LOG(DEBUG)<<6;
                         delete it3.second[i];
                     }
                 }
-                it3.second.shrink_to_fit();
+                LOG(DEBUG)<<6;
             }
-            CommonFun::freeContainer(it2.second);
-            species.insert(it2.first);
+            LOG(DEBUG)<<7;
         }
-        CommonFun::freeContainer(it1.second);
     }
-    for (SpeciesObject3D *it : species){
-        delete it;
+    LOG(DEBUG)<<8;
+    for (auto it : species){
+        LOG(DEBUG)<<9;
+        if (it){
+            delete it;
+        }
     }
-    CommonFun::freeContainer(species);
     LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE: "<<CommonFun::getCurrentRSS(1);
 
     //delete mask;

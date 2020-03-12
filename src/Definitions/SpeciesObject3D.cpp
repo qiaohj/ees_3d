@@ -81,12 +81,20 @@ SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year
     speciesExtinctionTimeSteps = p_parent->getSpeciesExtinctionTimeSteps();
     speciesExtinctionThreaholdPercentage = p_parent->getSpeciesExtinctionThreaholdPercentage();
     maxSpeciesDistribution = 0;
-    dispersalAbility = parent->getDispersalAbility();
+    dispersalAbility = new double[parent->getDispersalAbilityLength()];
+    for (int i=0; i<parent->getDispersalAbilityLength();i++){
+        dispersalAbility[i] = parent->getDispersalAbility()[i];
+    }
     dispersalSpeed = parent->getDispersalSpeed();
     dispersalMethod = parent->getDispersalMethod();
     numberOfPath = parent->getNumOfPath();
     speciationYears = parent->getSpeciationYears();
-    nicheBreadth = parent->getNicheBreadth();
+    for (auto it : parent->getNicheBreadth()){
+        NicheBreadth* p_NicheBreadth = it.second;
+        NicheBreadth* new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+        this->nicheBreadth[it.first] = new_NicheBreadth;
+    }
+
     dispersalAbilityLength = parent->getDispersalAbilityLength();
     burninYear = parent->getBurnInYear();
 
@@ -315,8 +323,11 @@ int SpeciesObject3D::getBurnInYear() {
 }
 
 SpeciesObject3D::~SpeciesObject3D() {
+    LOG(DEBUG)<<10;
     delete[] dispersalAbility;
+    LOG(DEBUG)<<11;
     for (auto it : nicheBreadth){
+        LOG(DEBUG)<<12;
         delete it.second;
     }
 
