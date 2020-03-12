@@ -259,7 +259,6 @@ void Scenario::createDB(const char* path) {
 	rc = sqlite3_open(path, &db);
 	if (rc) {
 		LOG(INFO)<<"Can't open database: "<<sqlite3_errmsg(db);
-		exit(0);
 	} else {
 		LOG(INFO)<<"Opened database successfully";
 	}

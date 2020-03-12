@@ -78,9 +78,8 @@ Scenario3D::Scenario3D(string p_env_db, string p_conf_db, string p_target, bool 
             simulation->setTotalSimulation(simulations.size());
             simulation->run();
             simulation->commitLog();
+            delete simulation;
         }
-        ///@todo: release all resource
-        //delete simulation;
     }
     simulations.clear();
     sqlite3_close(env_db);
@@ -92,7 +91,6 @@ sqlite3* Scenario3D::openDB(string p_db) {
     int rc = sqlite3_open(p_db.c_str(), &env_db);
     if (rc) {
         LOG(INFO) << "Can't open database: " << sqlite3_errmsg(env_db) << " from " << p_db;
-        exit(0);
     } else {
         LOG(INFO) << "Opened database from <" << p_db;
     }
@@ -165,6 +163,7 @@ vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env
             bool isFinished = boost::filesystem::exists(simulation->getTargetFolder());
             if ((isFinished) && (!p_overwrite)) {
                 LOG(INFO) << "Result folder is exist, skip this simulation!";
+                delete simulation;
                 continue;
             }
 
@@ -187,6 +186,15 @@ vector<Simulation3D*> Scenario3D::initSimulations(sqlite3 *conf_db, sqlite3 *env
 }
 
 Scenario3D::~Scenario3D() {
+    delete neighborInfo;
+
+    for (auto it :environments_base){
+        delete it.second;
+    }
+
+    for (auto it : masks){
+        delete it.second;
+    }
 
 }
 

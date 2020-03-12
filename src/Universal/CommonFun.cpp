@@ -221,7 +221,6 @@ void CommonFun::executeSQL(string s, sqlite3 *db, bool output) {
                 LOG(ERROR) << "SQL is : " << s;
             }
             sqlite3_free(zErr);
-            exit(1);
         }
     } else {
         //LOG(INFO) << "call back: "<< data;
@@ -256,7 +255,6 @@ boost::unordered_map<int, boost::unordered_map<int, float>> CommonFun::readEnvIn
 
         default:
             LOG(INFO) << "SQLITE ERROR: " << sqlite3_errmsg(db) << ". SQL is " << sql;
-            exit(1);
         }
     }
 

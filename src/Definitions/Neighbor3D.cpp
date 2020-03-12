@@ -87,6 +87,9 @@ int Neighbor3D::distance(int p_id1, int p_id2, int limited) {
 }
 
 Neighbor3D::~Neighbor3D() {
-
+    for (auto it : neighbors){
+        CommonFun::freeContainer(it.second);
+    }
+    //CommonFun::freeContainer(neighbors);
 }
 

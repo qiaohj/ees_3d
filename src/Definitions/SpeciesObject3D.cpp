@@ -61,14 +61,12 @@ SpeciesObject3D::SpeciesObject3D(sqlite3_stmt *stmt, int burn_in_year, vector<in
 
 string SpeciesObject3D::getIDWithParentID(){
     if (parent==NULL){
-        char t_char[5];
-        sprintf(t_char, "%u", id);
-        return string(t_char);
+        string id_str = to_string(id);
+        return id_str;
     }else{
         string parent_id = parent->getIDWithParentID();
-        char t_char[parent_id.length() + 5];
-        sprintf(t_char, "%s-%u", parent_id.c_str(), id);
-        return string(t_char);
+        string id_str = parent_id + "-" + to_string(id);
+        return id_str;
     }
 }
 SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year_i) {
@@ -267,26 +265,26 @@ string SpeciesObject3D::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
     int parent_year = (parent == NULL) ? 0 : parent->getDisappearedYearI();
     if (appearedYearI == t_disappearedYear) {
         if (iscolor) {
-            char t_char[40];
+            char t_char[100];
             sprintf(t_char, "SP%u[%u]:%u@%s~%s", id, timeLine[appearedYearI],
                     timeLine[t_disappearedYear - parent_year], color.c_str(),
                     linecolor.c_str());
             output += string(t_char);
         } else {
-            char t_char[40];
+            char t_char[100];
             sprintf(t_char, "SP%u[%u]:%u", id, timeLine[appearedYearI],
                     timeLine[t_disappearedYear - parent_year]);
             output += string(t_char);
         }
     } else {
         if (iscolor) {
-            char t_char[40];
+            char t_char[100];
             sprintf(t_char, "SP%u[%u-%u]:%u@%s~%s", id, timeLine[appearedYearI],
                     timeLine[t_disappearedYear], timeLine[t_disappearedYear - parent_year],
                     color.c_str(), linecolor.c_str());
             output += string(t_char);
         } else {
-            char t_char[40];
+            char t_char[100];
             sprintf(t_char, "SP%u[%u-%u]:%u", id, timeLine[appearedYearI], timeLine[t_disappearedYear],
                     timeLine[t_disappearedYear - parent_year]);
             output += string(t_char);
@@ -317,9 +315,10 @@ int SpeciesObject3D::getBurnInYear() {
 }
 
 SpeciesObject3D::~SpeciesObject3D() {
-    CommonFun::clearUnorderedMapObjString(&nicheBreadth);
-    CommonFun::freeContainer(environment_labels);
-    CommonFun::freeContainer(seeds);
+    delete[] dispersalAbility;
+    for (auto it : nicheBreadth){
+        delete it.second;
+    }
 
 }
 int SpeciesObject3D::getDispersalAbilityLength(){

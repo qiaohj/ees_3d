@@ -117,7 +117,6 @@ void Simulation3D::createLogDB() {
     int rc = sqlite3_open(logFile.c_str(), &log_db);
     if (rc) {
         LOG(ERROR) << "Can't open log database: " << sqlite3_errmsg(log_db) << " at " << logFile;
-        exit(0);
     } else {
         LOG(INFO) << "Create LOG Database at " << logFile << " successfully";
     }
@@ -151,7 +150,7 @@ bool Simulation3D::init(boost::unordered_map<string, EnvironmentalISEA3H*>* envi
      -------------------------*/
 
     if ((isFinished) && (!overwrite)) {
-        LOG(INFO) << "Result folder is exist, skip this simulation!";
+        LOG(INFO) << "Result folder is exist. Maybe executed by another running thread. Skip this simulation!";
         return false;
     }
     LOG(DEBUG) << "Save result to " << targetFolder;
@@ -198,6 +197,7 @@ bool Simulation3D::init(boost::unordered_map<string, EnvironmentalISEA3H*>* envi
     //Load the species parameters.
 
     set<int> seeds = ancestor->getSeeds();
+    LOG(DEBUG)<<0;
     boost::unordered_map<int, vector<Organism3D*> > t_o;
     /* -----------------
      * Create the individual organism(s) based on the seeds in the species' configuration.
@@ -206,11 +206,17 @@ bool Simulation3D::init(boost::unordered_map<string, EnvironmentalISEA3H*>* envi
      * Don't use the function of the multiple species and multiple seeds per species now,
      * because it hasn't be tested strictly.
      *-------------------------*/
+    LOG(DEBUG)<<1<<seeds.size();
     for (int seed : seeds) {
+        LOG(DEBUG)<<2<<" "<<seed;
         Organism3D *organism = new Organism3D(0, ancestor, NULL, seed);
+        LOG(DEBUG)<<3;
         boost::unordered_map<int, Organism3D*> t;
+        LOG(DEBUG)<<4;
         t[seed] = organism;
+        LOG(DEBUG)<<5;
         t_o[seed].push_back(organism);
+        LOG(DEBUG)<<6;
 
     }
     LOG(DEBUG) << "ADD ROOT SPECIES TO all_organisms WIHT the id is " << ancestor->getIDWithParentID() << " and SIZE is " << t_o.size();
@@ -288,13 +294,18 @@ void Simulation3D::generateSuitable() {
  * Run a simulation on a scenario with the species in the scenario.
  *---------------------*/
 int Simulation3D::run() {
+    clock_t start, end;
+    start = clock();
 
     boost::unordered_map<SpeciesObject3D*, ISEA3H*> species_group_maps;
 
     LOG(DEBUG)<<"Total timeLine is "<<timeLine.size();
     for (unsigned year_i = 1; year_i<timeLine.size(); year_i++) {
-        LOG(INFO) << "Current year:" << timeLine[year_i] << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"<<totalSimulation<<") N_sp:"<<
-                all_organisms[year_i - 1].size()<< ". Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
+        end = clock();
+        double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
+
+        LOG(INFO) << "v3.0 Current year:" << timeLine[year_i] << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"<<totalSimulation<<") N_sp:"<<
+                all_organisms[year_i - 1].size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
 
         boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > organisms_in_current_year;
         //LOG(DEBUG) << "Load environments of year " << timeLine[year_i] << " via index " << year_i;
@@ -630,7 +641,6 @@ int Simulation3D::run() {
 
         if ((CommonFun::getCurrentRSS(pow(1024, 3)) > memLimit)) {
             LOG(INFO) << "Current memory is " << CommonFun::getCurrentRSS(pow(1024, 3)) << "GB. Memory limit is " << memLimit << "GB";
-            sqlite3_close(log_db);
             return 1;
         }
     }
@@ -638,8 +648,6 @@ int Simulation3D::run() {
     generateSpeciationInfo(timeLine.size() - 1);
 
     //CommonFun::executeSQL("CREATE INDEX idx_year ON map (year)", log_db);
-    sqlite3_close(log_db);
-
     return 0;
 }
 void Simulation3D::generateSpeciationInfo(int year_i) {
@@ -840,42 +848,32 @@ set<int> Simulation3D::getDispersalMap_2(Organism3D *organism) {
     return new_cells;
 }
 Simulation3D::~Simulation3D() {
-    LOG(INFO)<<"MEMORY USAGE BEFORE RELEASE: "<<CommonFun::getCurrentRSS(1);
+
+    LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE: "<<CommonFun::getCurrentRSS(1);
+    sqlite3_close(log_db);
     //boost::unordered_map<int, boost::unordered_map<SpeciesObject3D*, boost::unordered_map<int, vector<Organism3D*> > > >
     set<SpeciesObject3D*> species;
-    LOG(DEBUG)<<1;
     for (auto it1 : all_organisms){
-        LOG(DEBUG)<<2;
         for (auto it2 : it1.second){
-            LOG(DEBUG)<<3;
             for (auto it3 : it2.second){
-                LOG(DEBUG)<<4;
                 for (unsigned i = 0; i < it3.second.size(); i++) {
-                    LOG(DEBUG)<<5;
                     if (it3.second[i]){
-                        LOG(DEBUG)<<6;
                         delete it3.second[i];
                     }
                 }
-                LOG(DEBUG)<<7;
                 it3.second.shrink_to_fit();
             }
-            LOG(DEBUG)<<8;
             CommonFun::freeContainer(it2.second);
-            LOG(DEBUG)<<9;
             species.insert(it2.first);
         }
-        LOG(DEBUG)<<10;
         CommonFun::freeContainer(it1.second);
     }
     for (SpeciesObject3D *it : species){
-        LOG(DEBUG)<<11;
         delete it;
     }
-    LOG(DEBUG)<<12;
     CommonFun::freeContainer(species);
-    LOG(DEBUG)<<13;
-    LOG(INFO)<<"MEMORY USAGE AFTER RELEASE: "<<CommonFun::getCurrentRSS(1);
+    LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE: "<<CommonFun::getCurrentRSS(1);
+
     //delete mask;
 
 //  cleanEnvironments();

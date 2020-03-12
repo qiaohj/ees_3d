@@ -34,6 +34,8 @@ float EnvironmentalISEA3H::readByID(int p_year_i, int p_id) {
 }
 
 EnvironmentalISEA3H::~EnvironmentalISEA3H() {
-
+    for (auto it : layers){
+        delete it.second;
+    }
 }
 

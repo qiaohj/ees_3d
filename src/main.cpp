@@ -80,8 +80,9 @@ int mainx(int argc, const char *argv[]) {
     } else {
         LOG(INFO) << "Opened environment database from <" << env_db_str << "> successfully.";
     }
+
     Neighbor3D *neighborInfo = new Neighbor3D(env_db);
-    //exit(1);
+    /*
     set<int> neighbors;
     set<int> handled_ids;
     neighborInfo->getNeighborByID(240, 2, &neighbors, &handled_ids);
@@ -99,8 +100,21 @@ int mainx(int argc, const char *argv[]) {
         //h.clear();
 
     }
+
+
+
+    //CommonFun::freeContainer(neighbors);
+    //CommonFun::freeContainer(handled_ids);
+     * */
+    size_t a = CommonFun::getCurrentRSS(1);
+    LOG(INFO)<< a;
+    delete neighborInfo;
+    sqlite3_close(env_db);
+    LOG(INFO)<< a - CommonFun::getCurrentRSS(1);
     //LOG(INFO) <<"distance is "<< neighborInfo->distance(22, 50145);
     //LOG(INFO) <<"distance is "<< neighborInfo->distance(31184, 31262, 10);
+
+
     return 0;
 }
 int main(int argc, const char *argv[]) {
@@ -148,7 +162,7 @@ int main(int argc, const char *argv[]) {
     //initialize the main scenario
 
     Scenario3D* a = new Scenario3D(env_db, conf_db, target, is_overwrite, id, memory_limit);
-    //a->run();
+    delete a;
 
 
     return EXIT_SUCCESS;
