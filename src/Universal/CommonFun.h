@@ -24,8 +24,9 @@ using namespace std;
 #include <float.h>
 #include <math.h>
 #include <unistd.h>
-#include <sys/resource.h>
 #include <sqlite3.h>
+#include <cmath>
+#include <sys/resource.h>
 
 #include <boost/unordered_map.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -34,7 +35,7 @@ using namespace std;
 
 #include "Const.h"
 #include "easylogging.h"
-#include <cmath>
+
 
 #ifndef M_PI
 #define M_PI    3.1415926535897932384626433832795
@@ -106,14 +107,6 @@ public:
      * @param db the database to execute the command
      */
     static void executeSQL(string s, sqlite3 *db, bool output);
-    /**
-     * @brief load the env information from db
-     * @param s the string array contains the SQL commend
-     * @param db the database to execute the command
-     * @param year the year to read, -1 means all data.
-     */
-    static boost::unordered_map<int, boost::unordered_map<int, float>> readEnvInfo(sqlite3 *db, string tablename, bool with_year);
-
     /**
      * @brief add leading ZERO to a number and convert the number to a string with fixed length
      * @param value the number to convert

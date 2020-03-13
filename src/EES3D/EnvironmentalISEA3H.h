@@ -17,6 +17,7 @@
 #include <boost/unordered_map.hpp>
 #include "ISEA3H.h"
 #include "DBField.h"
+#include "Utility.h"
 
 /**
  * @brief A class to handle the environmental layers in ISEA3H format

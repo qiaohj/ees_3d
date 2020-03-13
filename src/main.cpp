@@ -30,11 +30,11 @@ using namespace std;
 #include <unistd.h>
 #include <boost/thread/thread.hpp>
 
-#include "Definitions/Scenario.h"
 #include "Universal/easylogging.h"
 #include "Universal/CommonFun.h"
-#include "Definitions/ISEA3H.h"
-#include "Definitions/Neighbor.h"
+#include "EES3D/Scenario.h"
+#include "EES3D/ISEA3H.h"
+#include "EES3D/Neighbor.h"
 INITIALIZE_EASYLOGGINGPP;
 
 int mainy(int argc, const char *argv[]) {

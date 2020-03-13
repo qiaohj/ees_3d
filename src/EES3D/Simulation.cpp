@@ -172,7 +172,7 @@ bool Simulation::init(boost::unordered_map<string, EnvironmentalISEA3H*>* enviro
     LOG(DEBUG) << "Loading mask";
 
     if ((*masks).find(mask_table) == (*masks).end()) {
-        boost::unordered_map<int, boost::unordered_map<int, float>> mask_v = CommonFun::readEnvInfo(env_db, mask_table, false);
+        boost::unordered_map<int, boost::unordered_map<int, float>> mask_v = Utility::readEnvInfo(env_db, mask_table, false);
         LOG(DEBUG) << "NEW mask";
         ISEA3H *mask = new ISEA3H(mask_v[0]);
         (*masks)[mask_table] = mask;

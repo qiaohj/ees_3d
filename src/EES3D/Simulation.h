@@ -30,6 +30,7 @@ using namespace std;
 #include "ISEA3H.h"
 #include "Organism.h"
 #include "Neighbor.h"
+#include "Utility.h"
 
 /**
  * @brief A class to handle the attributes and behaviors of a virtual species
