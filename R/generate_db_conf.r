@@ -19,9 +19,9 @@ envdb <- dbConnect(RSQLite::SQLite(), base_db)
 mask<-dbReadTable(envdb, "mask")
 
 v_mean_temp<-dbReadTable(envdb, "Debiased_Mean_Annual_Temperature")
-v_mean_temp<-v_mean_temp[which(v_mean_temp$year==0),]
+v_mean_temp<-v_mean_temp[which(v_mean_temp$year==1200),]
 v_mean_prec<-dbReadTable(envdb, "Debiased_Mean_Annual_Precipitation")
-v_mean_prec<-v_mean_prec[which(v_mean_prec$year==0),]
+v_mean_prec<-v_mean_prec[which(v_mean_prec$year==1200),]
 
 dbDisconnect(envdb)
 mask$random_index<-sample(nrow(mask))
@@ -84,6 +84,7 @@ dim(simulations)
 head(simulations)
 simulations$is_run<-0
 simulations[which(simulations$random_index<=1000), "is_run"]<-1
+simulations[which(simulations$global_id==10143), "is_run"]<-1
 simulations[which(simulations$is_run==1),]
 mydb <- dbConnect(RSQLite::SQLite(), "/home/huijieqiao/git/ees_3d_data/TEST/conf.sqlite")
 dbWriteTable(mydb, "simulations", simulations, overwrite=T)
@@ -106,30 +107,3 @@ if (F){
   writeOGR(shape_t, dsn = "/home/huijieqiao/git/ees_3d_data/ISEA3H8", 
            layer = "seeds", driver="ESRI Shapefile", overwrite_layer=T)
 }
-if (F){
-  field.types=list(global_id="INTEGER",
-                   random_index="INTEGER",
-                   id="INTEGER",
-                   label="TEXT",
-                   da="TEXT",
-                   nb="TEXT", 
-                   nb_v="TEXT", 
-                   dispersal_ability="TEXT",       
-                   dispersal_speed="INTEGER",
-                   dispersal_method="INTEGER",
-                   number_of_path="INTEGER",
-                   speciation_years="INTEGER",
-                   species_extinction_threshold="INTEGER", 
-                   species_extinction_time_steps="INTEGER",
-                   species_extinction_threahold_percentage="REAL",
-                   group_extinction_threshold="INTEGER",
-                   initial_seeds="INTEGER",
-                   environments="TEXT",
-                   total_years="INTEGER",
-                   mask="TEXT",
-                   burn_in_year="INTEGER",
-                   is_run="INTEGER"
-  )
-}
-
-

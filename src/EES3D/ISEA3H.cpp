@@ -14,45 +14,39 @@
 #include "ISEA3H.h"
 
 ISEA3H::ISEA3H() {
-
+    values = new boost::unordered_map<int, float>();
 }
-ISEA3H::ISEA3H(boost::unordered_map<int, float> p_values){
+ISEA3H::ISEA3H(boost::unordered_map<int, float> *p_values){
     values = p_values;
 }
 
 int ISEA3H::getCellSize() {
-	return values.size();
+	return values->size();
 }
 
 void ISEA3H::setValue(int p_id, float p_value) {
-    values[p_id] = p_value;
+    values->erase(p_id);
+    values->insert({p_id, p_value});
 }
 
-boost::unordered_map<int, float> ISEA3H::getValues() {
+boost::unordered_map<int, float>* ISEA3H::getValues() {
 	return values;
 }
 
-int* ISEA3H::getIDs() {
-	int *array = new int[values.size()];
-	int i = 0;
-	for (auto iitem : values) {
-		int id = iitem.first;
-		array[i++] = id;
-	}
-	return array;
-}
 float ISEA3H::readByID(int p_id) {
-    if (values.find(p_id)==values.end()){
+    if (values->find(p_id)==values->end()){
         return ((float)NODATA);
     }else{
-        return values[p_id];
+        return values->at(p_id);
     }
 }
 
-void ISEA3H::save(const string fileName) {
-
-}
 ISEA3H::~ISEA3H() {
-    //CommonFun::freeContainer(values);
+    LOG(DEBUG)<<"7 "<<CommonFun::getCurrentRSS(1);
+    boost::unordered_map<int, float>().swap(*values);
+    delete values;
+    LOG(DEBUG)<<"7.2 "<<CommonFun::getCurrentRSS(1);
+    values = NULL;
+    LOG(DEBUG)<<"7.5 "<<CommonFun::getCurrentRSS(1);
 }
 

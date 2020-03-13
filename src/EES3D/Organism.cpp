@@ -100,19 +100,22 @@ int Organism::getSpeciationYears(){
 bool Organism::isSuitable(boost::unordered_map<string, ISEA3H*>* p_current_environments, ISEA3H* mask) {
     boost::unordered_map<string, NicheBreadth*> nicheBreadth = species->getNicheBreadth();
     for (auto item : nicheBreadth) {
-    	//LOG(INFO)<<"Environments:"<<i<<" Size:"<<(*p_current_environments).size()<<" Address:"<<(*p_current_environments)[i];
+
         float mask_value = mask->readByID(id);
         if ((int) mask_value == NODATA) {
+            LOG(DEBUG)<<"NO MASK";
             return false;
         }
         float env_value = (*p_current_environments)[item.first]->readByID(id);
         if ((int) env_value == NODATA) {
+            LOG(DEBUG)<<"NO DATA";
             return false;
         }
 
         //LOG(INFO)<<env_value<<"FALSE";
         if ((env_value > item.second->getMax())
                 || (env_value < item.second->getMin())) {
+            //LOG(DEBUG)<<"env_value is "<<env_value<<". Max is "<<item.second->getMax()<<" and Min is "<<item.second->getMin();
             return false;
         }
     }

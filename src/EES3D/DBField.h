@@ -42,6 +42,9 @@
 #define TIMELINE_step       2
 #define NEIGHBOR_ID       0
 #define NEIGHBOR_NEIGHBOR       1
+#define ENVIRONMENT_global_id   0
+#define ENVIRONMENT_v   1
+#define ENVIRONMENT_year   2
 
 /* end-of-error-codes */
 

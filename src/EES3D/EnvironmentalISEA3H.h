@@ -27,18 +27,18 @@ private:
 	/**
 	 * @brief A hash map to save the environmental layers used in the simulation time step by time step. The keys are the time steps, and the values are the environmental layers on the time step.
 	 */
-    boost::unordered_map<int, ISEA3H*> layers;
+    boost::unordered_map<int, ISEA3H*> *layers;
 
     string envName;
 public:
-
+    EnvironmentalISEA3H();
     /**
      * @brief Constructor of EnvironmentalISEA3H class
      * @param p_env_name The table name of the environment in the database.
      * @param p_env_db database
      * @param timeLine timeline the simulation
      */
-	EnvironmentalISEA3H(string p_env_name, sqlite3* p_env_db, vector<int> timeLine);
+	EnvironmentalISEA3H(string p_env_name, sqlite3* p_env_db, vector<int> &timeLine);
 
 	/**
 	 * @brief Destructor of EnvironmentalISEA3H class

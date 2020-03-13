@@ -86,8 +86,9 @@ int Neighbor::distance(int p_id1, int p_id2, int limited) {
 Neighbor::~Neighbor() {
     /*
     for (auto it : neighbors){
-        CommonFun::freeContainer(it.second);
-    }*/
-    //CommonFun::freeContainer(neighbors);
+        CommonFun::freeContainerRemoved(it.second);
+    }
+    CommonFun::freeContainerRemoved(neighbors);
+    */
 }
 

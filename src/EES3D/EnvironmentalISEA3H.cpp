@@ -12,30 +12,40 @@
  */
 
 #include "EnvironmentalISEA3H.h"
-EnvironmentalISEA3H::EnvironmentalISEA3H(string p_env_name, sqlite3 *p_env_db, vector<int> timeLine) {
+
+EnvironmentalISEA3H::EnvironmentalISEA3H(){
+    layers = new boost::unordered_map<int, ISEA3H*>();
+}
+EnvironmentalISEA3H::EnvironmentalISEA3H(string p_env_name, sqlite3 *p_env_db, vector<int> &timeLine) {
+    layers = new boost::unordered_map<int, ISEA3H*>();
     envName = p_env_name;
-    boost::unordered_map<int, boost::unordered_map<int, float>> values = Utility::readEnvInfo(p_env_db, p_env_name, true);
+    boost::unordered_map<int, boost::unordered_map<int, float>*> *values = new boost::unordered_map<int, boost::unordered_map<int, float>*>();
+    Utility::readEnvInfo(p_env_db, p_env_name, true, values);
     for (unsigned year_i = 0; year_i<timeLine.size() ; year_i++) {
-        ISEA3H *v = new ISEA3H(values[timeLine[year_i]]);
+        ISEA3H *v = new ISEA3H(values->at(timeLine[year_i]));
         //LOG(DEBUG)<<"Initial environments information size is "<<values[y].size()<<" to key "<<key;
-        layers[year_i] = v;
+        layers->insert({year_i, v});
     }
+    delete values;
 }
 
 ISEA3H* EnvironmentalISEA3H::getValues(int p_year_i) {
-    //LOG(DEBUG) << "Layer name is " << envName << ". Layer Size is " << layers.size();
-    return layers[p_year_i];
+    return layers->at(p_year_i);
 }
 
 float EnvironmentalISEA3H::readByID(int p_year_i, int p_id) {
 
-    float value = layers[p_year_i]->readByID(p_id);
+    float value = layers->at(p_year_i)->readByID(p_id);
     return value;
 }
 
 EnvironmentalISEA3H::~EnvironmentalISEA3H() {
-    for (auto it : layers){
+    LOG(DEBUG)<<"5 "<<CommonFun::getCurrentRSS(1);
+    for (auto it : *layers){
+        LOG(DEBUG)<<"6 "<<CommonFun::getCurrentRSS(1);
         delete it.second;
+        LOG(DEBUG)<<"6.5 "<<CommonFun::getCurrentRSS(1);
     }
+    delete layers;
 }
 

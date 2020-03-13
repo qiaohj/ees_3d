@@ -40,7 +40,7 @@ private:
     vector<string> logs;
     boost::unordered_map<string, Species*> species;
     vector<string> environment_labels;
-    boost::unordered_map<string, EnvironmentalISEA3H*> environments;
+    boost::unordered_map<string, EnvironmentalISEA3H*> *environments;
     vector<int> timeLine;
     ISEA3H* mask;
     string mask_table;
@@ -82,7 +82,7 @@ public:
     string getTargetFolder();
     void createLogDB();
     set<int> getDispersalMap_2(Organism *organism);
-    boost::unordered_map<string, ISEA3H*> getEnvironmenMap(int p_year);
+    void getEnvironmenMap(int p_year_i, boost::unordered_map<string, ISEA3H*> *maps);
     int getUnmarkedID(boost::unordered_map<int, vector<Organism*> > *organisms);
     void markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, boost::unordered_map<int, vector<Organism*> > *organisms);
     set<int> getNeighbors(int id, int distance);

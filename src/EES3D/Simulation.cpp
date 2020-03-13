@@ -14,6 +14,7 @@
 
 Simulation::Simulation(Species *p_species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
         vector<int> &p_timeLine, Neighbor* neighborInfo, vector<string> environment_labels, string mask_table) {
+    this->environments = new boost::unordered_map<string, EnvironmentalISEA3H*>();
     this->species[p_species->getIDWithParentID()] = p_species;
     this->ancestor = p_species;
     this->burnInYear = burnInYear;
@@ -73,7 +74,8 @@ void Simulation::saveGroupmap(int year_i, boost::unordered_map<Species*, ISEA3H*
         Species *sp = sp_it.first;
         ISEA3H *map = sp_it.second;
         if (map) {
-            for (auto item : map->getValues()) {
+            boost::unordered_map<int, float> *values = map->getValues();
+            for (auto item : *values) {
                 int id = item.first;
                 int group_id = (int) item.second;
                 if (group_id >= 0) {
@@ -106,7 +108,8 @@ string Simulation::getTargetFolder(){
     return this->targetFolder;
 }
 void Simulation::addEnvironment(string environment_label, EnvironmentalISEA3H *env) {
-    this->environments[environment_label] = env;
+    this->environments->erase(environment_label);
+    this->environments->insert({environment_label, env});
 }
 
 void Simulation::createLogDB() {
@@ -139,7 +142,7 @@ void Simulation::commitLog(){
     //CommonFun::executeSQL(logs, log_db, true);
     logs.clear();
 }
-bool Simulation::init(boost::unordered_map<string, EnvironmentalISEA3H*>* environments_base, sqlite3* env_db, boost::unordered_map<string, ISEA3H*>* masks){
+bool Simulation::init(boost::unordered_map<string, EnvironmentalISEA3H*> *environments_base, sqlite3* env_db, boost::unordered_map<string, ISEA3H*>* masks){
     //logs.push_back("BEGIN TRANSACTION;");
     bool isFinished = boost::filesystem::exists(this->targetFolder);
 
@@ -158,11 +161,12 @@ bool Simulation::init(boost::unordered_map<string, EnvironmentalISEA3H*>* enviro
     CommonFun::createFolder(targetFolder.c_str());
     for (string env_label : this->environment_labels) {
         LOG(DEBUG) << "Trying to load environment " << env_label;
-        EnvironmentalISEA3H *env = (*environments_base)[env_label];
+        EnvironmentalISEA3H *env = environments_base->at(env_label);
         if (env == NULL) {
-            LOG(DEBUG) << "No environment found, load it from db";
+            LOG(DEBUG) << "No environment found, load it from db for "<<env_label;
             env = new EnvironmentalISEA3H(env_label, env_db, timeLine);
-            (*environments_base)[env_label] = env;
+            environments_base->erase(env_label);
+            environments_base->insert({env_label, env});
         }
         LOG(DEBUG) << "Finish to load the environment " << env_label;
         addEnvironment(env_label, env);
@@ -171,16 +175,16 @@ bool Simulation::init(boost::unordered_map<string, EnvironmentalISEA3H*>* enviro
 
     LOG(DEBUG) << "Loading mask";
 
-    if ((*masks).find(mask_table) == (*masks).end()) {
-        boost::unordered_map<int, boost::unordered_map<int, float>> mask_v = Utility::readEnvInfo(env_db, mask_table, false);
-        LOG(DEBUG) << "NEW mask";
-        ISEA3H *mask = new ISEA3H(mask_v[0]);
-        (*masks)[mask_table] = mask;
+    if (masks->find(mask_table) == masks->end()) {
+        boost::unordered_map<int, boost::unordered_map<int, float>*>* mask_v = new boost::unordered_map<int, boost::unordered_map<int, float>*>();
+        Utility::readEnvInfo(env_db, mask_table, false, mask_v);
+        ISEA3H *mask = new ISEA3H(mask_v->at(0));
+        masks->erase(mask_table);
+        masks->insert({mask_table, mask});
         this->mask = mask;
-
     } else {
         LOG(DEBUG) << "Loaded mask";
-       this->mask = (*masks)[mask_table];
+        this->mask = masks->at(mask_table);
 
     }
     LOG(DEBUG) << "Finished to load mask";
@@ -192,7 +196,6 @@ bool Simulation::init(boost::unordered_map<string, EnvironmentalISEA3H*>* enviro
     //Load the species parameters.
 
     set<int> seeds = ancestor->getSeeds();
-    LOG(DEBUG)<<0;
     boost::unordered_map<int, vector<Organism*> > t_o;
     /* -----------------
      * Create the individual organism(s) based on the seeds in the species' configuration.
@@ -201,18 +204,11 @@ bool Simulation::init(boost::unordered_map<string, EnvironmentalISEA3H*>* enviro
      * Don't use the function of the multiple species and multiple seeds per species now,
      * because it hasn't be tested strictly.
      *-------------------------*/
-    LOG(DEBUG)<<1<<seeds.size();
     for (int seed : seeds) {
-        LOG(DEBUG)<<2<<" "<<seed;
         Organism *organism = new Organism(0, ancestor, NULL, seed);
-        LOG(DEBUG)<<3;
         boost::unordered_map<int, Organism*> t;
-        LOG(DEBUG)<<4;
         t[seed] = organism;
-        LOG(DEBUG)<<5;
         t_o[seed].push_back(organism);
-        LOG(DEBUG)<<6;
-
     }
     LOG(DEBUG) << "ADD ROOT SPECIES TO all_organisms WIHT the id is " << ancestor->getIDWithParentID() << " and SIZE is " << t_o.size();
     all_organisms[0][ancestor] = t_o;
@@ -223,7 +219,7 @@ vector<string> Simulation::getEnvironmentLabels() {
     return this->environment_labels;
 }
 EnvironmentalISEA3H* Simulation::getEnvironment(string environment_label) {
-    return this->environments[environment_label];
+    return this->environments->at(environment_label);
 }
 vector<int> Simulation::getTimeLine() {
     return this->timeLine;
@@ -237,15 +233,17 @@ ISEA3H* Simulation::getMask(){
 }
 void Simulation::generateSuitable() {
     boost::unordered_map<string, NicheBreadth*> nicheBreadth = ancestor->getNicheBreadth();
-    boost::unordered_map<string, ISEA3H*> current_environments = getEnvironmenMap(0);
+    boost::unordered_map<string, ISEA3H*> *current_environments = new boost::unordered_map<string, ISEA3H*>();
+    getEnvironmenMap(0, current_environments);
     set<int> values;
     LOG(DEBUG) << "Begin to generate the suitable area";
-    auto it = current_environments.begin();
-    for (auto item : it->second->getValues()) {
+    auto it = current_environments->begin();
+    boost::unordered_map<int, float> *env_v = it->second->getValues();
+    for (auto item : *env_v) {
         int id = item.first;
         int  v = 0;
         for (auto item : nicheBreadth) {
-            float env_value = current_environments[item.first]->readByID(id);
+            float env_value = current_environments->at(item.first)->readByID(id);
             if ((env_value > item.second->getMax()) || (env_value < item.second->getMin())) {
                 v = 0;
                 break;
@@ -281,6 +279,8 @@ void Simulation::generateSuitable() {
         CommonFun::executeSQL(output, log_db, false);
         output.clear();
     }
+    delete current_environments;
+    current_environments = NULL;
     LOG(DEBUG) << "END to generate the suitable area";
 }
 /*---------------------------
@@ -301,11 +301,12 @@ int Simulation::run() {
                 all_organisms[year_i - 1].size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
 
         boost::unordered_map<Species*, boost::unordered_map<int, vector<Organism*> > > organisms_in_current_year;
-        //LOG(DEBUG) << "Load environments of year " << timeLine[year_i] << " via index " << year_i;
-        boost::unordered_map<string, ISEA3H*> current_environments = getEnvironmenMap(year_i);
+        LOG(DEBUG) << "Load environments of year " << timeLine[year_i] << " via index " << year_i;
+        boost::unordered_map<string, ISEA3H*> *current_environments = new boost::unordered_map<string, ISEA3H*>();
+        getEnvironmenMap(year_i, current_environments);
         //Create the active individual organisms via cloning the individual organisms from the previous time step.
         boost::unordered_map<Species*, boost::unordered_map<int, Organism*> > actived_organisms;
-        //LOG(DEBUG) << "Found " << all_organisms[year_i - 1].size() << " species at time " << timeLine[year_i - 1] << ".";
+        LOG(DEBUG) << "Found " << all_organisms[year_i - 1].size() << " species at time " << timeLine[year_i - 1] << ".";
         for (auto sp_it : all_organisms[year_i - 1]) {
             Species *sp = sp_it.first;
             for (auto c_it : sp_it.second) {
@@ -316,7 +317,7 @@ int Simulation::run() {
             }
         }
         //If it is the beginning of the simulation, generate a suitable layer for the species;
-        //LOG(DEBUG) << "Current year is " << year << " and timeline[1] is " << timeLine[1];
+        LOG(DEBUG) << "Current year is " << year_i << " and timeline[1] is " << timeLine[year_i];
         if (year_i == 1) {
             generateSuitable();
         }
@@ -381,7 +382,7 @@ int Simulation::run() {
             vector<int> erased_key;
             for (auto it : s_it.second) {
                 if (it.second.size() > 0) {
-                    if (!it.second.front()->isSuitable(&current_environments, mask)) {
+                    if (!it.second.front()->isSuitable(current_environments, mask)) {
                         //LOG(INFO)<<"Remove it because of unsuitable";
                         erased_key.push_back(it.first);
                     }
@@ -636,12 +637,16 @@ int Simulation::run() {
 //              LOG(INFO)<<"Done!";
             }
         }
+
+        delete current_environments;
+        current_environments = NULL;
         LOG(DEBUG)<<"Remove the useless organisms. After  removing, Memory usage:"<<CommonFun::getCurrentRSS(1);
 
         if ((CommonFun::getCurrentRSS(pow(1024, 3)) > memLimit)) {
             LOG(INFO) << "Current memory is " << CommonFun::getCurrentRSS(pow(1024, 3)) << "GB. Memory limit is " << memLimit << "GB";
             return 1;
         }
+
     }
 
     generateSpeciationInfo(timeLine.size() - 1);
@@ -803,13 +808,12 @@ int Simulation::getUnmarkedID(boost::unordered_map<int, vector<Organism*>> *orga
     }
     return -1;
 }
-boost::unordered_map<string, ISEA3H*> Simulation::getEnvironmenMap(int p_year) {
-    boost::unordered_map<string, ISEA3H*> result;
-    //LOG(DEBUG) << "Environments size is " << environments.size();
-    for (auto item : environments) {
-        result[item.first] = item.second->getValues(p_year);
+void Simulation::getEnvironmenMap(int p_year_i, boost::unordered_map<string, ISEA3H*> *maps) {
+    for (auto item : *environments) {
+        ISEA3H *layer = item.second->getValues(p_year_i);
+        maps->erase(item.first);
+        maps->insert({item.first, layer});
     }
-    return result;
 }
 
 
@@ -826,7 +830,7 @@ set<int> Simulation::getDispersalMap_2(Organism *organism) {
 }
 Simulation::~Simulation() {
 
-    LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE: "<<CommonFun::getCurrentRSS(1);
+
     sqlite3_close(log_db);
     //boost::unordered_map<int, boost::unordered_map<Species*, boost::unordered_map<int, vector<Organism*> > > >
     LOG(DEBUG)<<1;
@@ -855,7 +859,7 @@ Simulation::~Simulation() {
             delete it.second;
         }
     }
-    LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE: "<<CommonFun::getCurrentRSS(1);
+
 
     //delete mask;
 

@@ -39,12 +39,12 @@ private:
 	unsigned long memLimit;
 	vector<int> timeLine;
 	Neighbor* neighborInfo;
-	boost::unordered_map<string, ISEA3H*> masks;
+	boost::unordered_map<string, ISEA3H*> *masks;
 	/// @brief If save the results to a sqlite database. Suggested to set it to true
 	/// @brief The environmental variables used in the simulation.
-	boost::unordered_map<string, EnvironmentalISEA3H*> environments_base;
+	boost::unordered_map<string, EnvironmentalISEA3H*> *environments_base;
 	/// @brief The virtual species in the simulation, including the initial species, and new species after the speciation events.
-	vector<Simulation*> initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite, Neighbor* neighborInfo);
+	void initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite, Neighbor* neighborInfo, vector<Simulation*> &simulations);
 	/// @brief Burn-in year of the simulation
 	int burnInYear;
 	/// @brief Whether outputing the details of the simulation, for debug only.

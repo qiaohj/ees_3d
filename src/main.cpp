@@ -153,10 +153,11 @@ int main(int argc, const char *argv[]) {
     unsigned long memory_limit = atoi(argv[5]);
     bool is_overwrite = atoi(argv[6]);
     //initialize the main scenario
-
+    LOG(INFO)<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1);
     Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
+    LOG(INFO)<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
     delete a;
-
+    LOG(INFO)<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
 
     return EXIT_SUCCESS;
 }

@@ -13,11 +13,11 @@
 
 #include "Utility.h"
 
-boost::unordered_map<int, boost::unordered_map<int, float>> Utility::readEnvInfo(sqlite3 *db, string tablename, bool with_year) {
-    boost::unordered_map<int, boost::unordered_map<int, float>> values;
+void Utility::readEnvInfo(sqlite3 *db, string tablename, bool with_year,
+        boost::unordered_map<int, boost::unordered_map<int, float>*> *&values) {
     string sql = "SELECT * FROM " + tablename;
     sqlite3_stmt *stmt;
-   //LOG(INFO) << "Query: "<< q;
+   //LOG(INFO) << "Query: "<< sql;
 
     sqlite3_prepare(db, sql.c_str(), -1, &stmt, NULL);
     int year = 0;
@@ -26,12 +26,15 @@ boost::unordered_map<int, boost::unordered_map<int, float>> Utility::readEnvInfo
         switch (sqlite3_step(stmt)) {
         case SQLITE_ROW:{
             if (with_year){
-                year = sqlite3_column_int(stmt, 2);
+                year = sqlite3_column_int(stmt, ENVIRONMENT_year);
             }
-            int id = sqlite3_column_int(stmt, 0);
-            float v = (float)sqlite3_column_double(stmt, 1);
-            //LOG(INFO)<<"year "<<year<<" id "<<id<<" v "<<v;
-            values[year][id] = v;
+            int id = sqlite3_column_int(stmt, ENVIRONMENT_global_id);
+            float v = (float)sqlite3_column_double(stmt, ENVIRONMENT_v);
+            if (values->find(year)==values->end()){
+                values->insert({year, new boost::unordered_map<int, float>()});
+            }
+            values->at(year)->insert({id, v});
+
             break;
         }
 
@@ -45,6 +48,4 @@ boost::unordered_map<int, boost::unordered_map<int, float>> Utility::readEnvInfo
     }
 
     sqlite3_finalize(stmt);
-
-    return values;
 }
