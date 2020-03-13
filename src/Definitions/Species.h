@@ -1,6 +1,6 @@
 /**
- * @file SpeciesObject3D.h
- * @brief Class SpeciesObject3D. A class to handle the attributes and behaviors of a virtual species
+ * @file Species.h
+ * @brief Class Species. A class to handle the attributes and behaviors of a virtual species
  * @author Huijie Qiao
  * @version 1.0
  * @date 3/3/2020
@@ -12,13 +12,12 @@
  */
 
 
-#ifndef DEFINITIONS_SPECIESOBJECT3D_H_
-#define DEFINITIONS_SPECIESOBJECT3D_H_
+#ifndef DEFINITIONS_Species_H_
+#define DEFINITIONS_Species_H_
 using namespace std;
 #include <string>
 #include <vector>
 #include <sqlite3.h>
-#include "../JsonPaster/include/json/json.h"
 #include "NicheBreadth.h"
 #include "../Universal/easylogging.h"
 #include "../Universal/CommonFun.h"
@@ -27,7 +26,7 @@ using namespace std;
 /**
  * @brief A class to handle the attributes and behaviors of a virtual species
  */
-class SpeciesObject3D {
+class Species {
 private:
     bool newSpecies;
     int id;
@@ -48,8 +47,8 @@ private:
     double speciesExtinctionThreaholdPercentage;
     unsigned maxSpeciesDistribution;
     set<int> seeds;
-    SpeciesObject3D* parent;
-    vector<SpeciesObject3D*> children;
+    Species* parent;
+    vector<Species*> children;
     int number_of_clade_extinction;
     int number_of_speciation;
     int number_of_species_extinction;
@@ -59,23 +58,23 @@ private:
     vector<int> timeLine;
 public:
     /**
-     * @brief Constructor of SpeciesObject3D class No.1 (Create a species object based on the configuration in JSON format)
+     * @brief Constructor of Species class No.1 (Create a species object based on the configuration in JSON format)
      * @param json_path the path to configuration file in JSON format
      */
-    SpeciesObject3D(sqlite3_stmt *stmt, int burn_in_year, vector<int>& timeLine);
+    Species(sqlite3_stmt *stmt, int burn_in_year, vector<int>& timeLine);
     /**
-     * @brief Constructor of SpeciesObject3D class No.2 (Create a species object based on the parent species)
+     * @brief Constructor of Species class No.2 (Create a species object based on the parent species)
      * @param p_id species ID
      * @param p_parent the parent species object
      * @param p_year time step
      */
-    SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year_i);
+    Species(int p_id, Species* p_parent, int p_year_i);
     /**
-	 * @brief Destructor of SpeciesObject3D class
+	 * @brief Destructor of Species class
 	 *
 	 * release all the resources
 	 */
-    virtual ~SpeciesObject3D();
+    virtual ~Species();
     /**
      * @brief return the dispersal ability array
      * @return
@@ -169,7 +168,7 @@ public:
      * @brief return the parent species of current species
      * @return
      */
-    SpeciesObject3D* getParent();
+    Species* getParent();
     /**
      * @brief set the time step when the species goes extinct.
      * @param p_disappeared_year
@@ -187,12 +186,12 @@ public:
      * @brief get all the children species
      * @return
      */
-    vector<SpeciesObject3D*> getChildren();
+    vector<Species*> getChildren();
     /**
      * @brief add a child species.
      * @param child
      */
-    void addChild(SpeciesObject3D* child);
+    void addChild(Species* child);
     /**
      * @brief get the tree of the species with its children species
      * @param isroot whether this species is a root species (the first species in the simulation)

@@ -1,6 +1,6 @@
 /**
- * @file Neighbor3D.h
- * @brief Class Neighbor3D. A class to get the neighbors of a given face and distance
+ * @file Neighbor.h
+ * @brief Class Neighbor. A class to get the neighbors of a given face and distance
  * @author Huijie Qiao
  * @version 1.0
  * @date 3/3/2020
@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef Neighbor3D_H
-#define Neighbor3D_H
+#ifndef Neighbor_H
+#define Neighbor_H
 
 using namespace std;
 #include <string>
@@ -22,29 +22,30 @@ using namespace std;
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/unordered_map.hpp>
 #include <sqlite3.h>
-#include "../Universal/const.h"
+#include "../Universal/Const.h"
 #include "../Universal/CommonFun.h"
+#include "DBField.h"
 
 /**
- *@brief A class to handle the Neighbor3D data
+ *@brief A class to handle the Neighbor data
  */
-class Neighbor3D {
+class Neighbor {
 private:
 	boost::unordered_map<int, set<int>> neighbors;
 public:
 
 	/**
-	 * @brief Constructor of Neighbor3D class No.1
+	 * @brief Constructor of Neighbor class No.1
 	 * @param p_filename the file to load the map info
 	 */
-	Neighbor3D(sqlite3* env_db);
+	Neighbor(sqlite3* env_db);
 
 	/**
-	 * @brief Destructor of Neighbor3D class
+	 * @brief Destructor of Neighbor class
 	 *
 	 * release all the resources
 	 */
-	virtual ~Neighbor3D();
+	virtual ~Neighbor();
 
 	/**
 	 * @brief return all the neighbors of a given face within a given distance
@@ -56,4 +57,4 @@ public:
 	boost::unordered_map<int, set<int>> getNeighbors();
 };
 
-#endif /* Neighbor3D_H */
+#endif /* Neighbor_H */

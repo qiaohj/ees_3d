@@ -20,9 +20,10 @@
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/unordered_map.hpp>
-#include "../Universal/const.h"
+#include "../Universal/Const.h"
 #include "../Universal/CommonFun.h"
 #include "../Universal/CSVReader.h"
+#include "../Universal/easylogging.h"
 /**
  *@brief A class to handle the ISEA3H data
  */

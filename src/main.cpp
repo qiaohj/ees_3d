@@ -2,9 +2,10 @@
  * @file main.cpp
  * @brief The main entrance of the simulation application
  * @details
- * Copyright 2014-2019 Huijie Qiao
- * Distributed under GNU license
- * See file LICENSE for detail or copy at https://www.gnu.org/licenses/gpl-3.0.en.html
+ * @version 1.0
+ * @date 3/13/2020
+ * @details
+ * Copyright 2014-2020 Huijie Qiao
  * The parameters to run the simulation are listed below.
  * 1. configure's base folder, which the application can load the configuration for species and scenario.
  * 2. scenario configuration. A JSON format configuration file to set up the parameter of the scenario
@@ -17,31 +18,23 @@
  */
 
 using namespace std;
-#include <gdal.h>
-#include <gdal_priv.h>
-#include <ogr_srs_api.h>
-#include <ogr_spatialref.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <execinfo.h>
 #include <signal.h>
 #include <unistd.h>
-
-//#include "JsonPaster/include/json/json.h"
-#include <algorithm> // sort
+#include <algorithm>
 #include <string>
 #include <math.h>
 #include <sqlite3.h>
 #include <unistd.h>
 #include <boost/thread/thread.hpp>
 
-#include "ExpressionParser/parser.h"
-#include "Definitions/Scenario3D.h"
+#include "Definitions/Scenario.h"
 #include "Universal/easylogging.h"
 #include "Universal/CommonFun.h"
-#include "Definitions/IndividualOrganism.h"
 #include "Definitions/ISEA3H.h"
-#include "Definitions/Neighbor3D.h"
+#include "Definitions/Neighbor.h"
 INITIALIZE_EASYLOGGINGPP;
 
 int mainy(int argc, const char *argv[]) {
@@ -69,10 +62,10 @@ int mainy(int argc, const char *argv[]) {
  *
  *-----------------------------------------*/
 int mainx(int argc, const char *argv[]) {
-    //ISEA3H* t = new ISEA3H("/home/huijieqiao/git/ees_3d_data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
+    //ISEA3H* t = new ISEA3H("/home/huijieqiao/git/ees__data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
     //LOG(INFO) <<t->readByID(55);
     sqlite3 *env_db;
-    string env_db_str = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/SQLITE/env_Hadley3D.sqlite";
+    string env_db_str = "/home/huijieqiao/git/ees__data/ISEA3H8/SQLITE/env_Hadley.sqlite";
     int rc = sqlite3_open(env_db_str.c_str(), &env_db);
     if (rc) {
         LOG(INFO) << "Can't open environment database: " << sqlite3_errmsg(env_db);
@@ -81,7 +74,7 @@ int mainx(int argc, const char *argv[]) {
         LOG(INFO) << "Opened environment database from <" << env_db_str << "> successfully.";
     }
 
-    Neighbor3D *neighborInfo = new Neighbor3D(env_db);
+    Neighbor *neighborInfo = new Neighbor(env_db);
     /*
     set<int> neighbors;
     set<int> handled_ids;
@@ -161,7 +154,7 @@ int main(int argc, const char *argv[]) {
     bool is_overwrite = atoi(argv[6]);
     //initialize the main scenario
 
-    Scenario3D* a = new Scenario3D(env_db, conf_db, target, is_overwrite, id, memory_limit);
+    Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
     delete a;
 
 

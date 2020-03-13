@@ -3,19 +3,16 @@
  * @brief Class ISEA3H. A class to handle the raster file
  * @author Huijie Qiao
  * @version 1.0
- * @date 11/25/2018
+ * @date 3/13/2020
  * @details
- * Copyright 2014-2019 Huijie Qiao
+ * Copyright 2014-2020 Huijie Qiao
  * Distributed under GNU license
  * See file LICENSE for detail or copy at https://www.gnu.org/licenses/gpl-3.0.en.html
  *
  */
 
 #include "ISEA3H.h"
-#include <iostream>
-#include <fstream>
-#include "../Universal/const.h"
-#include "../Universal/easylogging.h"
+
 ISEA3H::ISEA3H() {
 
 }
@@ -56,6 +53,6 @@ void ISEA3H::save(const string fileName) {
 
 }
 ISEA3H::~ISEA3H() {
-    CommonFun::freeContainer(values);
+    //CommonFun::freeContainer(values);
 }
 

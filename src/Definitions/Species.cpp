@@ -1,6 +1,6 @@
 /**
- * @file SpeciesObject3D.cpp
- * @brief Class SpeciesObject3D. A class to handle the attributes and behaviors of a virtual species
+ * @file Species.cpp
+ * @brief Class Species. A class to handle the attributes and behaviors of a virtual species
  * @author Huijie Qiao
  * @version 1.0
  * @date 3/6/2020
@@ -11,9 +11,9 @@
  *
  */
 
-#include "SpeciesObject3D.h"
+#include "Species.h"
 
-SpeciesObject3D::SpeciesObject3D(sqlite3_stmt *stmt, int burn_in_year, vector<int>& timeLine) {
+Species::Species(sqlite3_stmt *stmt, int burn_in_year, vector<int>& timeLine) {
     this->timeLine = timeLine;
 	currentSpeciesExtinctionTimeSteps = 0;
 	newSpecies = true;
@@ -59,7 +59,7 @@ SpeciesObject3D::SpeciesObject3D(sqlite3_stmt *stmt, int burn_in_year, vector<in
     seeds.insert(initial_seed);
 }
 
-string SpeciesObject3D::getIDWithParentID(){
+string Species::getIDWithParentID(){
     if (parent==NULL){
         string id_str = to_string(id);
         return id_str;
@@ -69,7 +69,7 @@ string SpeciesObject3D::getIDWithParentID(){
         return id_str;
     }
 }
-SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year_i) {
+Species::Species(int p_id, Species* p_parent, int p_year_i) {
     timeLine = p_parent->getTimeLine();
 	currentSpeciesExtinctionTimeSteps = 0;
 
@@ -108,19 +108,19 @@ SpeciesObject3D::SpeciesObject3D(int p_id, SpeciesObject3D* p_parent, int p_year
     number_of_species_extinction = 0;
     environment_labels = parent->getEnvironmentLabels();
 }
-vector<string> SpeciesObject3D::getEnvironmentLabels(){
+vector<string> Species::getEnvironmentLabels(){
     return this->environment_labels;
 }
-void SpeciesObject3D::setCladeExtinctionStatus(int status) {
+void Species::setCladeExtinctionStatus(int status) {
     clade_extinction_status = status;
 }
-void SpeciesObject3D::markParentClade() {
+void Species::markParentClade() {
     for (auto child : children) {
         child->setCladeExtinctionStatus(3);
         child->markParentClade();
     }
 }
-string SpeciesObject3D::getSpeciationExtinction(bool isroot,
+string Species::getSpeciationExtinction(bool isroot,
         int total_years) {
     char t_char[100];
     sprintf(t_char, "clade_extinction,species_extinction,speciation\n%u,%u,%u,%u",
@@ -128,7 +128,7 @@ string SpeciesObject3D::getSpeciationExtinction(bool isroot,
             number_of_speciation);
     return string(t_char);
 }
-bool SpeciesObject3D::isAllLeafExtinction(int total_years) {
+bool Species::isAllLeafExtinction(int total_years) {
     bool is_extinction = true;
     for (auto child : children) {
         if (child->getChildren().size() == 0) {
@@ -144,16 +144,16 @@ bool SpeciesObject3D::isAllLeafExtinction(int total_years) {
     }
     return true;
 }
-int SpeciesObject3D::getNumberOfCladeExtinction() {
+int Species::getNumberOfCladeExtinction() {
     return number_of_clade_extinction;
 }
-int SpeciesObject3D::getNumberOfSpeciation() {
+int Species::getNumberOfSpeciation() {
     return number_of_speciation;
 }
-int SpeciesObject3D::getNumberOfSpeciesExtinction() {
+int Species::getNumberOfSpeciesExtinction() {
     return number_of_species_extinction;
 }
-void SpeciesObject3D::markNode(int total_years) {
+void Species::markNode(int total_years) {
     number_of_clade_extinction = 0;
     number_of_speciation = 0;
     number_of_species_extinction = 0;
@@ -189,7 +189,7 @@ void SpeciesObject3D::markNode(int total_years) {
         number_of_speciation++;
     }
 }
-vector<string> SpeciesObject3D::getHTMLTree(int p_year) {
+vector<string> Species::getHTMLTree(int p_year) {
     vector<string> html_output;
     html_output.push_back(
             "<!DOCTYPE html><html lang=\"en\" xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">");
@@ -242,7 +242,7 @@ vector<string> SpeciesObject3D::getHTMLTree(int p_year) {
     html_output.push_back("</html>");
     return html_output;
 }
-string SpeciesObject3D::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
+string Species::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
     string output = "";
     unsigned i = 0;
     if (children.size() > 0) {
@@ -303,26 +303,26 @@ string SpeciesObject3D::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
     }
     return output;
 }
-vector<SpeciesObject3D*> SpeciesObject3D::getChildren() {
+vector<Species*> Species::getChildren() {
     return children;
 }
-void SpeciesObject3D::addChild(SpeciesObject3D* child) {
+void Species::addChild(Species* child) {
     children.push_back(child);
 }
-void SpeciesObject3D::setDisappearedYearI(int p_disappeared_year_i) {
+void Species::setDisappearedYearI(int p_disappeared_year_i) {
     disappearedYearI = p_disappeared_year_i;
 }
-int SpeciesObject3D::getDisappearedYearI() {
+int Species::getDisappearedYearI() {
     return disappearedYearI;
 }
-int SpeciesObject3D::getAppearedYearI() {
+int Species::getAppearedYearI() {
     return appearedYearI;
 }
-int SpeciesObject3D::getBurnInYear() {
+int Species::getBurnInYear() {
     return this->burninYear;
 }
 
-SpeciesObject3D::~SpeciesObject3D() {
+Species::~Species() {
     LOG(DEBUG)<<10;
     delete[] dispersalAbility;
     LOG(DEBUG)<<11;
@@ -332,78 +332,78 @@ SpeciesObject3D::~SpeciesObject3D() {
     }
 
 }
-int SpeciesObject3D::getDispersalAbilityLength(){
+int Species::getDispersalAbilityLength(){
 	return dispersalAbilityLength;
 }
-double* SpeciesObject3D::getDispersalAbility() {
+double* Species::getDispersalAbility() {
     return dispersalAbility;
 }
-vector<int> SpeciesObject3D::getTimeLine(){
+vector<int> Species::getTimeLine(){
     return this->timeLine;
 }
 
-unsigned SpeciesObject3D::getSpeciesExtinctionThreshold(){
+unsigned Species::getSpeciesExtinctionThreshold(){
 	return speciesExtinctionThreshold;
 }
 
-int SpeciesObject3D::getGroupExtinctionThreshold(){
+int Species::getGroupExtinctionThreshold(){
 	return groupExtinctionThreshold;
 }
 
-int SpeciesObject3D::getSpeciesExtinctionTimeSteps(){
+int Species::getSpeciesExtinctionTimeSteps(){
 	return speciesExtinctionTimeSteps;
 }
 
-double SpeciesObject3D::getSpeciesExtinctionThreaholdPercentage(){
+double Species::getSpeciesExtinctionThreaholdPercentage(){
 	return speciesExtinctionThreaholdPercentage;
 }
-void SpeciesObject3D::setMaxSpeciesDistribution(unsigned p_max_species_distribution){
+void Species::setMaxSpeciesDistribution(unsigned p_max_species_distribution){
 	maxSpeciesDistribution = p_max_species_distribution;
 }
-unsigned SpeciesObject3D::getMaxSpeciesDistribution(){
+unsigned Species::getMaxSpeciesDistribution(){
 	return maxSpeciesDistribution;
 }
-int SpeciesObject3D::getCurrentSpeciesExtinctionTimeSteps(){
+int Species::getCurrentSpeciesExtinctionTimeSteps(){
 	return currentSpeciesExtinctionTimeSteps;
 }
 
-void SpeciesObject3D::setCurrentSpeciesExtinctionTimeSteps(int p_currentSpeciesExtinctionTimeSteps){
+void Species::setCurrentSpeciesExtinctionTimeSteps(int p_currentSpeciesExtinctionTimeSteps){
 	currentSpeciesExtinctionTimeSteps = p_currentSpeciesExtinctionTimeSteps;
 }
 
-void SpeciesObject3D::addCurrentSpeciesExtinctionTimeSteps(){
+void Species::addCurrentSpeciesExtinctionTimeSteps(){
 	currentSpeciesExtinctionTimeSteps++;
 }
 
 
-int SpeciesObject3D::getDispersalSpeed() {
+int Species::getDispersalSpeed() {
     return dispersalSpeed;
 }
-set<int> SpeciesObject3D::getSeeds() {
+set<int> Species::getSeeds() {
     return seeds;
 }
-int SpeciesObject3D::getID() {
+int Species::getID() {
     return id;
 }
-int SpeciesObject3D::getDispersalMethod() {
+int Species::getDispersalMethod() {
     return dispersalMethod;
 }
-int SpeciesObject3D::getNumOfPath() {
+int Species::getNumOfPath() {
     return numberOfPath;
 }
-boost::unordered_map<string, NicheBreadth*> SpeciesObject3D::getNicheBreadth() {
+boost::unordered_map<string, NicheBreadth*> Species::getNicheBreadth() {
     return nicheBreadth;
 }
-int SpeciesObject3D::getSpeciationYears() {
+int Species::getSpeciationYears() {
 	//return 99999999;
     return speciationYears;
 }
-SpeciesObject3D* SpeciesObject3D::getParent() {
+Species* Species::getParent() {
     return parent;
 }
-bool SpeciesObject3D::isNewSpecies(){
+bool Species::isNewSpecies(){
     return newSpecies;
 }
-void SpeciesObject3D::setNewSpecies(bool p){
+void Species::setNewSpecies(bool p){
     newSpecies = p;
 }

@@ -3,9 +3,9 @@
  * @brief Class CSVReader. A class to read the data from CSV file
  * @author Huijie Qiao
  * @version 1.0
- * @date 3/3/2020
+ * @date 3/13/2020
  * @details
- * Copyright 2014-2019 Huijie Qiao
+ * Copyright 2014-2020 Huijie Qiao
  * Distributed under GNU license
  * See file LICENSE for detail or copy at https://www.gnu.org/licenses/gpl-3.0.en.html
  *

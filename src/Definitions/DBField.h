@@ -34,9 +34,15 @@
 #define SIMULATION_burn_in_year      22
 #define SIMULATION_is_run       23
 #define ENVIRONMENTS_names       0
+#define ENVIRONMENTS_begin       0
+#define ENVIRONMENTS_end       0
+#define ENVIRONMENTS_step       0
 #define TIMELINE_from       0
 #define TIMELINE_to       1
 #define TIMELINE_step       2
+#define NEIGHBOR_ID       0
+#define NEIGHBOR_NEIGHBOR       1
+
 /* end-of-error-codes */
 
 

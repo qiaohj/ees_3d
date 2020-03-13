@@ -3,9 +3,9 @@
  * @brief Class CommonFun. A class to implement the public functions common used in the application.
  * @author Huijie Qiao
  * @version 1.0
- * @date 11/25/2018
+ * @date 3/13/2020
  * @details
- * Copyright 2014-2019 Huijie Qiao
+ * Copyright 2014-2020 Huijie Qiao
  * Distributed under GNU license
  * See file LICENSE for detail or copy at https://www.gnu.org/licenses/gpl-3.0.en.html
  *
@@ -15,10 +15,6 @@
 #define CommonFun_H
 
 using namespace std;
-#include <gdal.h>
-#include <gdal_priv.h>
-#include <ogr_srs_api.h>
-#include <ogr_spatialref.h>
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,8 +32,7 @@ using namespace std;
 #include <boost/filesystem.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "../JsonPaster/include/json/json.h"
-#include "const.h"
+#include "Const.h"
 #include "easylogging.h"
 #include <cmath>
 
@@ -56,16 +51,6 @@ public:
     static string quoteSql(const string &s);
     static bool checkKey();
     static int callback(void *NotUsed, int argc, char **argv, char **azColName);
-    /**
-     * @brief Convert the X, Y index to longitude and latitude.
-     * @param x X index
-     * @param y Y index
-     * @param fromWkt the source projection
-     *
-     * @param toWkt the target projection
-     */
-    static void convert2LL(double *x, double *y, const char *fromWkt,
-            const char *toWkt);
     /**
      * @brief read the text file to a string
      * @param path the path to the text file
@@ -87,12 +72,6 @@ public:
      */
     static string removeSuffix(const string &path,
             const string &extension);
-    /**
-     * @brief read the JSON file to a Json object (to load the configuration of a scenario or a species from their configuration file)
-     * @param path the path to the JSON file
-     * @return a Json object
-     */
-    static Json::Value readJson(const char *path);
     /**
      * @brief output a string to a text file
      * @param s the string to save
@@ -134,63 +113,7 @@ public:
      * @param year the year to read, -1 means all data.
      */
     static boost::unordered_map<int, boost::unordered_map<int, float>> readEnvInfo(sqlite3 *db, string tablename, bool with_year);
-    /**
-     * @brief convert longitude and latitude to X, Y index
-     * @param adfGeoTransform The GeoTransform matrix of the raster layers
-     * @param longitude longitude
-     * @param latitude latitude
-     * @param x X index
-     * @param y Y index
-     */
-    static void LL2XY(const double *adfGeoTransform, const double longitude,
-            const double latitude, unsigned *x, unsigned *y);
-    /**
-     * @brief convert X, Y index to longitude and latitude
-     * @param adfGeoTransform The GeoTransform matrix of the raster layers
-     * @param x X index
-     * @param y Y index
-     * @param longitude longitude
-     * @param latitude latitude
-     */
-    static void XY2LL(const double *adfGeoTransform, const unsigned x,
-            const unsigned y, double *longitude, double *latitude);
 
-    /**
-     * @brief convert the number in degrees to the radiant equivalent
-     * @param deg the number in degrees
-     * @return
-     */
-    static double deg2rad(double deg);
-    /**
-     * @brief calculate the great-circle distance between two points.
-     * @param latitude1 latitude for point No.1
-     * @param longitude1 longitude for point No.1
-     * @param latitude2 latitude for point No.2
-     * @param longitude2 longitude for point No.2
-     * @return the great-circle distance between two points.
-     */
-    static double haversine_distance(double latitude1, double longitude1,
-            double latitude2, double longitude2);
-    /**
-     * @brief another method to calculate the great-circle distance between two points.
-     * @param latitude1 latitude for point No.1
-     * @param longitude1 longitude for point No.1
-     * @param latitude2 latitude for point No.2
-     * @param longitude2 longitude for point No.2
-     * @return the great-circle distance between two points.
-     */
-    static double ArcInRadians(double latitude1, double longitude1,
-            double latitude2, double longitude2);
-    /**
-     * @brief the 3rd method to calculate the great-circle distance between two points.
-     * @param latitude1 latitude for point No.1
-     * @param longitude1 longitude for point No.1
-     * @param latitude2 latitude for point No.2
-     * @param longitude2 longitude for point No.2
-     * @return the great-circle distance between two points.
-     */
-    static double vincenty_distance(double latitude1, double longitude1,
-            double latitude2, double longitude2);
     /**
      * @brief add leading ZERO to a number and convert the number to a string with fixed length
      * @param value the number to convert
@@ -216,33 +139,7 @@ public:
      * @return
      */
     static size_t writeMemoryUsage(unsigned line, bool is, size_t last);
-    /**
-     * @brief we have so many functions to calculate the great circle distance, but we used none of them so far.
-     * @param x1
-     * @param y1
-     * @param x2
-     * @param y2
-     * @param fromWkt
-     * @param toWkt
-     * @param geoTrans
-     * @param resolution
-     * @return
-     */
-    static double GreatCirleDistance(int x1, int y1, int x2, int y2,
-            const char *fromWkt, const char *toWkt, const double *geoTrans,
-            int resolution);
-    /**
-     * @brief we have so many functions to calculate the great circle distance, but we used none of them so far.
-     * @param x1
-     * @param y1
-     * @param x2
-     * @param y2
-     * @param poCT
-     * @param geoTrans
-     * @param resolution
-     * @return
-     */
-    static double GreatCirleDistanceFast(int x1, int y1, int x2, int y2, OGRCoordinateTransformation *poCT, const double *geoTrans, double resolution);
+
     /**
      * @brief calculate the Euclidean distance between to points.
      * @param x1
@@ -270,23 +167,24 @@ public:
      * @brief clear a vector and release the memory
      * @param v
      */
-    template<typename T> static void clearVectorObj(T *v);
+
     /**
      * @brief clear a hash map and release the memory
      * @param v
      */
-    template<typename T> static void clearUnorderedMapObjInt(T *v);
-    template<typename T> static void clearUnorderedMapObjString(T *v);
-    template<typename T> static void clearUnorderedMapKey(T *v);
-    template<typename T> static void freeContainer(T& p_container);
-    static void clearUnorderedMap(vector<string> *v);
+    template<typename T> static void clearVectorObjRemoved(T *v);
+    template<typename T> static void clearUnorderedMapObjIntRemoved(T *v);
+    template<typename T> static void clearUnorderedMapObjStringRemoved(T *v);
+    template<typename T> static void clearUnorderedMapKeyRemoved(T *v);
+    template<typename T> static void freeContainerRemoved(T& p_container);
+    static void clearUnorderedMapRemoved(vector<string> *v);
 
 };
-template<typename T> void CommonFun::freeContainer(T &p_container) {
+template<typename T> void CommonFun::freeContainerRemoved(T &p_container) {
     T empty;
     swap(p_container, empty);
 }
-template<typename T> void CommonFun::clearUnorderedMapObjString(T *v) {
+template<typename T> void CommonFun::clearUnorderedMapObjStringRemoved(T *v) {
     vector<string> erased_key;
     for (auto it : *v) {
         erased_key.push_back(it.first);
@@ -297,10 +195,10 @@ template<typename T> void CommonFun::clearUnorderedMapObjString(T *v) {
         }
         v->erase(key);
     }
-    freeContainer(erased_key);
-    freeContainer(v);
+    freeContainerRemoved(erased_key);
+    freeContainerRemoved(v);
 }
-template<typename T> void CommonFun::clearUnorderedMapObjInt(T *v) {
+template<typename T> void CommonFun::clearUnorderedMapObjIntRemoved(T *v) {
     vector<int> erased_key;
     for (auto it : *v) {
         erased_key.push_back(it.first);
@@ -311,16 +209,16 @@ template<typename T> void CommonFun::clearUnorderedMapObjInt(T *v) {
         }
         v->erase(key);
     }
-    freeContainer(erased_key);
-    freeContainer(v);
+    freeContainerRemoved(erased_key);
+    freeContainerRemoved(v);
 }
-template<typename T> void CommonFun::clearUnorderedMapKey(T *v) {
+template<typename T> void CommonFun::clearUnorderedMapKeyRemoved(T *v) {
     for (auto it : *v) {
         delete it;
     }
 }
 
-template<typename T> void CommonFun::clearVectorObj(T *v) {
+template<typename T> void CommonFun::clearVectorObjRemoved(T *v) {
     for (typename T::iterator it = v->begin(); it != v->end(); ++it) {
         delete *it;
         *it = NULL;

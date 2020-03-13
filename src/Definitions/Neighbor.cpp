@@ -1,23 +1,20 @@
 /**
- * @file Neighbor3D.cpp
- * @brief Class Neighbor3D. A class to handle the raster file
+ * @file Neighbor.cpp
+ * @brief Class Neighbor. A class to handle the raster file
  * @author Huijie Qiao
  * @version 1.0
- * @date 11/25/2018
+ * @date 3/13/2020
  * @details
- * Copyright 2014-2019 Huijie Qiao
+ * Copyright 2014-2020 Huijie Qiao
  * Distributed under GNU license
  * See file LICENSE for detail or copy at https://www.gnu.org/licenses/gpl-3.0.en.html
  *
  */
 
-#include "Neighbor3D.h"
-#include <iostream>
-#include <fstream>
-#include "../Universal/const.h"
-#include "../Universal/easylogging.h"
+#include "Neighbor.h"
 
-Neighbor3D::Neighbor3D(sqlite3 *env_db) {
+
+Neighbor::Neighbor(sqlite3 *env_db) {
     sqlite3_stmt *stmt;
     string sql = "SELECT * FROM neighbor";
     sqlite3_prepare(env_db, sql.c_str(), -1, &stmt, NULL);
@@ -27,8 +24,8 @@ Neighbor3D::Neighbor3D(sqlite3 *env_db) {
         //LOG(INFO)<<"SQLITE3 status is :"<<status;
         switch (status) {
         case SQLITE_ROW: {
-            int key = (int) sqlite3_column_int(stmt, 0);
-            string neighbor = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+            int key = (int) sqlite3_column_int(stmt, NEIGHBOR_ID);
+            string neighbor = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, NEIGHBOR_NEIGHBOR)));
             vector<string> tokens = CommonFun::splitStr(neighbor, ",");
             set<int> values;
             for (string token : tokens) {
@@ -50,7 +47,7 @@ Neighbor3D::Neighbor3D(sqlite3 *env_db) {
 
     sqlite3_finalize(stmt);
 }
-void Neighbor3D::getNeighborByID(int p_id, int distance, set<int> *p_neighbors, set<int> *handled_ids) {
+void Neighbor::getNeighborByID(int p_id, int distance, set<int> *p_neighbors, set<int> *handled_ids) {
     //LOG(DEBUG)<<"ID is "<<p_id<<" and distance is "<<distance;
     if (distance > 0) {
         set<int> v = neighbors[p_id];
@@ -65,10 +62,10 @@ void Neighbor3D::getNeighborByID(int p_id, int distance, set<int> *p_neighbors, 
     p_neighbors->insert(p_id);
 
 }
-boost::unordered_map<int, set<int>> Neighbor3D::getNeighbors(){
+boost::unordered_map<int, set<int>> Neighbor::getNeighbors(){
     return this->neighbors;
 }
-int Neighbor3D::distance(int p_id1, int p_id2, int limited) {
+int Neighbor::distance(int p_id1, int p_id2, int limited) {
     int distance = 0;
     while (true) {
         //LOG(INFO)<<"distance "<<distance;
@@ -86,10 +83,11 @@ int Neighbor3D::distance(int p_id1, int p_id2, int limited) {
     }
 }
 
-Neighbor3D::~Neighbor3D() {
+Neighbor::~Neighbor() {
+    /*
     for (auto it : neighbors){
         CommonFun::freeContainer(it.second);
-    }
+    }*/
     //CommonFun::freeContainer(neighbors);
 }
 

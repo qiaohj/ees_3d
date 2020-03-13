@@ -1,53 +1,54 @@
 /**
- * @file Organism3D.h
- * @brief Class Organism3D. A class to handle the behavior of an individual in the simulation
+ * @file Organism.h
+ * @brief Class Organism. A class to handle the behavior of an individual in the simulation
  * @author Huijie Qiao
  * @version 1.0
- * @date 3/3/2020
+ * @date 3/13/2020
  * @details
- * Copyright 2014-2019 Huijie Qiao
+ * Copyright 2014-2020 Huijie Qiao
  * Distributed under GNU license
  * See file LICENSE for detail or copy at https://www.gnu.org/licenses/gpl-3.0.en.html
  *
  */
 
-#ifndef DEFINITIONS_INDIVIDUALORGANISM3D_H_
-#define DEFINITIONS_INDIVIDUALORGANISM3D_H_
+#ifndef DEFINITIONS_INDIVIDUALORGANISM_H_
+#define DEFINITIONS_INDIVIDUALORGANISM_H_
+
 using namespace std;
-#include "SpeciesObject3D.h"
+#include "Species.h"
 #include "ISEA3H.h"
 #include "../Universal/easylogging.h"
 /**
  * @brief A class to handle the behavior of an individual in the simulation
  */
-class Organism3D {
+class Organism {
 private:
     int id;
     int groupId;
     int tempSpeciesID;
     int dispersalAbility;
-    SpeciesObject3D* species;
+    Species* species;
     int year_i;
-    Organism3D* parent;
-//    vector<Organism3D*> children;
+    Organism* parent;
+//    vector<Organism*> children;
 
 public:
     /**
-     * @brief Constructor of Organism3D class
+     * @brief Constructor of Organism class
      * @param p_year the time step of the individual
      * @param p_species the species ID of the individual
      * @param p_parent the parent species ID of the individual
      * @param p_id the id of the face of the individual's locality.
      */
-    Organism3D(int p_year, SpeciesObject3D* p_species,
-            Organism3D* p_parent, int p_id);
+    Organism(int p_year, Species* p_species,
+            Organism* p_parent, int p_id);
 
     /**
-	 * @brief Destructor of Organism3D class
+	 * @brief Destructor of Organism class
 	 *
 	 * release all the resources
 	 */
-    virtual ~Organism3D();
+    virtual ~Organism();
 
     /**
      * @brief return the next dispersal time step of the individual based on the dispersal speed of the species.
@@ -92,7 +93,7 @@ public:
      * @brief return the species object of the individual
      * @return
      */
-    SpeciesObject3D* getSpecies();
+    Species* getSpecies();
 
     /**
      * @brief return the species ID of the individual
@@ -103,7 +104,7 @@ public:
      * @brief set the parent species to the individual
      * @param p_parent
      */
-    void setParent(Organism3D* p_parent);
+    void setParent(Organism* p_parent);
 
     /**
      * @brief set a dispersal ability based on the dispersal ability of the species.
@@ -114,7 +115,7 @@ public:
      * @brief return the parent of the individual
      * @return
      */
-    Organism3D* getParent();
+    Organism* getParent();
 
     /**
      * @brief return the time step which the individual is living
@@ -154,10 +155,10 @@ public:
      * @brief set the species object to the individual
      * @param p_species
      */
-    void setSpecies(SpeciesObject3D* p_species);
-//    void addChild(Organism3D* child);
+    void setSpecies(Species* p_species);
+//    void addChild(Organism* child);
 //    void clearChildren();
-//    void removeChild(Organism3D* child);
+//    void removeChild(Organism* child);
 
     /**
      * @brief return the memory usage of the object (for debug).
@@ -165,4 +166,4 @@ public:
     int long getMemoryUsage();
 };
 
-#endif /* DEFINITIONS_INDIVIDUALORGANISM3D_H_ */
+#endif /* DEFINITIONS_INDIVIDUALORGANISM_H_ */
