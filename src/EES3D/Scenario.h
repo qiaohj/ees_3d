@@ -20,8 +20,8 @@ using namespace std;
 #include <boost/unordered_set.hpp>
 #include <sqlite3.h>
 #include "../Universal/CommonFun.h"
-#include "ISEA3H.h"
-#include "EnvironmentalISEA3H.h"
+#include "ISEA.h"
+#include "EnvVar.h"
 #include "Species.h"
 #include "Organism.h"
 #include "../Universal/easylogging.h"
@@ -39,10 +39,10 @@ private:
 	unsigned long memLimit;
 	vector<int> timeLine;
 	Neighbor* neighborInfo;
-	boost::unordered_map<string, ISEA3H*> *masks;
+	unordered_map<string, ISEA*> *masks;
 	/// @brief If save the results to a sqlite database. Suggested to set it to true
 	/// @brief The environmental variables used in the simulation.
-	boost::unordered_map<string, EnvironmentalISEA3H*> *environments_base;
+	unordered_map<string, EnvVar*> *environments_base;
 	/// @brief The virtual species in the simulation, including the initial species, and new species after the speciation events.
 	void initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite, Neighbor* neighborInfo, vector<Simulation*> &simulations);
 	/// @brief Burn-in year of the simulation

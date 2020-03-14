@@ -1,6 +1,6 @@
 /**
- * @file EnvironmentalISEA3H.h
- * @brief Class EnvironmentalISEA3H. A class to handle the environmental layers in ISEA3H format
+ * @file EnvVar.h
+ * @brief Class EnvVar. A class to handle the environmental layers in ISEA format
  * @author Huijie Qiao
  * @version 1.0
  * @date 3/03/2020
@@ -11,48 +11,48 @@
  *
  */
 
-#ifndef EnvironmentalISEA3H_H_
-#define EnvironmentalISEA3H_H_
+#ifndef EnvVar_H_
+#define EnvVar_H_
 
 #include <boost/unordered_map.hpp>
-#include "ISEA3H.h"
+#include "ISEA.h"
 #include "DBField.h"
 #include "Utility.h"
 
 /**
- * @brief A class to handle the environmental layers in ISEA3H format
+ * @brief A class to handle the environmental layers in ISEA format
  */
-class EnvironmentalISEA3H {
+class EnvVar {
 private:
 	/**
 	 * @brief A hash map to save the environmental layers used in the simulation time step by time step. The keys are the time steps, and the values are the environmental layers on the time step.
 	 */
-    boost::unordered_map<int, ISEA3H*> *layers;
+    unordered_map<int, ISEA*> *layers;
 
     string envName;
 public:
-    EnvironmentalISEA3H();
+    EnvVar();
     /**
-     * @brief Constructor of EnvironmentalISEA3H class
+     * @brief Constructor of EnvVar class
      * @param p_env_name The table name of the environment in the database.
      * @param p_env_db database
      * @param timeLine timeline the simulation
      */
-	EnvironmentalISEA3H(string p_env_name, sqlite3* p_env_db, vector<int> &timeLine);
+	EnvVar(string p_env_name, sqlite3* p_env_db, vector<int> &timeLine);
 
 	/**
-	 * @brief Destructor of EnvironmentalISEA3H class
+	 * @brief Destructor of EnvVar class
 	 *
 	 * release all the resources
 	 */
-	virtual ~EnvironmentalISEA3H();
+	virtual ~EnvVar();
 
     /**
      * @brief Get the environmental layer of the given time step
      * @param p_year time step
-     * @return A ISEA3H object of the environmental layer of the given time step.
+     * @return A ISEA object of the environmental layer of the given time step.
      */
-    ISEA3H* getValues(int p_year_i);
+    ISEA* getValues(int p_year_i);
 
     /**
      * @brief Get the value based on the id of the face
@@ -66,4 +66,4 @@ public:
 
 
 
-#endif /* EnvironmentalISEA3H_H_ */
+#endif /* EnvVar_H_ */

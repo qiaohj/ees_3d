@@ -16,7 +16,7 @@
 
 using namespace std;
 #include "Species.h"
-#include "ISEA3H.h"
+#include "ISEA.h"
 #include "../Universal/easylogging.h"
 /**
  * @brief A class to handle the behavior of an individual in the simulation
@@ -87,7 +87,7 @@ public:
      * @param p_current_environments
      * @return True: suitable False: unsuitable
      */
-    bool isSuitable(boost::unordered_map<string, ISEA3H*>* p_current_environments, ISEA3H* mask);
+    bool isSuitable(unordered_map<string, ISEA*>* p_current_environments, ISEA* mask);
 
     /**
      * @brief return the species object of the individual

@@ -391,7 +391,7 @@ int Species::getDispersalMethod() {
 int Species::getNumOfPath() {
     return numberOfPath;
 }
-boost::unordered_map<string, NicheBreadth*> Species::getNicheBreadth() {
+unordered_map<string, NicheBreadth*> Species::getNicheBreadth() {
     return nicheBreadth;
 }
 int Species::getSpeciationYears() {

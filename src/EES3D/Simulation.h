@@ -26,8 +26,8 @@ using namespace std;
 #include "../Universal/CommonFun.h"
 #include "DBField.h"
 #include "Species.h"
-#include "EnvironmentalISEA3H.h"
-#include "ISEA3H.h"
+#include "EnvVar.h"
+#include "ISEA.h"
 #include "Organism.h"
 #include "Neighbor.h"
 #include "Utility.h"
@@ -38,11 +38,11 @@ using namespace std;
 class Simulation {
 private:
     vector<string> logs;
-    boost::unordered_map<string, Species*> species;
+    unordered_map<string, Species*> species;
     vector<string> environment_labels;
-    boost::unordered_map<string, EnvironmentalISEA3H*> *environments;
+    unordered_map<string, EnvVar*> *environments;
     vector<int> timeLine;
-    ISEA3H* mask;
+    ISEA* mask;
     string mask_table;
     string targetFolder;
     string logFile;
@@ -54,7 +54,7 @@ private:
     unsigned long memLimit;
     int indexSimulation;
     int totalSimulation;
-    boost::unordered_map<int, boost::unordered_map<Species*, boost::unordered_map<int, vector<Organism*> > > > all_organisms;
+    unordered_map<int, unordered_map<Species*, unordered_map<int, vector<Organism*> > > > all_organisms;
 
 public:
     /**
@@ -68,29 +68,29 @@ public:
     void setNeighbor(Neighbor *neighborInfo);
     void generateSuitable();
     bool getOverwrite();
-    void saveGroupmap(int year_i, boost::unordered_map<Species*, ISEA3H*> *species_group_maps);
+    void saveGroupmap(int year_i, unordered_map<Species*, ISEA*> *species_group_maps);
     int run();
     Species *ancestor;
-    void addEnvironment(string environment_label, EnvironmentalISEA3H *env);
-    void setMask(ISEA3H* p_mask);
-    bool init(boost::unordered_map<string, EnvironmentalISEA3H*>* environments_base, sqlite3* env_db, boost::unordered_map<string, ISEA3H*>* masks);
+    void addEnvironment(string environment_label, EnvVar *env);
+    void setMask(ISEA* p_mask);
+    bool init(unordered_map<string, EnvVar*>* environments_base, sqlite3* env_db, unordered_map<string, ISEA*>* masks);
     void setTargetFolder(string p_target);
     vector<string> getEnvironmentLabels();
-    EnvironmentalISEA3H* getEnvironment(string environment_label);
+    EnvVar* getEnvironment(string environment_label);
     vector<int> getTimeLine();
-    ISEA3H* getMask();
+    ISEA* getMask();
     string getTargetFolder();
     void createLogDB();
     set<int> getDispersalMap_2(Organism *organism);
-    void getEnvironmenMap(int p_year_i, boost::unordered_map<string, ISEA3H*> *maps);
-    int getUnmarkedID(boost::unordered_map<int, vector<Organism*> > *organisms);
-    void markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, boost::unordered_map<int, vector<Organism*> > *organisms);
+    void getEnvironmentMap(int p_year_i, unordered_map<string, ISEA*> *maps);
+    int getUnmarkedID(unordered_map<int, vector<Organism*> > *organisms);
+    void markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, unordered_map<int, vector<Organism*> > *organisms);
     set<int> getNeighbors(int id, int distance);
     int getDividedYearI(Organism *o_1, Organism *o_2);
-    int getMinDividedYear(int speciation_year, int group_id_1, int group_id_2, boost::unordered_map<int, vector<Organism*> > *organisms, int current_year_i);
+    int getMinDividedYear(int speciation_year, int group_id_1, int group_id_2, unordered_map<int, vector<Organism*> > *organisms, int current_year_i);
     int distance(int id1, int id2, int limited);
-    void markedSpeciesID(int group_id, int temp_species_id, boost::unordered_map<int, vector<Organism*> > *organisms);
-    int getTempSpeciesID(int group_id, boost::unordered_map<int, vector<Organism*> > *organisms);
+    void markedSpeciesID(int group_id, int temp_species_id, unordered_map<int, vector<Organism*> > *organisms);
+    int getTempSpeciesID(int group_id, unordered_map<int, vector<Organism*> > *organisms);
     void generateSpeciationInfo(int year_i);
     virtual ~Simulation();
 

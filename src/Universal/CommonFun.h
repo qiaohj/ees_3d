@@ -46,9 +46,15 @@ using namespace std;
 #endif
 
 
-
+typedef struct {
+        uint32_t virtualMem;
+        uint32_t physicalMem;
+    } processMem_t;
 class CommonFun {
+
 public:
+    static processMem_t GetProcessMemory();
+    static int parseLine(char *line);
     static string quoteSql(const string &s);
     static bool checkKey();
     static int callback(void *NotUsed, int argc, char **argv, char **azColName);

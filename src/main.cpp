@@ -33,7 +33,8 @@ using namespace std;
 #include "Universal/easylogging.h"
 #include "Universal/CommonFun.h"
 #include "EES3D/Scenario.h"
-#include "EES3D/ISEA3H.h"
+#include "EES3D/ISEA.h"
+#include "TEST/ISEA_MEMTEST.h"
 #include "EES3D/Neighbor.h"
 INITIALIZE_EASYLOGGINGPP;
 
@@ -62,7 +63,7 @@ int mainy(int argc, const char *argv[]) {
  *
  *-----------------------------------------*/
 int mainx(int argc, const char *argv[]) {
-    //ISEA3H* t = new ISEA3H("/home/huijieqiao/git/ees__data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
+    //ISEA* t = new ISEA("/home/huijieqiao/git/ees__data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
     //LOG(INFO) <<t->readByID(55);
     sqlite3 *env_db;
     string env_db_str = "/home/huijieqiao/git/ees__data/ISEA3H8/SQLITE/env_Hadley.sqlite";
@@ -110,7 +111,58 @@ int mainx(int argc, const char *argv[]) {
 
     return 0;
 }
-int main(int argc, const char *argv[]) {
+
+
+int main(int argc, const char *argv[]){
+    clock_t start, end;
+    start = clock();
+    LOG(INFO)<<"Pointer";
+    for (int j = 0; j < 3; j++) {
+        map<int, int> *a = new map<int, int>();
+        LOG(INFO) << 1 << ". " << CommonFun::getCurrentRSS(1);
+        for (int i=0;i <100000; i++){
+            a->erase(i);
+            a->insert({i, 1});
+        }
+        LOG(INFO) << 2 << ". " << CommonFun::getCurrentRSS(1);
+        a->clear();
+        delete a;
+        LOG(INFO) << 4 << ". " << CommonFun::getCurrentRSS(1);
+    }
+    class C {
+    private:
+        map<int, float> *v;
+    public:
+        C(){
+            v = new map<int, float>();
+        }
+        virtual ~C(){
+            //CommonFun::freeContainerRemoved(v);
+            delete v;
+        }
+        void setValue(int p_id, float p_value){
+            v->erase(p_id);
+            v->insert({p_id, p_value});
+        }
+    };
+    LOG(INFO) << "Object";
+    for (int j = 0; j < 3; j++) {
+        C *a = new C();
+        LOG(INFO) << 1 << ". " << CommonFun::getCurrentRSS(1);
+        for (int i = 0; i < 100000; i++) {
+            a->setValue(i, 1);
+        }
+        LOG(INFO) << 2 << ". " << CommonFun::getCurrentRSS(1);
+
+        delete a;
+        LOG(INFO) << 4 << ". " << CommonFun::getCurrentRSS(1);
+    }
+    end = clock();
+    double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
+    LOG(INFO)<<5<<". Time Taken:"<<time_taken;
+    return 0;
+}
+int mainx2(int argc, const char *argv[]) {
 
     // Check the validity of the input
     // If the length of parameters are not satisfied with the required number, the application will skip this simulation and show out a warning.
@@ -150,15 +202,23 @@ int main(int argc, const char *argv[]) {
     }
     el::Loggers::flushAll();
 
+
     unsigned long memory_limit = atoi(argv[5]);
     bool is_overwrite = atoi(argv[6]);
-    //initialize the main scenario
-    LOG(INFO)<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1);
-    Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
-    LOG(INFO)<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
-    delete a;
-    LOG(INFO)<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
-
+    for (int i=0; i<10; i++){
+        //initialize the main scenario
+        LOG(INFO)<<i<<". "<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
+                <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
+        Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
+        LOG(INFO)<<i<<". "<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
+                <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
+        delete a;
+        LOG(INFO)<<i<<". "<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
+                <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
+        sleep(10);
+        LOG(INFO)<<i<<". "<<"MEMORY USAGE AFTER A COUPLE SECONDS: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
+                <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
+    }
     return EXIT_SUCCESS;
 }
 

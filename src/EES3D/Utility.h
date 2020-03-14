@@ -28,6 +28,6 @@ public:
      * @param year the year to read, -1 means all data.
      */
     static void readEnvInfo(sqlite3 *db, string tablename, bool with_year,
-            boost::unordered_map<int, boost::unordered_map<int, float>*> *&values);
+            unordered_map<int, unordered_map<int, float>*> *&values);
 };
 #endif /* UTILITY_ */

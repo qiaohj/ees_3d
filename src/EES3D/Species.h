@@ -30,7 +30,7 @@ class Species {
 private:
     bool newSpecies;
     int id;
-    boost::unordered_map<string, NicheBreadth*> nicheBreadth;
+    unordered_map<string, NicheBreadth*> nicheBreadth;
     double* dispersalAbility;
     int dispersalAbilityLength;
     int dispersalSpeed;
@@ -159,7 +159,7 @@ public:
      * @brief return the niche breadths of the species
      * @return
      */
-    boost::unordered_map<string, NicheBreadth*> getNicheBreadth();
+    unordered_map<string, NicheBreadth*> getNicheBreadth();
     /**
      * @brief return the speciation year
      */

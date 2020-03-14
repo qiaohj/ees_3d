@@ -14,10 +14,10 @@
 #include "Scenario.h"
 
 Scenario::Scenario(string p_env_db, string p_conf_db, string p_target, bool p_overwrite, int p_id, unsigned long p_mem_limit) {
-    masks = new boost::unordered_map<string, ISEA3H*>();
+    masks = new unordered_map<string, ISEA*>();
         /// @brief If save the results to a sqlite database. Suggested to set it to true
         /// @brief The environmental variables used in the simulation.
-    environments_base = new boost::unordered_map<string, EnvironmentalISEA3H*>();
+    environments_base = new unordered_map<string, EnvVar*>();
 
     //initialize the required parameters for the simulation.
     memLimit = p_mem_limit;

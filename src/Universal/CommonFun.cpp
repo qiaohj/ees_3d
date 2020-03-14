@@ -71,6 +71,35 @@ void CommonFun::executeSQL(const vector<string> s, sqlite3 *db, bool output) {
     string joined = boost::algorithm::join(s, " ");
     CommonFun::executeSQL(joined, db, output);
 }
+processMem_t CommonFun::GetProcessMemory() {
+    FILE *file = fopen("/proc/self/status", "r");
+    char line[128];
+    processMem_t processMem;
+
+    while (fgets(line, 128, file) != NULL) {
+        if (strncmp(line, "VmSize:", 7) == 0) {
+            processMem.virtualMem = parseLine(line);
+        }
+
+        if (strncmp(line, "VmRSS:", 6) == 0) {
+            processMem.physicalMem = parseLine(line);
+        }
+        if (processMem.physicalMem != 0 && processMem.virtualMem != 0) {
+            break;
+        }
+    }
+    fclose(file);
+    return processMem;
+}
+int CommonFun::parseLine(char *line) {
+    // This assumes that a digit will be found and the line ends in " Kb".
+    int i = strlen(line);
+    const char *p = line;
+    while (*p < '0' || *p > '9') p++;
+    line[i - 3] = '\0';
+    i = atoi(p);
+    return i;
+}
 string CommonFun::quoteSql(const string &s) {
     return string("'") + s + string("'");
 }
