@@ -6,7 +6,7 @@ library(RSQLite)
 library(DBI)
 
 
-logdb<-"/home/huijieqiao/git/ees_3d_data/TEST/Results/259_GOOD_MODERATE/259_GOOD_MODERATE.sqlite"
+logdb<-"/home/huijieqiao/git/ees_3d_data/TEST/Results/1072_GOOD_NARROW/1072_GOOD_NARROW.sqlite"
 mydb <- dbConnect(RSQLite::SQLite(), logdb)
 trees<-dbReadTable(mydb, "trees")
 suitable<-dbReadTable(mydb, "suitable")
@@ -21,9 +21,9 @@ shape_t@data<-subset(shape_t@data, shape_t$global_id %in% suitable$ID)
 shape_t@data$global_id<-as.numeric(as.character(shape_t@data$global_id))
 shape_t@data<-inner_join(shape_t@data, suitable, by=c("global_id"="ID"))
 writeOGR(shape_t, dsn = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/test", 
-         layer = "1170", driver="ESRI Shapefile", overwrite_layer=T)
+         layer = "1188", driver="ESRI Shapefile", overwrite_layer=T)
 table(map$YEAR)
-y<-1170
+y<-1188
 for (y in c(1199:0)){
   
   item <- map[which(map$YEAR==y),]
@@ -32,7 +32,7 @@ for (y in c(1199:0)){
   shape_t@data$global_id<-as.numeric(as.character(shape_t@data$global_id))
   shape_t@data<-subset(shape_t@data, shape_t$global_id %in% item$ID)
   shape_t@data<-inner_join(shape_t@data, item, by=c("global_id"="ID"))
-  plot(shape_t, col=rainbow(10)[item$group_id+1], cex=0.2)
+  plot(shape_t, col=rainbow(10)[shape_t@data$group_id+1], cex=0.2)
   print(table(item$group_id))
   x<-readline(prompt=sprintf("Year is %d, Found %d groups. (X=exit): ", y, length(unique(item$group_id))))
   if (tolower(x)=="x"){

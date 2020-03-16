@@ -28,10 +28,9 @@ using namespace std;
 #include <cmath>
 #include <sys/resource.h>
 
-#include <boost/unordered_map.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/thread/thread.hpp>
+#include <boost/thread.hpp>
 
 #include "Const.h"
 #include "easylogging.h"
@@ -70,7 +69,10 @@ public:
      * @param delimiter
      * @return
      */
-    static vector<string> splitStr(string s, string delimiter);
+    static void splitStr(string s, string delimiter, vector<string> *v);
+
+    static bool fileExist (const string& name);
+
     /**
      * @brief remove the the given extension from a file name
      * @param path

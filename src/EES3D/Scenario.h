@@ -16,18 +16,16 @@
 
 using namespace std;
 #include <string>
-#include <boost/unordered_map.hpp>
-#include <boost/unordered_set.hpp>
 #include <sqlite3.h>
+#include "../Universal/easylogging.h"
 #include "../Universal/CommonFun.h"
+#include "Neighbor.h"
+#include "DBField.h"
+#include "Simulation.h"
 #include "ISEA.h"
 #include "EnvVar.h"
 #include "Species.h"
 #include "Organism.h"
-#include "../Universal/easylogging.h"
-#include "Neighbor.h"
-#include "DBField.h"
-#include "Simulation.h"
 
 
 /**
@@ -37,7 +35,7 @@ class Scenario {
 private:
 	/// @brief a sqlite db connection to save the results.
 	unsigned long memLimit;
-	vector<int> timeLine;
+	vector<int> *timeLine;
 	Neighbor* neighborInfo;
 	unordered_map<string, ISEA*> *masks;
 	/// @brief If save the results to a sqlite database. Suggested to set it to true

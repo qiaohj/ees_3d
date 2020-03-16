@@ -15,9 +15,9 @@
 
 using namespace std;
 #include <sqlite3.h>
-#include <boost/unordered_map.hpp>
 #include "../Universal/easylogging.h"
 #include "DBField.h"
+#include "ISEA.h"
 
 class Utility {
 public:
@@ -28,6 +28,6 @@ public:
      * @param year the year to read, -1 means all data.
      */
     static void readEnvInfo(sqlite3 *db, string tablename, bool with_year,
-            unordered_map<int, unordered_map<int, float>*> *&values);
+            unordered_map<int, ISEA*> *values);
 };
 #endif /* UTILITY_ */

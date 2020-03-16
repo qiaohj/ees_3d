@@ -98,8 +98,8 @@ int Organism::getSpeciationYears(){
 //    children.push_back(child);
 //}
 bool Organism::isSuitable(unordered_map<string, ISEA*>* p_current_environments, ISEA* mask) {
-    unordered_map<string, NicheBreadth*> nicheBreadth = species->getNicheBreadth();
-    for (auto item : nicheBreadth) {
+    unordered_map<string, NicheBreadth*> *nicheBreadth = species->getNicheBreadth();
+    for (auto item : *nicheBreadth) {
 
         float mask_value = mask->readByID(id);
         if ((int) mask_value == NODATA) {

@@ -18,10 +18,8 @@ using namespace std;
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/unordered_map.hpp>
 #include <sqlite3.h>
+#include <set>
 #include "../Universal/Const.h"
 #include "../Universal/CommonFun.h"
 #include "DBField.h"
@@ -31,30 +29,30 @@ using namespace std;
  */
 class Neighbor {
 private:
-	boost::unordered_map<int, set<int>> neighbors;
+    unordered_map<int, set<int>*> *neighbors;
 public:
 
-	/**
-	 * @brief Constructor of Neighbor class No.1
-	 * @param p_filename the file to load the map info
-	 */
-	Neighbor(sqlite3* env_db);
+    /**
+     * @brief Constructor of Neighbor class No.1
+     * @param p_filename the file to load the map info
+     */
+    Neighbor(sqlite3 *env_db);
 
-	/**
-	 * @brief Destructor of Neighbor class
-	 *
-	 * release all the resources
-	 */
-	virtual ~Neighbor();
+    /**
+     * @brief Destructor of Neighbor class
+     *
+     * release all the resources
+     */
+    virtual ~Neighbor();
 
-	/**
-	 * @brief return all the neighbors of a given face within a given distance
-	 * @return
-	 */
-	void getNeighborByID(int p_id, int distance, set<int>* neighbors, set<int> *handled_neighbors);
+    /**
+     * @brief return all the neighbors of a given face within a given distance
+     * @return
+     */
+    void getNeighborByID(int p_id, int distance, set<int> *neighbors, set<int> *handled_neighbors);
 
-	int distance(int p_id1, int p_id2, int limited);
-	boost::unordered_map<int, set<int>> getNeighbors();
+    int distance(int p_id1, int p_id2, int limited);
+    unordered_map<int, set<int>*>* getNeighbors();
 };
 
 #endif /* Neighbor_H */

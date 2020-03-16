@@ -150,17 +150,18 @@ string CommonFun::fixedLength(int value, int digits = 3) {
     reverse(result.begin(), result.end());
     return result;
 }
-vector<string> CommonFun::splitStr(string s, string delimiter){
-    vector<string> v;
+bool CommonFun::fileExist(const string &name) {
+    return (access(name.c_str(), F_OK) != -1);
+}
+void CommonFun::splitStr(string s, string delimiter, vector<string> * v){
     size_t pos = 0;
     std::string token;
     while ((pos = s.find(delimiter)) != std::string::npos) {
         token = s.substr(0, pos);
-        v.push_back(token);
+        v->push_back(token);
         s.erase(0, pos + delimiter.length());
     }
-    v.push_back(s);
-    return v;
+    v->push_back(s);
 }
 /**
  * Returns the peak (maximum so far) resident set size (physical

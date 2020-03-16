@@ -14,7 +14,7 @@
 #include "Utility.h"
 
 void Utility::readEnvInfo(sqlite3 *db, string tablename, bool with_year,
-        unordered_map<int, unordered_map<int, float>*> *&values) {
+        unordered_map<int, ISEA*> *values) {
     string sql = "SELECT * FROM " + tablename;
     sqlite3_stmt *stmt;
    //LOG(INFO) << "Query: "<< sql;
@@ -31,9 +31,9 @@ void Utility::readEnvInfo(sqlite3 *db, string tablename, bool with_year,
             int id = sqlite3_column_int(stmt, ENVIRONMENT_global_id);
             float v = (float)sqlite3_column_double(stmt, ENVIRONMENT_v);
             if (values->find(year)==values->end()){
-                values->insert({year, new unordered_map<int, float>()});
+                values->insert({year, new ISEA()});
             }
-            values->at(year)->insert({id, v});
+            values->at(year)->setValue(id, v);
 
             break;
         }

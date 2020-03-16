@@ -16,7 +16,6 @@
  * 7. with detail. An ZERO value means output the details of the simulation or not.
  *
  */
-
 using namespace std;
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,24 +27,27 @@ using namespace std;
 #include <math.h>
 #include <sqlite3.h>
 #include <unistd.h>
-#include <boost/thread/thread.hpp>
 
 #include "Universal/easylogging.h"
 #include "Universal/CommonFun.h"
 #include "EES3D/Scenario.h"
 #include "EES3D/ISEA.h"
-#include "TEST/ISEA_MEMTEST.h"
 #include "EES3D/Neighbor.h"
+#include "EES3D/EnvVar.h"
+
 INITIALIZE_EASYLOGGINGPP;
 
-int mainy(int argc, const char *argv[]) {
+
+
+
+int testFind(int argc, const char *argv[]) {
     int f = stoi(argv[1]);
-    std::set<int> example = { 1};
+    set<int> example = { 1};
 
     if (example.find(f) != example.end()) {
-        std::cout << "Found\n";
+        cout << "Found\n";
     } else {
-        std::cout << "Not found\n";
+        cout << "Not found\n";
     }
     return 0;
 }
@@ -62,7 +64,7 @@ int mainy(int argc, const char *argv[]) {
  * 7. with detail. An ZERO value means output the details of the simulation or not.
  *
  *-----------------------------------------*/
-int mainx(int argc, const char *argv[]) {
+int testSQLITE(int argc, const char *argv[]) {
     //ISEA* t = new ISEA("/home/huijieqiao/git/ees__data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
     //LOG(INFO) <<t->readByID(55);
     sqlite3 *env_db;
@@ -113,7 +115,7 @@ int mainx(int argc, const char *argv[]) {
 }
 
 
-int main(int argc, const char *argv[]){
+int testISEA(int argc, const char *argv[]){
     clock_t start, end;
     start = clock();
     LOG(INFO)<<"Pointer";
@@ -147,7 +149,7 @@ int main(int argc, const char *argv[]){
     };
     LOG(INFO) << "Object";
     for (int j = 0; j < 3; j++) {
-        C *a = new C();
+        ISEA *a = new ISEA();
         LOG(INFO) << 1 << ". " << CommonFun::getCurrentRSS(1);
         for (int i = 0; i < 100000; i++) {
             a->setValue(i, 1);
@@ -162,7 +164,7 @@ int main(int argc, const char *argv[]){
     LOG(INFO)<<5<<". Time Taken:"<<time_taken;
     return 0;
 }
-int mainx2(int argc, const char *argv[]) {
+int run(int argc, const char *argv[]) {
 
     // Check the validity of the input
     // If the length of parameters are not satisfied with the required number, the application will skip this simulation and show out a warning.
@@ -205,20 +207,65 @@ int mainx2(int argc, const char *argv[]) {
 
     unsigned long memory_limit = atoi(argv[5]);
     bool is_overwrite = atoi(argv[6]);
-    for (int i=0; i<10; i++){
+    for (int i=0; i<1; i++){
         //initialize the main scenario
-        LOG(INFO)<<i<<". "<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
+        LOG(DEBUG)<<i<<". "<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
                 <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
         Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
-        LOG(INFO)<<i<<". "<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
+        LOG(DEBUG)<<i<<". "<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
                 <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
         delete a;
-        LOG(INFO)<<i<<". "<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
+        LOG(DEBUG)<<i<<". "<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
                 <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
         sleep(10);
-        LOG(INFO)<<i<<". "<<"MEMORY USAGE AFTER A COUPLE SECONDS: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
+        LOG(DEBUG)<<i<<". "<<": "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
                 <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
     }
     return EXIT_SUCCESS;
 }
 
+void testEnvVar(int times){
+    LOG(INFO)<<"BEGIN"<<": "<<CommonFun::getCurrentRSS(1);
+    string p_db = "/home/huijieqiao/git/ees_3d_data/ISEA3H8/SQLITE/env_Hadley3D.sqlite";
+    string p_env_name1 = "Debiased_Mean_Annual_Precipitation";
+    string p_env_name2 = "Debiased_Mean_Annual_Temperature";
+    sqlite3 *env_db;
+    int rc = sqlite3_open(p_db.c_str(), &env_db);
+    if (rc) {
+        LOG(INFO) << "Can't open database: " << sqlite3_errmsg(env_db) << " from " << p_db;
+    } else {
+        LOG(INFO) << "Opened database from <" << p_db;
+    }
+    for (int i = 1; i <= times; i++) {
+        LOG(INFO) << i << ". 1" << ": " << CommonFun::getCurrentRSS(1);
+        vector<int> *timeLine = new vector<int>();
+        LOG(INFO) << i << ". 2" << ": " << CommonFun::getCurrentRSS(1);
+        for (int j = 1200; j <= 0; j++) {
+            timeLine->push_back(j);
+        }
+        LOG(INFO) << i << ". 3.1" << ": " << CommonFun::getCurrentRSS(1);
+        EnvVar *env1 = new EnvVar(p_env_name1, env_db, timeLine);
+        LOG(INFO) << i << ". 4.1" << ": " << CommonFun::getCurrentRSS(1);
+        delete env1;
+        LOG(INFO) << i << ". 5.1" << ": " << CommonFun::getCurrentRSS(1);
+
+        LOG(INFO) << i << ". 3.2" << ": " << CommonFun::getCurrentRSS(1);
+        EnvVar *env2 = new EnvVar(p_env_name2, env_db, timeLine);
+        LOG(INFO) << i << ". 4.2" << ": " << CommonFun::getCurrentRSS(1);
+        delete env2;
+        LOG(INFO) << i << ". 5.2" << ": " << CommonFun::getCurrentRSS(1);
+
+        delete timeLine;
+        LOG(INFO) << i << ". 6" << ": " << CommonFun::getCurrentRSS(1);
+    }
+    sqlite3_close(env_db);
+    LOG(INFO)<<"END "<<": "<<CommonFun::getCurrentRSS(1);
+}
+
+int main(int argc, const char *argv[]){
+    //testEnvVar(stoi(argv[1]));
+
+    //return 0;
+    int status = run(argc, argv);
+    return status;
+}

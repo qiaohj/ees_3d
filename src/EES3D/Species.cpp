@@ -13,19 +13,34 @@
 
 #include "Species.h"
 
-Species::Species(sqlite3_stmt *stmt, int burn_in_year, vector<int>& timeLine) {
-    this->timeLine = timeLine;
+Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
+    seeds = new set<int>();
+    int from = sqlite3_column_int(stmt, SIMULATION_from);
+    int to = sqlite3_column_int(stmt, SIMULATION_to);
+    int step = sqlite3_column_int(stmt, SIMULATION_step);
+    timeLine = new vector<int>();
+    if (from < to) {
+        for (int i = from; i <= to; i += step) {
+            this->timeLine->push_back(i);
+        }
+    } else {
+        for (int i = from; i >= to; i += step) {
+            this->timeLine->push_back(i);
+        }
+    }
 	currentSpeciesExtinctionTimeSteps = 0;
 	newSpecies = true;
     id = sqlite3_column_int(stmt, SIMULATION_id);
-    vector<string> dispersalAbility_str = CommonFun::splitStr(
-            string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_dispersal_ability))), ",");
+    vector<string> *dispersalAbility_str = new vector<string>();
+    CommonFun::splitStr(
+            string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_dispersal_ability))), ",", dispersalAbility_str);
 
-    dispersalAbilityLength = dispersalAbility_str.size();
+    dispersalAbilityLength = dispersalAbility_str->size();
     dispersalAbility = new double[dispersalAbilityLength];
 	for (int index = 0; index < dispersalAbilityLength; ++index) {
-		dispersalAbility[index] = stod(dispersalAbility_str[index]);
+		dispersalAbility[index] = stod(dispersalAbility_str->at(index));
 	}
+	delete dispersalAbility_str;
 	this->burninYear = burn_in_year;
 
     dispersalSpeed = sqlite3_column_int(stmt, SIMULATION_dispersal_speed);
@@ -46,17 +61,23 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year, vector<int>& timeLine) {
     number_of_clade_extinction = 0;
     number_of_speciation = 0;
     number_of_species_extinction = 0;
-    environment_labels = CommonFun::splitStr(string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments))), ",");
-    vector<string> niche_breadth_array = CommonFun::splitStr(
-            string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_nb_v))), "|");
-    for (unsigned i = 0; i < niche_breadth_array.size(); ++i) {
-        vector<string> niche_breadth_item = CommonFun::splitStr(niche_breadth_array[i], ",");
-        NicheBreadth* niche_breadth = new NicheBreadth(stod(niche_breadth_item[0]), stod(niche_breadth_item[1]));
-        nicheBreadth[environment_labels[i]] = niche_breadth;
+    environment_labels = new vector<string>();
+    CommonFun::splitStr(string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments))), ",", environment_labels);
+    vector<string> *niche_breadth_array = new vector<string>();
+    CommonFun::splitStr(
+            string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_nb_v))), "|", niche_breadth_array);
+    nicheBreadth = new unordered_map<string, NicheBreadth*>();
+    for (unsigned i = 0; i < niche_breadth_array->size(); ++i) {
+        vector<string> *niche_breadth_item = new vector<string>();
+        CommonFun::splitStr(niche_breadth_array->at(i), ",", niche_breadth_item);
+        NicheBreadth* niche_breadth = new NicheBreadth(stod(niche_breadth_item->at(0)), stod(niche_breadth_item->at(1)));
+        nicheBreadth->insert({environment_labels->at(i), niche_breadth});
+        delete niche_breadth_item;
     }
+    delete niche_breadth_array;
 
     int initial_seed = sqlite3_column_int(stmt, SIMULATION_initial_seeds);;
-    seeds.insert(initial_seed);
+    seeds->insert(initial_seed);
 }
 
 string Species::getIDWithParentID(){
@@ -70,18 +91,29 @@ string Species::getIDWithParentID(){
     }
 }
 Species::Species(int p_id, Species* p_parent, int p_year_i) {
-    timeLine = p_parent->getTimeLine();
+    LOG(DEBUG)<<"y1";
+    timeLine = new vector<int>();
+    for (auto it : *(p_parent->getTimeLine())){
+        timeLine->push_back(it);
+    }
+    LOG(DEBUG)<<"y2";
 	currentSpeciesExtinctionTimeSteps = 0;
 
     newSpecies = true;
     parent = p_parent;
     id = p_id;
+    LOG(DEBUG)<<"y3";
     speciesExtinctionThreshold = parent->getSpeciesExtinctionThreshold();
+    LOG(DEBUG)<<"y4";
     groupExtinctionThreshold = parent->getGroupExtinctionThreshold();
+    LOG(DEBUG)<<"y5";
     speciesExtinctionTimeSteps = p_parent->getSpeciesExtinctionTimeSteps();
+    LOG(DEBUG)<<"y6";
     speciesExtinctionThreaholdPercentage = p_parent->getSpeciesExtinctionThreaholdPercentage();
     maxSpeciesDistribution = 0;
+    LOG(DEBUG)<<"y7";
     dispersalAbility = new double[parent->getDispersalAbilityLength()];
+    LOG(DEBUG)<<"y8";
     for (int i=0; i<parent->getDispersalAbilityLength();i++){
         dispersalAbility[i] = parent->getDispersalAbility()[i];
     }
@@ -89,26 +121,37 @@ Species::Species(int p_id, Species* p_parent, int p_year_i) {
     dispersalMethod = parent->getDispersalMethod();
     numberOfPath = parent->getNumOfPath();
     speciationYears = parent->getSpeciationYears();
-    for (auto it : parent->getNicheBreadth()){
+    LOG(DEBUG)<<"y9";
+    nicheBreadth = new unordered_map<string, NicheBreadth*>();
+    for (auto it : *(parent->getNicheBreadth())){
         NicheBreadth* p_NicheBreadth = it.second;
         NicheBreadth* new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
-        this->nicheBreadth[it.first] = new_NicheBreadth;
+        nicheBreadth->insert({it.first, new_NicheBreadth});
     }
-
+    LOG(DEBUG)<<"y10";
     dispersalAbilityLength = parent->getDispersalAbilityLength();
     burninYear = parent->getBurnInYear();
 
     parent->setDisappearedYearI(p_year_i);
     appearedYearI = p_year_i;
     disappearedYearI = 0;
+    LOG(DEBUG)<<"y11";
     parent->addChild(this);
     clade_extinction_status = 0;
     number_of_clade_extinction = 0;
     number_of_speciation = 0;
     number_of_species_extinction = 0;
-    environment_labels = parent->getEnvironmentLabels();
+    LOG(DEBUG)<<"y12";
+    environment_labels = new vector<string>();
+    for (auto it : *(parent->getEnvironmentLabels())){
+        environment_labels->push_back(it);
+    }
+    seeds = new set<int>();
+    for (auto it : *(parent->getSeeds())){
+        seeds->insert(it);
+    }
 }
-vector<string> Species::getEnvironmentLabels(){
+vector<string> *Species::getEnvironmentLabels(){
     return this->environment_labels;
 }
 void Species::setCladeExtinctionStatus(int status) {
@@ -274,27 +317,27 @@ string Species::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
     if (appearedYearI == t_disappearedYear) {
         if (iscolor) {
             char t_char[100];
-            sprintf(t_char, "SP%u[%u]:%u@%s~%s", id, timeLine[appearedYearI],
-                    timeLine[t_disappearedYear - parent_year], color.c_str(),
+            sprintf(t_char, "SP%u[%u]:%u@%s~%s", id, timeLine->at(appearedYearI),
+                    timeLine->at(t_disappearedYear - parent_year), color.c_str(),
                     linecolor.c_str());
             output += string(t_char);
         } else {
             char t_char[100];
-            sprintf(t_char, "SP%u[%u]:%u", id, timeLine[appearedYearI],
-                    timeLine[t_disappearedYear - parent_year]);
+            sprintf(t_char, "SP%d[%d]:%d", id, timeLine->at(appearedYearI),
+                    timeLine->at(t_disappearedYear - parent_year));
             output += string(t_char);
         }
     } else {
         if (iscolor) {
             char t_char[100];
-            sprintf(t_char, "SP%u[%u-%u]:%u@%s~%s", id, timeLine[appearedYearI],
-                    timeLine[t_disappearedYear], timeLine[t_disappearedYear - parent_year],
+            sprintf(t_char, "SP%d[%d-%d]:%d@%s~%s", id, timeLine->at(appearedYearI),
+                    timeLine->at(t_disappearedYear), timeLine->at(t_disappearedYear - parent_year),
                     color.c_str(), linecolor.c_str());
             output += string(t_char);
         } else {
             char t_char[100];
-            sprintf(t_char, "SP%u[%u-%u]:%u", id, timeLine[appearedYearI], timeLine[t_disappearedYear],
-                    timeLine[t_disappearedYear - parent_year]);
+            sprintf(t_char, "SP%d[%d-%d]:%d", id, timeLine->at(appearedYearI), timeLine->at(t_disappearedYear),
+                    timeLine->at(t_disappearedYear - parent_year));
             output += string(t_char);
         }
     }
@@ -323,14 +366,21 @@ int Species::getBurnInYear() {
 }
 
 Species::~Species() {
-    LOG(DEBUG)<<10;
+    LOG(DEBUG)<<"w1";
     delete[] dispersalAbility;
-    LOG(DEBUG)<<11;
-    for (auto it : nicheBreadth){
-        LOG(DEBUG)<<12;
+    LOG(DEBUG)<<"w2";
+    for (auto it : *nicheBreadth){
+        LOG(DEBUG)<<"w3";
         delete it.second;
     }
-
+    LOG(DEBUG)<<"w4";
+    delete nicheBreadth;
+    LOG(DEBUG)<<"w5";
+    delete seeds;
+    LOG(DEBUG)<<"w6";
+    delete environment_labels;
+    LOG(DEBUG)<<"w7";
+    delete timeLine;
 }
 int Species::getDispersalAbilityLength(){
 	return dispersalAbilityLength;
@@ -338,7 +388,7 @@ int Species::getDispersalAbilityLength(){
 double* Species::getDispersalAbility() {
     return dispersalAbility;
 }
-vector<int> Species::getTimeLine(){
+vector<int> *Species::getTimeLine(){
     return this->timeLine;
 }
 
@@ -379,7 +429,7 @@ void Species::addCurrentSpeciesExtinctionTimeSteps(){
 int Species::getDispersalSpeed() {
     return dispersalSpeed;
 }
-set<int> Species::getSeeds() {
+set<int> *Species::getSeeds() {
     return seeds;
 }
 int Species::getID() {
@@ -391,7 +441,7 @@ int Species::getDispersalMethod() {
 int Species::getNumOfPath() {
     return numberOfPath;
 }
-unordered_map<string, NicheBreadth*> Species::getNicheBreadth() {
+unordered_map<string, NicheBreadth*> *Species::getNicheBreadth() {
     return nicheBreadth;
 }
 int Species::getSpeciationYears() {

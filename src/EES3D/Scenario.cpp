@@ -14,6 +14,7 @@
 #include "Scenario.h"
 
 Scenario::Scenario(string p_env_db, string p_conf_db, string p_target, bool p_overwrite, int p_id, unsigned long p_mem_limit) {
+    timeLine = new vector<int>();
     masks = new unordered_map<string, ISEA*>();
         /// @brief If save the results to a sqlite database. Suggested to set it to true
         /// @brief The environmental variables used in the simulation.
@@ -64,52 +65,56 @@ Scenario::Scenario(string p_env_db, string p_conf_db, string p_target, bool p_ov
 
     if (from < to) {
         for (int i = from; i <= to; i += step) {
-            this->timeLine.push_back(i);
+            this->timeLine->push_back(i);
         }
     } else {
         for (int i = from; i >= to; i += step) {
-            this->timeLine.push_back(i);
+            this->timeLine->push_back(i);
         }
     }
     LOG(INFO) << "Init the simulations";
-    LOG(DEBUG)<<"MEMORY USAGE BEFORE INIT SMULATIONS: "<<CommonFun::getCurrentRSS(1);
+    LOG(DEBUG) << "MEMORY USAGE BEFORE INIT SMULATIONS: " << CommonFun::getCurrentRSS(1);
     vector<Simulation*> simulations;
     initSimulations(conf_db, env_db, p_id, p_target, p_overwrite, neighborInfo, simulations);
 
     LOG(INFO) << "Run the simulations. Simulation size is " << simulations.size();
     int i = 1;
-    for (Simulation* simulation : simulations){
-        LOG(DEBUG)<<"MEMORY USAGE BEFORE INIT SIMULATION ("<<simulation->getTargetFolder()<<"): "<<CommonFun::getCurrentRSS(1);
-        for (auto it : *environments_base){
-            if (it.second){
-                LOG(DEBUG)<< it.first <<" inited";
-            }else{
-                LOG(DEBUG)<< it.first <<" is NULL";
+    for (Simulation *simulation : simulations) {
+        LOG(DEBUG) << "MEMORY USAGE BEFORE INIT SIMULATION (" << simulation->getTargetFolder() << "): " << CommonFun::getCurrentRSS(1);
+        for (auto it : *environments_base) {
+            if (it.second) {
+                LOG(DEBUG) << it.first << " inited";
+            } else {
+                LOG(DEBUG) << it.first << " is NULL";
             }
         }
-        bool status  = simulation->init(environments_base, env_db, masks);
-        for (auto it : *environments_base){
-            if (it.second){
-                LOG(DEBUG)<< it.first <<" inited";
-            }else{
-                LOG(DEBUG)<< it.first <<" is NULL";
+        bool status = simulation->init(environments_base, env_db, masks);
+        for (auto it : *environments_base) {
+            if (it.second) {
+                LOG(DEBUG) << it.first << " inited";
+            } else {
+                LOG(DEBUG) << it.first << " is NULL";
             }
         }
-        LOG(DEBUG)<<"MEMORY USAGE AFTER INIT SIMULATION ("<<simulation->getTargetFolder()<<"): "<<CommonFun::getCurrentRSS(1);
-        if (status){
+        LOG(DEBUG) << "MEMORY USAGE AFTER INIT SIMULATION (" << simulation->getTargetFolder() << "): " << CommonFun::getCurrentRSS(1);
+        if (status) {
+
             simulation->setIndexSimulation(i++);
             simulation->setTotalSimulation(simulations.size());
-            LOG(DEBUG)<<"MEMORY USAGE BEFORE RUN: "<<CommonFun::getCurrentRSS(1);
+            LOG(DEBUG) << "MEMORY USAGE BEFORE RUN: " << CommonFun::getCurrentRSS(1);
             simulation->run();
-            LOG(DEBUG)<<"MEMORY USAGE BEFORE COMMIT LOG: "<<CommonFun::getCurrentRSS(1);
+            LOG(DEBUG) << "MEMORY USAGE BEFORE COMMIT LOG: " << CommonFun::getCurrentRSS(1);
             simulation->commitLog();
+
         }
-        LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE: "<<CommonFun::getCurrentRSS(1);
+        LOG(DEBUG) << "MEMORY USAGE BEFORE RELEASE: " << CommonFun::getCurrentRSS(1);
         delete simulation;
-        LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE: "<<CommonFun::getCurrentRSS(1);
+        LOG(DEBUG) << "MEMORY USAGE AFTER RELEASE: " << CommonFun::getCurrentRSS(1);
     }
-    LOG(DEBUG)<<"MEMORY USAGE AFTER ALL SIMULATIONS: "<<CommonFun::getCurrentRSS(1);
+
+    LOG(DEBUG) << "MEMORY USAGE AFTER ALL SIMULATIONS: " << CommonFun::getCurrentRSS(1);
     simulations.clear();
+
     sqlite3_close(env_db);
     sqlite3_close(conf_db);
     LOG(INFO) << "Finished";
@@ -175,12 +180,13 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
             int burn_in_year = sqlite3_column_int(stmt, SIMULATION_burn_in_year);
             string label = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_label)));
             //LOG(DEBUG) << "init Species";
-            Species *new_species = new Species(stmt, burn_in_year, timeLine);
+            Species *new_species = new Species(stmt, burn_in_year);
             //LOG(DEBUG) << "Finished to init Species";
 
             string environments_str = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments)));
             string mask_table = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_mask)));
-            vector<string> environment_labels = CommonFun::splitStr(environments_str, ",");
+            vector<string> *environment_labels = new vector<string>();
+            CommonFun::splitStr(environments_str, ",", environment_labels);
 
             Simulation *simulation = new Simulation(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, timeLine, neighborInfo,
                     environment_labels, mask_table);
@@ -189,7 +195,7 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
              * If the target folder exists and the is_overwrite parameter is false, skip the simulation,
              * or overwrite the existing result with the new simulation.
              -------------------------*/
-            bool isFinished = boost::filesystem::exists(simulation->getTargetFolder());
+            bool isFinished = CommonFun::fileExist(simulation->getTargetFolder());
             if ((isFinished) && (!p_overwrite)) {
                 LOG(INFO) << "Result folder is exist, skip this simulation!";
                 delete simulation;
@@ -216,6 +222,9 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
 Scenario::~Scenario() {
     LOG(DEBUG)<<"1 "<<CommonFun::getCurrentRSS(1);
     delete neighborInfo;
+    LOG(DEBUG)<<"1.5 "<<CommonFun::getCurrentRSS(1);
+    delete timeLine;
+
     LOG(DEBUG)<<"2 "<<CommonFun::getCurrentRSS(1);
     for (auto it : *environments_base){
         LOG(DEBUG)<<"3 "<<CommonFun::getCurrentRSS(1);

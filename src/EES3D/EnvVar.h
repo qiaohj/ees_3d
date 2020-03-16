@@ -14,7 +14,6 @@
 #ifndef EnvVar_H_
 #define EnvVar_H_
 
-#include <boost/unordered_map.hpp>
 #include "ISEA.h"
 #include "DBField.h"
 #include "Utility.h"
@@ -38,7 +37,7 @@ public:
      * @param p_env_db database
      * @param timeLine timeline the simulation
      */
-	EnvVar(string p_env_name, sqlite3* p_env_db, vector<int> &timeLine);
+	EnvVar(string p_env_name, sqlite3* p_env_db, vector<int> *timeLine);
 
 	/**
 	 * @brief Destructor of EnvVar class

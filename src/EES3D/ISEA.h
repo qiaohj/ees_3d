@@ -17,9 +17,6 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/io.hpp>
-//#include <boost/unordered_map.hpp>
 #include "../Universal/Const.h"
 #include "../Universal/CommonFun.h"
 #include "../Universal/CSVReader.h"
