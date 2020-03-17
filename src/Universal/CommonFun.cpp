@@ -55,17 +55,17 @@ string CommonFun::removeSuffix(const string &path, const string &extension) {
         return string("");
     return path.substr(0, path.length() - extension.length());
 }
-void CommonFun::writeFile(const string s, const char *path) {
+void CommonFun::writeFile(string *s, const char *path) {
     ofstream outfile(path);
     if (!outfile.is_open()) {
         cerr << "Couldn't open " << path << endl;
     }
-    outfile << s << endl;
+    outfile << *s << endl;
     outfile.close();
 }
-void CommonFun::writeFile(const vector<string> s, const char *path) {
-    string joined = boost::algorithm::join(s, "\n");
-    writeFile(joined, path);
+void CommonFun::writeFile(vector<string> *s, const char *path) {
+    string joined = boost::algorithm::join(*s, "\n");
+    writeFile(&joined, path);
 }
 void CommonFun::executeSQL(const vector<string> s, sqlite3 *db, bool output) {
     string joined = boost::algorithm::join(s, " ");

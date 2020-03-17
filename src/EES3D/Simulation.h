@@ -35,7 +35,9 @@ using namespace std;
  */
 class Simulation {
 private:
-    vector<string> logs;
+    double t1;
+    double t2;
+    vector<string> *logs;
     unordered_map<string, Species*> species;
     vector<string> *environment_labels;
     unordered_map<string, EnvVar*> *environments;
@@ -52,17 +54,17 @@ private:
     unsigned long memLimit;
     int indexSimulation;
     int totalSimulation;
-    unordered_map<int, unordered_map<Species*, unordered_map<int, vector<Organism*> > > > all_organisms;
+    unordered_map<int, unordered_map<Species*, unordered_map<int, vector<Organism*> *> *> *> *all_organisms;
 
 public:
     /**
      * @brief Constructor of Simulation
      */
     Simulation(Species *species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit, vector<int> *p_timeLine, Neighbor *neighborInfo, vector<string> *environment_labels, string mask_table);
-    int getMinDividedYear_old(int speciation_year, int group_id_1, int group_id_2, unordered_map<int, vector<Organism*> > *organisms, int current_year_i);
-    int getMinDividedYear_Disjoint(int speciation_year, int group_id_1, int group_id_2, unordered_map<int, vector<Organism*> > *organisms, int current_year_i);
+    int getMinDividedYear_old(int speciation_year, vector<Organism*> *group_1, vector<Organism*> *group_2, int current_year_i);
+    int getMinDividedYear_Disjoint(int speciation_year, vector<Organism*> *group_1, vector<Organism*> *group_2, int current_year_i);
     int getDividedYearI(Organism *o_1, Organism *o_2);
-    int getMinDividedYear(int speciation_year, int group_id_1, int group_id_2, unordered_map<int, vector<Organism*> > *organisms, int current_year_i);
+    int getMinDividedYear(int speciation_year, int group_id_1, int group_id_2, unordered_map<int, vector<Organism*> *> *organisms, int current_year_i);
     void setIndexSimulation(int indexSimulation);
     void setTotalSimulation(int totalSimulation);
     void commitLog();
@@ -82,15 +84,15 @@ public:
     ISEA* getMask();
     string getTargetFolder();
     void createLogDB();
-    set<int> getDispersalMap_2(Organism *organism);
+    void getDispersalMap_2(Organism *organism, set<int> *new_cells);
     void getEnvironmentMap(int p_year_i, unordered_map<string, ISEA*> *maps);
-    int getUnmarkedID(unordered_map<int, vector<Organism*> > *organisms);
-    void markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, unordered_map<int, vector<Organism*> > *organisms);
-    set<int> getNeighbors(int id, int distance);
+    int getUnmarkedID(unordered_map<int, vector<Organism*> *> *organisms);
+    void markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, unordered_map<int, vector<Organism*> *> *organisms);
+    void getNeighbors(int id, int distance, set<int> *cells);
 
     int distance(int id1, int id2, int limited);
-    void markedSpeciesID(int group_id, int temp_species_id, unordered_map<int, vector<Organism*> > *organisms);
-    int getTempSpeciesID(int group_id, unordered_map<int, vector<Organism*> > *organisms);
+    void markedSpeciesID(int group_id, int temp_species_id, unordered_map<int, vector<Organism*> *> *organisms);
+    int getTempSpeciesID(int group_id, unordered_map<int, vector<Organism*> *> *organisms);
     void generateSpeciationInfo(int year_i);
     virtual ~Simulation();
 

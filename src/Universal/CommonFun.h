@@ -86,7 +86,7 @@ public:
      * @param s the string to save
      * @param path the path to the text file
      */
-    static void writeFile(const string s, const char *path);
+    static void writeFile(string *s, const char *path);
     /**
      * @brief create a folder
      * @param path the folder's path
@@ -102,7 +102,7 @@ public:
      * @param s the string array to save
      * @param path the path to the text file
      */
-    static void writeFile(const vector<string> s, const char *path);
+    static void writeFile(vector<string> *s, const char *path);
     /**
      * @brief execute a sql command
      * @param s the string array contains the SQL commend

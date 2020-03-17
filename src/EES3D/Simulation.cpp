@@ -11,12 +11,13 @@
  *
  */
 #include "Simulation.h"
-double t1;
-double t2;
+
 Simulation::Simulation(Species *p_species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
         vector<int> *p_timeLine, Neighbor* neighborInfo, vector<string> *environment_labels, string mask_table) {
-    t1 = 0;
-    t2 = 0;
+    this->t1 = 0;
+    this->t2 = 0;
+    this->all_organisms = new unordered_map<int, unordered_map<Species*, unordered_map<int, vector<Organism*> *> *> *>();
+    this->logs = new vector<string>();
     this->environments = new unordered_map<string, EnvVar*>();
     this->species[p_species->getIDWithParentID()] = p_species;
     this->ancestor = p_species;
@@ -32,7 +33,7 @@ Simulation::Simulation(Species *p_species, string label, int burnInYear, string 
     this->environment_labels = environment_labels;
     this->mask_table = mask_table;
     this->mask = NULL;
-    targetFolder = target + "/" + label;
+    this->targetFolder = target + "/" + label;
 }
 void Simulation::setIndexSimulation(int indexSimulation){
     this->indexSimulation = indexSimulation;
@@ -77,7 +78,7 @@ void Simulation::saveGroupmap(int year_i, unordered_map<Species*, ISEA*> *specie
                     }
                     i = 1;
                     sprintf(line, "%u,%u,%u,%s", timeLine->at(year_i), id, group_id, sp_id.c_str());
-                    logs.push_back(line);
+                    logs->push_back(line);
                 }
             }
 
@@ -129,7 +130,6 @@ void Simulation::commitLog(){
     CommonFun::writeFile(logs, logFile.c_str());
     //LOG(INFO)<<"Outputting log db";
     //CommonFun::executeSQL(logs, log_db, true);
-    logs.clear();
 }
 bool Simulation::init(unordered_map<string, EnvVar*> *environments_base, sqlite3* env_db, unordered_map<string, ISEA*>* masks){
     //logs.push_back("BEGIN TRANSACTION;");
@@ -180,7 +180,7 @@ bool Simulation::init(unordered_map<string, EnvVar*> *environments_base, sqlite3
     //Load the species parameters.
 
     set<int> *seeds = ancestor->getSeeds();
-    unordered_map<int, vector<Organism*> > t_o;
+    unordered_map<int, vector<Organism*> *> *t_o = new unordered_map<int, vector<Organism*> *>();
     /* -----------------
      * Create the individual organism(s) based on the seeds in the species' configuration.
      * All the individual organism(s) has(have) the same parameters inherited from the species and the different localities.
@@ -190,12 +190,18 @@ bool Simulation::init(unordered_map<string, EnvVar*> *environments_base, sqlite3
      *-------------------------*/
     for (int seed : *seeds) {
         Organism *organism = new Organism(0, ancestor, NULL, seed);
-        unordered_map<int, Organism*> t;
-        t[seed] = organism;
-        t_o[seed].push_back(organism);
+        unordered_map<int, Organism*> *t = new unordered_map<int, Organism*>();
+        t->insert({seed, organism});
+        if (t_o->find(seed)==t_o->end()){
+            t_o->insert({seed, new vector<Organism*>()});
+        }
+        t_o->at(seed)->push_back(organism);
     }
-    LOG(DEBUG) << "ADD ROOT SPECIES TO all_organisms WIHT the id is " << ancestor->getIDWithParentID() << " and SIZE is " << t_o.size();
-    all_organisms[0][ancestor] = t_o;
+    LOG(DEBUG) << "ADD ROOT SPECIES TO all_organisms WIHT the id is " << ancestor->getIDWithParentID() << " and SIZE is " << t_o->size();
+    unordered_map<Species*, unordered_map<int, vector<Organism*> *> *> *item = new unordered_map<Species*, unordered_map<int, vector<Organism*> *> *>();
+    item->insert({ancestor, t_o});
+    all_organisms->insert({0, item});
+
     return true;
 }
 
@@ -274,32 +280,35 @@ int Simulation::run() {
     clock_t start, end;
     start = clock();
 
-    unordered_map<Species*, ISEA*> species_group_maps;
     LOG(DEBUG)<<"Total timeLine is "<<timeLine->size();
     for (unsigned year_i = 1; year_i<timeLine->size(); year_i++) {
         end = clock();
         double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
 
-        LOG(INFO) << "v3.3 Current year:" << timeLine->at(year_i) << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"<<totalSimulation<<") N_sp:"<<
+        LOG(INFO) << "v3.6 Current year:" << timeLine->at(year_i) << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"<<totalSimulation<<") N_sp:"<<
                 all_organisms[year_i - 1].size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
 
         LOG(DEBUG) << "Load environments of year " << timeLine->at(year_i) << " via index " << year_i;
-        unordered_map<Species*, unordered_map<int, vector<Organism*> > > organisms_in_current_year;
+        unordered_map<Species*, unordered_map<int, vector<Organism*> *> *> *organisms_in_current_year =
+                new unordered_map<Species*, unordered_map<int, vector<Organism*> *> *>();
         unordered_map<string, ISEA*> *current_environments = new unordered_map<string, ISEA*>();
         getEnvironmentMap(year_i, current_environments);
         //Create the active individual organisms via cloning the individual organisms from the previous time step.
-        unordered_map<Species*, unordered_map<int, Organism*> > actived_organisms;
-        LOG(DEBUG) << "Found " << all_organisms[year_i - 1].size() << " species at time " << timeLine->at(year_i - 1) << ".";
-        for (auto sp_it : all_organisms[year_i - 1]) {
+        unordered_map<Species*, unordered_map<int, Organism*> *> *actived_organisms = new unordered_map<Species*, unordered_map<int, Organism*> *>();
+        LOG(DEBUG) << "Found " << all_organisms->at(year_i - 1)->size() << " species at time " << timeLine->at(year_i - 1) << ".";
+        for (auto sp_it : *(all_organisms->at(year_i - 1))) {
             Species *sp = sp_it.first;
             //If the species's timeline doesn't contain the current time, skip it.
             if (find(sp->getTimeLine()->begin(), sp->getTimeLine()->end(), timeLine->at(year_i))==sp->getTimeLine()->end()){
                 //continue;
             }
-            for (auto c_it : sp_it.second) {
+            for (auto c_it : *(sp_it.second)) {
+                if (actived_organisms->find(sp)==actived_organisms->end()){
+                    actived_organisms->insert({sp, new unordered_map<int, Organism*>()});
+                }
                 //LOG(DEBUG)<<"Found "<<c_it.second.size()<< " individual from species "<<sp->getIDWithParentID()<<" at pixel "<<c_it.first;
-                if (c_it.second.size() > 0) {
-                    actived_organisms[sp][c_it.first] = c_it.second.front();
+                if (c_it.second->size() > 0) {
+                    actived_organisms->at(sp)->insert({c_it.first, c_it.second->front()});
                 }
             }
         }
@@ -309,19 +318,17 @@ int Simulation::run() {
             generateSuitable();
         }
 
-        int organism_count = 0;
-
         //Handle the active individual organisms one by one.
-        LOG(DEBUG)<<"start to simulate organism by species. Count of species is " << actived_organisms.size();
-        for (auto s_it : actived_organisms) {
+        LOG(DEBUG)<<"start to simulate organism by species. Count of species is " << actived_organisms->size();
+        for (auto s_it : *actived_organisms) {
             //LOG(DEBUG)<<"start to simulate organism by organism. Current species is "<< s_it.first->getIDWithParentID() << ". Count of organisms is " << s_it.second.size();
-            vector<Organism*> new_organisms;
-            for (auto o_it : s_it.second) {
+            vector<Organism*> *new_organisms = new vector<Organism*>();
+            for (auto o_it : *(s_it.second)) {
                 Organism *organism = o_it.second;
                 //if current year no smaller than individual organism's next run year, then move this organism.
                 //LOG(DEBUG)<<"Organism index is "<< organism->getID()<<". Current year is "<<year_i<<". Next year is "<<organism->getNextRunYearI();
                 if ((int)year_i >= organism->getNextRunYearI()) {
-                    set<int> next_cells;
+                    set<int> *next_cells = new set<int> ();
                     switch (organism->getDispersalMethod()) {
                     //only the new individual organisms can move
                     case 1:
@@ -330,131 +337,115 @@ int Simulation::run() {
                         //all the individual organisms can move
                     case 2:
                         organism->setRandomDispersalAbility();
-                        next_cells = getDispersalMap_2(organism);
+                        getDispersalMap_2(organism, next_cells);
                         break;
                     default:
                         ;
                     }
-                    for (auto it : next_cells) {
+                    for (auto it : *next_cells) {
 
                         //create a new organism
                         Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, it);
                         new_organism->setRandomDispersalAbility();
-                        new_organisms.push_back(new_organism);
+                        new_organisms->push_back(new_organism);
                     }
 
-                    next_cells.clear();
+                    delete next_cells;
 
                 }
             }
             //LOG(DEBUG) << "new_organisms size is "<<new_organisms.size();
-            for (auto it : new_organisms) {
+            for (auto it : *new_organisms) {
                 int id = it->getID();
                 //species id, index
-                organisms_in_current_year[s_it.first][id].push_back(it);
+                if (organisms_in_current_year->find(s_it.first)==organisms_in_current_year->end()){
+                    organisms_in_current_year->insert({s_it.first, new unordered_map<int, vector<Organism*> *>()});
+                }
+                if (organisms_in_current_year->at(s_it.first)->find(id)==organisms_in_current_year->at(s_it.first)->end()){
+                    organisms_in_current_year->at(s_it.first)->insert({id, new vector<Organism*> ()});
+                }
+                organisms_in_current_year->at(s_it.first)->at(id)->push_back(it);
             }
-            organism_count += new_organisms.size();
-            new_organisms.clear();
+            delete new_organisms;
             //LOG(DEBUG)<<"end to simulate organism by organism.";
         }
 
-        LOG(DEBUG)<<"end to simulate organism by species. Count of species is " << actived_organisms.size() << ". Count of all organisms is " << organism_count;
+        LOG(DEBUG)<<"end to simulate organism by species. Count of species is " << actived_organisms->size();
 
         //remove the unsuitable organisms
         LOG(DEBUG)<<"begin to remove the unsuitable organisms.";
-        unordered_map<Species*, vector<int>> erased_keys;
-
-        for (auto s_it : organisms_in_current_year) {
+        for (auto s_it : *organisms_in_current_year) {
             LOG(DEBUG)<<"start to remove unsuitable organisms.";
-            vector<int> erased_key;
-            for (auto it : s_it.second) {
-                if (it.second.size() > 0) {
+            for (auto it = s_it.second->begin(); it!=s_it.second->end();) {
+                if (it->second->size() > 0) {
                     //unordered_map<Species*, unordered_map<int, vector<Organism*> > >
-
-                    if (!it.second.front()->isSuitable(current_environments, mask)) {
+                    if (!it->second->front()->isSuitable(current_environments, mask)) {
                         LOG(DEBUG)<<"Remove it because of unsuitable";
-                        erased_key.push_back(it.first);
+                        for (auto o_it : *(it->second)){
+                            delete o_it;
+                        }
+                        delete it->second;
+                        s_it.second->erase(it);
+                    }else{
+                        it++;
                     }
                 }
             }
-            erased_keys[s_it.first] = erased_key;
             LOG(DEBUG)<<"end to remove unsuitable organisms.";
         }
-        for (auto sp_it : erased_keys) {
-            for (auto key : sp_it.second) {
-                for (vector<Organism*>::iterator it = organisms_in_current_year[sp_it.first][key].begin(); it != organisms_in_current_year[sp_it.first][key].end(); ++it) {
-                    delete *it;
-                    organism_count--;
-                }
-                organisms_in_current_year[sp_it.first][key].clear();
-                vector<Organism*>().swap(organisms_in_current_year[sp_it.first][key]);
-                organisms_in_current_year[sp_it.first].erase(key);
-            }
-        }
-        LOG(DEBUG)<<"after remove unsuitable, Count of all organisms is " << organism_count;
 
-        unordered_map<Species*, vector<int>> erased_keys2;
-        for (auto sp_it : organisms_in_current_year) {
-            Species *species = sp_it.first;
-            if ((sp_it.second.size() > 0) &&
+        LOG(DEBUG)<<"after remove unsuitable, memory " << CommonFun::getCurrentRSS(1);
+        //unordered_map<Species*, unordered_map<int, vector<Organism*> *> *>
+        for (auto sp_it =organisms_in_current_year->begin(); sp_it!=organisms_in_current_year->end();) {
+            Species *species = sp_it->first;
+            if ((sp_it->second->size() > 0) &&
                     ((species->getCurrentSpeciesExtinctionTimeSteps() < species->getSpeciesExtinctionTimeSteps())) &&
-                    (sp_it.second.size() >= (species->getMaxSpeciesDistribution() * species->getSpeciesExtinctionThreaholdPercentage()))) {
+                    (sp_it->second->size() >= (species->getMaxSpeciesDistribution() * species->getSpeciesExtinctionThreaholdPercentage()))) {
 
-                species->setMaxSpeciesDistribution((sp_it.second.size() > species->getMaxSpeciesDistribution()) ? sp_it.second.size() : species->getMaxSpeciesDistribution());
-                if ((sp_it.second.size() <= species->getSpeciesExtinctionThreshold()) && (year_i >= 10)) {
+                species->setMaxSpeciesDistribution((sp_it->second->size() > species->getMaxSpeciesDistribution()) ? sp_it->second->size() : species->getMaxSpeciesDistribution());
+                if ((sp_it->second->size() <= species->getSpeciesExtinctionThreshold()) && ((int)year_i >= species->getSpeciationYears())) {
                     species->addCurrentSpeciesExtinctionTimeSteps();
                 } else {
                     species->setCurrentSpeciesExtinctionTimeSteps(0);
                 }
+                sp_it++;
             } else {
-                vector<int> erased_key;
-                for (auto it : sp_it.second) {
-                    if (it.second.size() > 0) {
-                        erased_key.push_back(it.first);
+                for (auto it = sp_it->second->begin(); it!=sp_it->second->end(); it++) {
+                    for (auto o_it : *(it->second)){
+                        delete o_it;
                     }
+                    delete it->second;
+                    sp_it->second->erase(it);
                 }
-                erased_keys2[sp_it.first] = erased_key;
+                delete sp_it->second;
+                organisms_in_current_year->erase(sp_it);
             }
         }
-        for (auto sp_it : erased_keys2) {
-            for (auto key : sp_it.second) {
-                for (vector<Organism*>::iterator it = organisms_in_current_year[sp_it.first][key].begin(); it != organisms_in_current_year[sp_it.first][key].end(); ++it) {
-                    delete *it;
-                    organism_count--;
-                }
-                organisms_in_current_year[sp_it.first][key].clear();
-                vector<Organism*>().swap(organisms_in_current_year[sp_it.first][key]);
-                organisms_in_current_year[sp_it.first].erase(key);
-            }
-            sp_it.second.clear();
-            sp_it.first->setDisappearedYearI(year_i);
-            organisms_in_current_year.erase(sp_it.first);
-        }
-        LOG(DEBUG)<<"end to remove unsuitable organisms. organisms size is "<< organisms_in_current_year.size();
+        LOG(DEBUG)<<"end to remove unsuitable organisms. organisms size is "<< organisms_in_current_year->size();
 
         //mark the group id for every organisms in this year, seperated by species id;
         LOG(DEBUG)<<"Begin to mark the group id, and detect the speciation.";
-        for (auto sp_it : organisms_in_current_year) {
+        for (auto sp_it : *organisms_in_current_year) {
             //printf("Species ID:%u\n", sp_it.first->getID());
-            unordered_map<int, vector<Organism*> > organisms = sp_it.second;
+            unordered_map<int, vector<Organism*> *> *organisms = sp_it.second;
             Species *species = sp_it.first;
             int  current_group_id = 1;
             //if ((int)year_i >= (species->getBurnInYear() + species->getSpeciationYears())) {
             if (true){
                 //LOG(DEBUG)<<"Begin to mark the organism.";
-                int unmarked_id = getUnmarkedID(&organisms);
+                int unmarked_id = getUnmarkedID(organisms);
 
                 while (unmarked_id != -1) {
                     //LOG(INFO)<<"Unmarked organism is "<<unmarked_organism->getX() <<", "<<unmarked_organism->getY()
                     //      <<" dispersal ability is "<<unmarked_organism->getDispersalAbility()<<". current_group_id is "<<current_group_id;
                     int dispersal_ability = -1;
-                    for (auto it : organisms[unmarked_id]){
+                    for (auto it : *(organisms->at(unmarked_id))){
                         dispersal_ability = (dispersal_ability>it->getDispersalAbility())?dispersal_ability:it->getDispersalAbility();
                     }
-                    markJointOrganism(current_group_id, unmarked_id, dispersal_ability, &organisms);
+                    markJointOrganism(current_group_id, unmarked_id, dispersal_ability, organisms);
                     current_group_id++;
                     //LOG(DEBUG)<<"NEW GROUP ADDED";
-                    unmarked_id = getUnmarkedID(&organisms);
+                    unmarked_id = getUnmarkedID(organisms);
 
                 }
                 //LOG(DEBUG)<<"End to mark the organism. " << current_group_id-1<<" groups were found.";
@@ -464,28 +455,28 @@ int Simulation::run() {
                 LOG(DEBUG)<<"Begin to detect speciation.";
                 for (int  group_id_1 = 1; group_id_1 < current_group_id - 1; group_id_1++) {
                     LOG(DEBUG)<<"getTempSpeciesID 1 for group "<<group_id_1 <<" current_group_id is "<<current_group_id;
-                    int  temp_species_id_1 = getTempSpeciesID(group_id_1, &organisms);
+                    int  temp_species_id_1 = getTempSpeciesID(group_id_1, organisms);
                     for (int  group_id_2 = group_id_1 + 1; group_id_2 < current_group_id; group_id_2++) {
                         LOG(DEBUG)<<"getTempSpeciesID 2 for group "<<group_id_2 <<" current_group_id is "<<current_group_id;
-                        int  temp_species_id_2 = getTempSpeciesID(group_id_2, &organisms);
+                        int  temp_species_id_2 = getTempSpeciesID(group_id_2, organisms);
                         //if both groups were marked, and they have the same id, skip it.
                         if ((temp_species_id_1 != 0) && (temp_species_id_2 != 0) && (temp_species_id_1 == temp_species_id_2)) {
                             continue;
                         }
                         LOG(DEBUG)<<"get min_divided_year.";
-                        int min_divided_year = getMinDividedYear(sp_it.first->getSpeciationYears(), group_id_1, group_id_2, &organisms, year_i);
+                        int min_divided_year = getMinDividedYear(sp_it.first->getSpeciationYears(), group_id_1, group_id_2, organisms, year_i);
                         LOG(DEBUG)<<"min_divided_year is "<<min_divided_year;
 
                         if (min_divided_year >= species->getSpeciationYears()) {
                             LOG(DEBUG)<<"mark species id with new id.";
                             //if a speciation happened, marked them with two ids if they were not marked.
                             if (temp_species_id_1 == 0) {
-                                markedSpeciesID(group_id_1, temp_species_id, &organisms);
+                                markedSpeciesID(group_id_1, temp_species_id, organisms);
                                 temp_species_id_1 = temp_species_id;
                                 temp_species_id++;
                             }
                             if (temp_species_id_2 == 0) {
-                                markedSpeciesID(group_id_2, temp_species_id, &organisms);
+                                markedSpeciesID(group_id_2, temp_species_id, organisms);
                                 temp_species_id_2 = temp_species_id;
                                 temp_species_id++;
                             }
@@ -495,9 +486,9 @@ int Simulation::run() {
                             //if there is not speciation, marked them with the same id
                             int  t_id = (temp_species_id_1 == 0) ? temp_species_id_2 : temp_species_id_1;
                             t_id = (t_id == 0) ? temp_species_id : t_id;
-                            markedSpeciesID(group_id_1, t_id, &organisms);
+                            markedSpeciesID(group_id_1, t_id, organisms);
                             temp_species_id_1 = t_id;
-                            markedSpeciesID(group_id_2, t_id, &organisms);
+                            markedSpeciesID(group_id_2, t_id, organisms);
                             temp_species_id_2 = t_id;
                             LOG(DEBUG)<<"end to mark species id with old id.";
                         }
@@ -506,51 +497,58 @@ int Simulation::run() {
                 LOG(DEBUG)<<"End to detect speciation.";
 
             } else {
-                for (auto y_it : sp_it.second) {
-                    for (auto o_it : y_it.second) {
+                for (auto y_it : *(sp_it.second)) {
+                    for (auto o_it : *(y_it.second)) {
                         o_it->setGroupId(current_group_id);
                     }
                 }
             }
         }
-        LOG(DEBUG)<<"end to mark the group id, and detect the speciation. organisms size is "<<organisms_in_current_year.size();
+        LOG(DEBUG)<<"end to mark the group id, and detect the speciation. species size is "<<organisms_in_current_year->size();
 
         LOG(DEBUG)<<"Begin to rebuild the organism structure in this year";
-        unordered_map<Species*, unordered_map<int, vector<Organism*> > > new_organisms_in_current_year;
-        for (auto sp_it : organisms_in_current_year) {
+        for (auto sp_it = organisms_in_current_year->begin(); sp_it!= organisms_in_current_year->end();) {
             LOG(DEBUG)<<"get all organisms in this year";
-            unordered_map<int, vector<Organism*> > organisms = sp_it.second;
+            unordered_map<int, vector<Organism*> *> *organisms = sp_it->second;
             //count all the species
-            unordered_map<int , int > species_ids;
-            set<int> temp_species_ids;
-            for (auto c_it : sp_it.second) {
+            unordered_map<int, int> *species_ids = new unordered_map<int, int>();
+            set<int> *temp_species_ids = new set<int>();
+            for (auto c_it : *(organisms)) {
                 LOG(DEBUG)<<"go from the first species in this year";
-                if (c_it.second.size() > 0) {
-                    Organism *organism_item = c_it.second.front();
+                if (c_it.second->size() > 0) {
+                    Organism *organism_item = c_it.second->front();
                     LOG(DEBUG)<<"x1";
-                    temp_species_ids.insert(organism_item->getTempSpeciesId());
+                    temp_species_ids->insert(organism_item->getTempSpeciesId());
                 }
             }
             int  i = 1;
             LOG(DEBUG)<<"x2";
-            for (auto it : temp_species_ids) {
-                species_ids[it] = i++;
+            for (auto it : *temp_species_ids) {
+                species_ids->erase(it);
+                species_ids->insert({it, i++});
             }
+            delete temp_species_ids;
             LOG(DEBUG)<<"x3";
-            if (species_ids.size() > 1) {
+            if (species_ids->size() > 1) {
                 LOG(DEBUG)<<"x4";
-                for (auto sp_id_it : species_ids) {
+                for (auto sp_id_it : *species_ids) {
                     LOG(DEBUG)<<"x5";
-                    Species *new_species = new Species(sp_id_it.second, sp_it.first, year_i);
+                    Species *new_species = new Species(sp_id_it.second, sp_it->first, year_i);
                     //createSpeciesFolder(new_species, false);
-                    species[new_species->getIDWithParentID()] = new_species;
-                    for (auto c_it : sp_it.second) {
+                    species.insert({new_species->getIDWithParentID(), new_species});
+                    unordered_map<int, vector<Organism*> *> *new_map = new unordered_map<int, vector<Organism*> *>();
+                    organisms_in_current_year->insert({new_species, new_map});
+                    for (auto c_it : *organisms) {
                         LOG(DEBUG)<<"x6";
-                        for (auto o_it : c_it.second) {
+
+                        for (auto o_it : *(c_it.second)) {
                             LOG(DEBUG)<<"x7";
                             if (o_it->getTempSpeciesId() == sp_id_it.first) {
                                 LOG(DEBUG)<<"x8";
-                                new_organisms_in_current_year[new_species][c_it.first].push_back(o_it);
+                                if (new_map->find(c_it.first)==new_map->end()){
+                                    new_map->insert({c_it.first, new vector<Organism*>()});
+                                }
+                                new_map->at(c_it.first)->push_back(o_it);
                                 LOG(DEBUG)<<"x9";
                                 o_it->setSpecies(new_species);
                             }
@@ -558,43 +556,47 @@ int Simulation::run() {
                     }
 
                 }
+                for (auto it_t : *(sp_it->second)){
+                    delete it_t.second;
+                }
+                delete sp_it->second;
+
             } else {
                 LOG(DEBUG)<<"x10";
-                new_organisms_in_current_year[sp_it.first] = sp_it.second;
+
             }
         }
         LOG(DEBUG)<<"x11";
-        organisms_in_current_year = new_organisms_in_current_year;
 
-        LOG(DEBUG)<<"End to rebuild the organism structure in this year. organisms size is "<<organisms_in_current_year.size();
+        LOG(DEBUG)<<"End to rebuild the organism structure in this year. organisms size is "<<organisms_in_current_year->size();
         LOG(DEBUG)<<"begin to generate group maps";
-        unordered_map<Species*, ISEA*> group_maps;
-        for (auto sp_it : organisms_in_current_year) {
+        unordered_map<Species*, ISEA*> *group_maps = new unordered_map<Species*, ISEA*>();
+        for (auto sp_it : *organisms_in_current_year) {
             Species *species = sp_it.first;
-            if (group_maps.find(species) == group_maps.end()) {
-                group_maps[sp_it.first] = new ISEA();
+            if (group_maps->find(species) == group_maps->end()) {
+                group_maps->insert({sp_it.first, new ISEA()});
             }
-            if (sp_it.second.size() > 0) {
-                for (auto o_id : sp_it.second) {
-                    if (o_id.second.size() > 0) {
-                        group_maps[sp_it.first]->setValue(o_id.second[0]->getID(), o_id.second[0]->getGroupId());
+            if (sp_it.second->size() > 0) {
+                for (auto o_id : *(sp_it.second)) {
+                    if (o_id.second->size() > 0) {
+                        group_maps->at(sp_it.first)->setValue(o_id.second->at(0)->getID(), o_id.second->at(0)->getGroupId());
                     }
                 }
             } else {
                 //sp_it.first->setDisappearedYear(year);
-                group_maps[sp_it.first] = NULL;
+                delete group_maps->at(sp_it.first);
             }
 
         }
 
-        saveGroupmap(year_i, &group_maps);
-        for (auto it : group_maps){
+        saveGroupmap(year_i, group_maps);
+        for (auto it : *group_maps){
             if (it.second){
                 delete it.second;
             }
         }
-
-        all_organisms.insert(make_pair(year_i, organisms_in_current_year));
+        delete group_maps;
+        all_organisms->insert({year_i, organisms_in_current_year});
 
         //remove the useless organism
         LOG(DEBUG)<<"Remove the useless organisms. Before removing, Memory usage:"<<CommonFun::getCurrentRSS(1);
@@ -622,18 +624,19 @@ int Simulation::run() {
             if (removed_year_i >= 0) {
 
                 //LOG(INFO)<<"Current year is "<<year<<". Remove organisms at year "<< removed_year<<".";
-                unordered_map<int, vector<Organism*> > temp_o = all_organisms[removed_year_i][sp_it];
-                for (auto it1 : temp_o) {
-                    for (auto it2 : it1.second){
+                unordered_map<int, vector<Organism*> *> *temp_o = all_organisms->at(removed_year_i)->at(sp_it);
+                for (auto it1 : *temp_o) {
+                    for (auto it2 : *(it1.second)){
                         delete it2;
                     }
                 }
-                all_organisms.erase(removed_year_i);
+                delete temp_o;
+                all_organisms->at(removed_year_i)->erase(sp_it);
 
 //              LOG(INFO)<<"Set the parent to NULL for year "<<removed_year + sp_it->getDispersalSpeed();
-                temp_o = all_organisms[removed_year_i + sp_it->getDispersalSpeed()][sp_it];
-                for (auto it1 : temp_o) {
-                    for (auto it2 : it1.second) {
+                temp_o = all_organisms->at(removed_year_i + sp_it->getDispersalSpeed())->at(sp_it);
+                for (auto it1 : *temp_o) {
+                    for (auto it2 : *(it1.second)) {
                         it2->setParent(NULL);
                     }
                 }
@@ -650,6 +653,7 @@ int Simulation::run() {
             return 1;
         }
 
+        delete organisms_in_current_year;
     }
 
     generateSpeciationInfo(timeLine->size() - 1);
@@ -678,9 +682,9 @@ void Simulation::generateSpeciationInfo(int year_i) {
 
     }
 }
-int  Simulation::getTempSpeciesID(int group_id, unordered_map<int, vector<Organism*> > *organisms) {
-    for (auto c_it : (*organisms)) {
-        for (auto o_it : c_it.second) {
+int  Simulation::getTempSpeciesID(int group_id, unordered_map<int, vector<Organism*> *> *organisms) {
+    for (auto c_it : *organisms) {
+        for (auto o_it : *(c_it.second)) {
             if (o_it->getGroupId() == group_id) {
                 return o_it->getTempSpeciesId();
             }
@@ -690,11 +694,11 @@ int  Simulation::getTempSpeciesID(int group_id, unordered_map<int, vector<Organi
 }
 void Simulation::markedSpeciesID(int  group_id,
         int  temp_species_id,
-        unordered_map<int, vector<Organism*> > *organisms) {
+        unordered_map<int, vector<Organism*> *> *organisms) {
     //LOG(INFO)<<"Size of organism 1 is "<<organisms->size();
     for (auto c_it : (*organisms)) {
         //LOG(INFO)<<"Size of organism 2 is "<<c_it.second.size();
-        for (auto o_it : c_it.second) {
+        for (auto o_it : *(c_it.second)) {
             if (o_it->getGroupId() == group_id) {
                 o_it->setTempSpeciesId(temp_species_id);
             }
@@ -706,58 +710,83 @@ int Simulation::distance(int id1, int id2, int limited) {
     return neighborInfo->distance(id1, id2, limited);
 }
 int Simulation::getMinDividedYear(int speciation_year, int  group_id_1, int group_id_2,
-        unordered_map<int, vector<Organism*> > *organisms, int current_year_i){
-    /**
+        unordered_map<int, vector<Organism*> *> *organisms, int current_year_i){
+    /*
+    int total = 0;
+    for (auto c_it : *organisms){
+        total += c_it.second.size();
+    }
+    LOG(INFO) << "TOTAL ORGANISMS ARE "<<total;
     int v;
     clock_t start, end;
     double time_taken;
     start = clock();
-    v = getMinDividedYear_old(speciation_year, group_id_1, group_id_2, organisms, current_year_i);
+    vector<Organism*> *group_1 = new vector<Organism*>();
+    vector<Organism*> *group_2 = new vector<Organism*>();
+    for (auto c_it : (*organisms)) {
+        for (auto o_it : c_it.second) {
+            if (o_it->getGroupId() == group_id_1) {
+                group_1->push_back(o_it);
+            } else if (o_it->getGroupId() == group_id_2) {
+                group_2->push_back(o_it);
+            }
+        }
+    }
+    LOG(INFO) << "GROUP 1 "<<group_1->size() <<", GROUP 2 "<< group_2->size();
+    v = getMinDividedYear_old(speciation_year, group_1, group_2, organisms, current_year_i);
     end = clock();
     time_taken = double(end - start) / double(CLOCKS_PER_SEC);
     t1 += time_taken;
-    LOG(INFO)<<"OLD METHODS TOOK "<<time_taken<<" SEC, AND VALUE IS "<<v<<", TOTAL TIME IS "<<t1;
+    LOG(INFO) << "OLD METHODS TOOK " << time_taken << " SEC, AND VALUE IS " << v << ", TOTAL TIME IS " << t1;
 
     start = clock();
-    v = getMinDividedYear_Disjoint(speciation_year, group_id_1, group_id_2, organisms, current_year_i);
-    end = clock();
-    time_taken = double(end - start) / double(CLOCKS_PER_SEC);
-    t2 += time_taken;
-    LOG(INFO)<<"NEW METHODS TOOK "<<time_taken<<" SEC, AND VALUE IS "<<v<<", TOTAL TIME IS "<<t2;
-    return v;
-    **/
-    return getMinDividedYear_Disjoint(speciation_year, group_id_1, group_id_2, organisms, current_year_i);;
-}
-int Simulation::getMinDividedYear_Disjoint(int speciation_year, int group_id_1, int group_id_2, unordered_map<int, vector<Organism*> > *organisms, int current_year_i) {
-    int nearest_divided_year_i = 1;
-    vector<int> group_c_1;
-    vector<int> group_c_2;
-    /// @todo improve here
-    //save all the organisms in each groups
-    vector<Organism*> group_1;
-    vector<Organism*> group_2;
-    //LOG(DEBUG)<<"1";
+    group_1 = new vector<Organism*>();
+    group_2 = new vector<Organism*>();
     for (auto c_it : (*organisms)) {
         //LOG(DEBUG)<<"5";
         for (auto o_it : c_it.second) {
             //LOG(DEBUG)<<"6";
             if (o_it->getGroupId() == group_id_1) {
-                group_1.push_back(o_it);
+                group_1->push_back(o_it);
             } else if (o_it->getGroupId() == group_id_2) {
-                group_2.push_back(o_it);
+                group_2->push_back(o_it);
             }
         }
     }
+    LOG(INFO) << "GROUP 1 "<<group_1->size() <<", GROUP 2 "<< group_2->size();
+    v = getMinDividedYear_Disjoint(speciation_year, group_1, group_2, organisms, current_year_i);
+    end = clock();
+    time_taken = double(end - start) / double(CLOCKS_PER_SEC);
+    t2 += time_taken;
+    LOG(INFO) << "NEW METHODS TOOK " << time_taken << " SEC, AND VALUE IS " << v << ", TOTAL TIME IS " << t2;
+    return v;
+    */
 
+    vector<Organism*> *group_1 = new vector<Organism*>();
+    vector<Organism*> *group_2 = new vector<Organism*>();
+    for (auto c_it : (*organisms)) {
+        for (auto o_it : *(c_it.second)) {
+            if (o_it->getGroupId() == group_id_1) {
+                group_1->push_back(o_it);
+            } else if (o_it->getGroupId() == group_id_2) {
+                group_2->push_back(o_it);
+            }
+        }
+    }
+    return getMinDividedYear_Disjoint(speciation_year, group_1, group_2, current_year_i);
+}
+int Simulation::getMinDividedYear_Disjoint(int speciation_year, vector<Organism*> *group_1,
+        vector<Organism*> *group_2, int current_year_i) {
+    int nearest_divided_year_i = 1;
     //LOG(DEBUG)<<"2";
     while (nearest_divided_year_i<speciation_year) {
         bool is_end = false;
         set<int> parent_1;
         set<int> parent_2;
-        for (auto it : group_1) {
+        for (auto it : *group_1) {
             parent_1.insert(it->getParent()->getGroupId());
         }
-        for (auto it : group_2) {
+        for (auto it : *group_2) {
             parent_2.insert(it->getParent()->getGroupId());
         }
         set<int> intersect;
@@ -767,60 +796,43 @@ int Simulation::getMinDividedYear_Disjoint(int speciation_year, int group_id_1, 
         }
         nearest_divided_year_i++;
 
-        vector<Organism*> group_1_t;
-        vector<Organism*> group_2_t;
-        for (auto it : group_1) {
+        vector<Organism*> *group_1_t = new vector<Organism*>();
+        vector<Organism*> *group_2_t = new vector<Organism*>();
+        for (auto it : *group_1) {
             if (it->getParent() == NULL) {
                 is_end = true;
                 break;
             }
-            group_1_t.push_back(it->getParent());
+            group_1_t->push_back(it->getParent());
         }
         if (!is_end) {
-            for (auto it : group_2) {
+            for (auto it : *group_2) {
                 if (it->getParent() == NULL) {
                     is_end = true;
                     break;
                 }
-                group_2_t.push_back(it->getParent());
+                group_2_t->push_back(it->getParent());
             }
         }
+        delete group_1;
+        delete group_2;
         group_1 = group_1_t;
         group_2 = group_2_t;
+
         if (is_end){
             return  nearest_divided_year_i;
         }
     }
-
+    delete group_1;
+    delete group_2;
     return nearest_divided_year_i;
 }
-int Simulation::getMinDividedYear_old(int speciation_year, int group_id_1, int group_id_2,
-        unordered_map<int, vector<Organism*> > *organisms, int current_year_i) {
+int Simulation::getMinDividedYear_old(int speciation_year, vector<Organism*> *group_1, vector<Organism*> *group_2, int current_year_i) {
     int nearest_divided_year_i = 0;
-    vector<int> group_c_1;
-    vector<int> group_c_2;
-    int group_1_index = 0;
-    int group_2_index = 0;
-    /// @todo improve here
-    //save all the organisms in that two groups
-    vector<Organism*> group_1 = (*organisms)[group_1_index];
-    vector<Organism*> group_2 = (*organisms)[group_2_index];
-    //LOG(DEBUG)<<"1";
-    for (auto c_it : (*organisms)) {
-        //LOG(DEBUG)<<"5";
-        for (auto o_it : c_it.second) {
-            //LOG(DEBUG)<<"6";
-            if (o_it->getGroupId() == group_id_1) {
-                group_1.push_back(o_it);
-            } else if (o_it->getGroupId() == group_id_2) {
-                group_2.push_back(o_it);
-            }
-        }
-    }
     //LOG(DEBUG)<<"2";
-    for (auto o_it_1 : group_1) {
+    for (auto o_it_1 : *group_1) {
         //LOG(DEBUG)<<"7";
-        for (auto o_it_2 : group_2) {
+        for (auto o_it_2 : *group_2) {
             //LOG(DEBUG)<<"8";
             int divided_year_i = getDividedYearI(o_it_1, o_it_2);
             nearest_divided_year_i = (divided_year_i > nearest_divided_year_i) ? divided_year_i : nearest_divided_year_i;
@@ -830,6 +842,8 @@ int Simulation::getMinDividedYear_old(int speciation_year, int group_id_1, int g
         }
         //printf("%u/%u\n", i++, group_1.size() * group_2.size());
     }
+    delete group_1;
+    delete group_2;
     return current_year_i - nearest_divided_year_i;
 }
 int Simulation::getDividedYearI(Organism *o_1, Organism *o_2) {
@@ -844,38 +858,37 @@ int Simulation::getDividedYearI(Organism *o_1, Organism *o_2) {
         return getDividedYearI(parent_1, parent_2);
     }
 }
-set<int> Simulation::getNeighbors(int id, int distance) {
-    set<int> neighbors;
-    set<int> handled_ids;
-    neighborInfo->getNeighborByID(id, distance, &neighbors, &handled_ids);
-    handled_ids.clear();
-    return neighbors;
+void Simulation::getNeighbors(int id, int distance, set<int> *cells) {
+    set<int> *handled_ids = new set<int>();
+    neighborInfo->getNeighborByID(id, distance, cells, handled_ids);
+    delete handled_ids;
 }
-void Simulation::markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, unordered_map<int, vector<Organism*> > *organisms) {
+void Simulation::markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, unordered_map<int, vector<Organism*> *> *organisms) {
 
     if (dispersal_ability == 0) {
         dispersal_ability = 1;
     }
     //LOG(DEBUG)<<"id="<<id<<" p_dispersal_ability="<<p_dispersal_ability;
-    set<int> neighbors = getNeighbors(unmarked_id, dispersal_ability);
+    set<int> *neighbors = new set<int>();
+    getNeighbors(unmarked_id, dispersal_ability, neighbors);
     //string n_ids = "";
     //string n_ids_x = "";
     //string n_ids_y = "";
-    for (int n_id : neighbors) {
+    for (int n_id : *neighbors) {
         //n_ids += "," + to_string(n_id);
         if (organisms->find(n_id) == organisms->end()) {
             continue;
         }
         //n_ids_x += "," + to_string(n_id);
-        vector<Organism*> organisms_in_id = (*organisms)[n_id];
-        int group_id = organisms_in_id.front()->getGroupId();
+        vector<Organism*> *organisms_in_id = organisms->at(n_id);
+        int group_id = organisms_in_id->front()->getGroupId();
         //LOG(DEBUG)<<"GROUP ID OF '"<<n_id<<"' IS: "<<group_id;
         if (group_id != 0) {
             continue;
         }
         //n_ids_y += "," + to_string(n_id);
         dispersal_ability = -1;
-        for (auto it : organisms_in_id) {
+        for (auto it : *organisms_in_id) {
             it->setGroupId(p_group_id);
             dispersal_ability = (dispersal_ability>it->getDispersalAbility())?dispersal_ability:it->getDispersalAbility();
         }
@@ -887,12 +900,12 @@ void Simulation::markJointOrganism(int p_group_id, int unmarked_id, int dispersa
     //LOG(DEBUG)<<"no data removed   :"<<unmarked_id<<n_ids_x;
     //LOG(DEBUG)<<"grouped id removed:"<<unmarked_id<<n_ids_y;
     //LOG(DEBUG)<<"End to marked a group, which is "<<p_group_id;
-    neighbors.clear();
+    delete neighbors;
 }
 
-int Simulation::getUnmarkedID(unordered_map<int, vector<Organism*>> *organisms) {
+int Simulation::getUnmarkedID(unordered_map<int, vector<Organism*>*> *organisms) {
     for (auto p_it : (*organisms)) {
-        if (p_it.second.front()->getGroupId()==0){
+        if (p_it.second->front()->getGroupId()==0){
             return p_it.first;
         }
     }
@@ -907,41 +920,45 @@ void Simulation::getEnvironmentMap(int p_year_i, unordered_map<string, ISEA*> *m
 }
 
 
-set<int> Simulation::getDispersalMap_2(Organism *organism) {
-    set<int> new_cells;
+void Simulation::getDispersalMap_2(Organism *organism, set<int> *new_cells) {
     int p_dispersal_ability = organism->getDispersalAbility();
     if (organism->getNumOfPath() == -1) {
         int id = organism->getID();
         //LOG(DEBUG) << "Looking for neighbors for " << id << ", which dispersal ability is " << p_dispersal_ability << ".";
-        new_cells = getNeighbors(id, p_dispersal_ability);
+        getNeighbors(id, p_dispersal_ability, new_cells);
         //LOG(DEBUG)<<new_cells.size() <<" neighbors were found.";
     }
-    return new_cells;
 }
 Simulation::~Simulation() {
 
-
+    LOG(INFO)<<"Cleaning everything in the simulation";
     sqlite3_close(log_db);
     //unordered_map<int, unordered_map<Species*, unordered_map<int, vector<Organism*> > > >
     LOG(DEBUG)<<"z1";
-    for (auto it1 : all_organisms){
+    for (auto it1 : *all_organisms){
         LOG(DEBUG)<<"z2";
-        for (auto it2 : it1.second){
+        for (auto it2 : *(it1.second)){
             LOG(DEBUG)<<"z3";
-            for (auto it3 : it2.second){
+            for (auto it3 : *(it2.second)){
                 LOG(DEBUG)<<"z4";
-                for (unsigned i = 0; i < it3.second.size(); i++) {
+                for (unsigned i = 0; i < it3.second->size(); i++) {
                     LOG(DEBUG)<<"z5";
-                    if (it3.second[i]){
+                    if (it3.second->at(i)){
                         LOG(DEBUG)<<"z6";
-                        delete it3.second[i];
+                        delete it3.second->at(i);
                     }
                 }
                 LOG(DEBUG)<<"z7";
+                delete it3.second;
             }
             LOG(DEBUG)<<"z8";
+            delete it2.second;
         }
+        delete it1.second;
+
     }
+    delete all_organisms;
+    delete logs;
     LOG(DEBUG)<<"z9";
     for (auto it : species){
         LOG(DEBUG)<<"z10";

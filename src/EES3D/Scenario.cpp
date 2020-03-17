@@ -106,7 +106,10 @@ Scenario::Scenario(string p_env_db, string p_conf_db, string p_target, bool p_ov
             LOG(DEBUG) << "MEMORY USAGE BEFORE COMMIT LOG: " << CommonFun::getCurrentRSS(1);
             simulation->commitLog();
 
+        }else{
+            i++;
         }
+
         LOG(DEBUG) << "MEMORY USAGE BEFORE RELEASE: " << CommonFun::getCurrentRSS(1);
         delete simulation;
         LOG(DEBUG) << "MEMORY USAGE AFTER RELEASE: " << CommonFun::getCurrentRSS(1);
