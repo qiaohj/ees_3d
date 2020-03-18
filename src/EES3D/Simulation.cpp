@@ -219,7 +219,7 @@ ISEA* Simulation::getMask(){
 void Simulation::generateSuitable() {
     unordered_map<string, NicheBreadth*> *nicheBreadth = ancestor->getNicheBreadth();
     unordered_map<string, ISEA*> *current_environments = new unordered_map<string, ISEA*>();
-    getEnvironmentMap(timeLine->at(0), current_environments);
+    getEnvironmentMap(timeLine->front(), current_environments);
     set<int> *values = new set<int>();
     LOG(DEBUG) << "Begin to generate the suitable area";
     auto it = current_environments->begin();
@@ -425,6 +425,7 @@ int Simulation::run() {
                 }
                 LOG(DEBUG)<<"a3";
                 delete sp_it->second;
+                sp_it->first->setDisappearedYearI(year_i);
                 sp_it = organisms_in_current_year->erase(sp_it);
             }
         }
@@ -566,7 +567,9 @@ int Simulation::run() {
                 for (auto it_t : *(sp_it->second)){
                     delete it_t.second;
                 }
+
                 delete sp_it->second;
+                //sp_it->first->setDisappearedYearI(year_i);
                 sp_it = organisms_in_current_year->erase(sp_it);
 
             } else {
@@ -588,11 +591,10 @@ int Simulation::run() {
             if (sp_it.second->size() > 0) {
                 for (auto o_id : *(sp_it.second)) {
                     if (o_id.second->size() > 0) {
-                        group_maps->at(sp_it.first)->setValue(o_id.second->at(0)->getID(), o_id.second->at(0)->getGroupId());
+                        group_maps->at(sp_it.first)->setValue(o_id.second->front()->getID(), o_id.second->front()->getGroupId());
                     }
                 }
             } else {
-                //sp_it.first->setDisappearedYear(year);
                 delete group_maps->at(sp_it.first);
             }
 
@@ -664,27 +666,28 @@ int Simulation::run() {
     }
     delete organisms_in_current_year;
 
-    generateSpeciationInfo(timeLine->size() - 1);
+    generateSpeciationInfo();
 
     //CommonFun::executeSQL("CREATE INDEX idx_year ON map (year)", log_db);
     return 0;
 }
-void Simulation::generateSpeciationInfo(int year_i) {
+void Simulation::generateSpeciationInfo() {
     vector<Species*> *roots = new vector<Species*>();
     for (auto it : *all_species) {
         Species *sp_it = it.second;
+        //if the species is the root species, make the node from it.
         if (sp_it->getAppearedYearI() == 0) {
-            sp_it->markNode(year_i);
+            sp_it->markNode();
             roots->push_back(sp_it);
         }
     }
 
     for (auto sp_it : *roots) {
-        string tree = sp_it->getNewickTree(true, false, year_i);
+        string tree = sp_it->getNewickTree(true, false);
         string sql = "INSERT INTO trees (TYPE, CONTENT) VALUES ('NEWICK', " + CommonFun::quoteSql(&tree) + ");";
         CommonFun::executeSQL(&sql, log_db, true);
         vector<string> *htmltree = new vector<string>();
-        sp_it->getHTMLTree(year_i, htmltree);
+        sp_it->getHTMLTree(htmltree);
         tree = boost::algorithm::join(*htmltree, " ");
         sql = "INSERT INTO trees (TYPE, CONTENT) VALUES ('HTML', " + CommonFun::quoteSql(&tree) + ");";
         CommonFun::executeSQL(&sql, log_db, true);

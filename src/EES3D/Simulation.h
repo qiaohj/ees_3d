@@ -93,7 +93,7 @@ public:
     int distance(int id1, int id2, int limited);
     void markedSpeciesID(int group_id, int temp_species_id, unordered_map<int, vector<Organism*> *> *organisms);
     int getTempSpeciesID(int group_id, unordered_map<int, vector<Organism*> *> *organisms);
-    void generateSpeciationInfo(int year_i);
+    void generateSpeciationInfo();
     virtual ~Simulation();
 
 

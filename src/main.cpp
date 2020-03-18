@@ -207,20 +207,14 @@ int run(int argc, const char *argv[]) {
 
     unsigned long memory_limit = atoi(argv[5]);
     bool is_overwrite = atoi(argv[6]);
-    for (int i=0; i<1; i++){
-        //initialize the main scenario
-        LOG(DEBUG)<<i<<". "<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
-                <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
-        Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
-        LOG(DEBUG)<<i<<". "<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
-                <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
-        delete a;
-        LOG(DEBUG)<<i<<". "<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
-                <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
-        sleep(10);
-        LOG(DEBUG)<<i<<"10 Sec later "<<": "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
-                <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
-    }
+    //initialize the main scenario
+    LOG(DEBUG)<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1);
+    Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
+    LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
+    //delete a;
+    LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
+
+
     return EXIT_SUCCESS;
 }
 

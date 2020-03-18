@@ -31,7 +31,8 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
     }
 	currentSpeciesExtinctionTimeSteps = 0;
 	newSpecies = true;
-    id = sqlite3_column_int(stmt, SIMULATION_id);
+    //id = sqlite3_column_int(stmt, SIMULATION_id);
+    global_id = sqlite3_column_int(stmt, SIMULATION_global_id);
     vector<string> *dispersalAbility_str = new vector<string>();
     CommonFun::splitStr(
             string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_dispersal_ability))), ",", dispersalAbility_str);
@@ -56,7 +57,7 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
     //LOG(INFO)<<"speciesExtinctionThreaholdPercentage"<<speciesExtinctionThreaholdPercentage;
     maxSpeciesDistribution = 0;
     appearedYearI = 0;
-    disappearedYearI = 0;
+    disappearedYearI = timeLine->size() - 1;
     parent = NULL;
     clade_extinction_status = 0;
     number_of_clade_extinction = 0;
@@ -71,7 +72,7 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
     for (unsigned i = 0; i < niche_breadth_array->size(); ++i) {
         vector<string> *niche_breadth_item = new vector<string>();
         CommonFun::splitStr(niche_breadth_array->at(i), ",", niche_breadth_item);
-        NicheBreadth* niche_breadth = new NicheBreadth(stod(niche_breadth_item->at(0)), stod(niche_breadth_item->at(1)));
+        NicheBreadth* niche_breadth = new NicheBreadth(stod(niche_breadth_item->front()), stod(niche_breadth_item->at(1)));
         nicheBreadth->insert({environment_labels->at(i), niche_breadth});
         delete niche_breadth_item;
     }
@@ -83,11 +84,11 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
 
 string Species::getIDWithParentID(){
     if (parent==NULL){
-        string id_str = to_string(id);
+        string id_str = to_string(global_id);
         return id_str;
     }else{
         string parent_id = parent->getIDWithParentID();
-        string id_str = parent_id + "-" + to_string(id);
+        string id_str = parent_id + "-" + to_string(global_id);
         return id_str;
     }
 }
@@ -103,7 +104,8 @@ Species::Species(int p_id, Species* p_parent, int p_year_i) {
 
     newSpecies = true;
     parent = p_parent;
-    id = p_id;
+    //id = p_id;
+    global_id = p_id;
     LOG(DEBUG)<<"y3";
     speciesExtinctionThreshold = parent->getSpeciesExtinctionThreshold();
     LOG(DEBUG)<<"y4";
@@ -136,7 +138,7 @@ Species::Species(int p_id, Species* p_parent, int p_year_i) {
 
     parent->setDisappearedYearI(p_year_i);
     appearedYearI = p_year_i;
-    disappearedYearI = 0;
+    disappearedYearI = timeLine->size() - 1;
     LOG(DEBUG)<<"y11";
     parent->addChild(this);
     clade_extinction_status = 0;
@@ -165,23 +167,22 @@ void Species::markParentClade() {
         child->markParentClade();
     }
 }
-string Species::getSpeciationExtinction(bool isroot,
-        int total_years) {
+string Species::getSpeciationExtinction(bool isroot) {
     char t_char[100];
-    sprintf(t_char, "clade_extinction,species_extinction,speciation\n%u,%u,%u,%u",
-    		total_years, number_of_clade_extinction, number_of_species_extinction,
+    sprintf(t_char, "clade_extinction,species_extinction,speciation\n%d,%d,%d",
+    		number_of_clade_extinction, number_of_species_extinction,
             number_of_speciation);
     return string(t_char);
 }
-bool Species::isAllLeafExtinction(int total_years) {
+bool Species::isAllLeafExtinction() {
     bool is_extinction = true;
     for (auto child : *children) {
         if (child->getChildren()->size() == 0) {
-            if (child->getDisappearedYearI() == total_years) {
+            if (child->getDisappearedYearI() == (int)(timeLine->size()-1)) {
                 return false;
             }
         } else {
-            is_extinction = child->isAllLeafExtinction(total_years);
+            is_extinction = child->isAllLeafExtinction();
             if (!is_extinction) {
                 return is_extinction;
             }
@@ -198,14 +199,14 @@ int Species::getNumberOfSpeciation() {
 int Species::getNumberOfSpeciesExtinction() {
     return number_of_species_extinction;
 }
-void Species::markNode(int total_years) {
+void Species::markNode() {
     number_of_clade_extinction = 0;
     number_of_speciation = 0;
     number_of_species_extinction = 0;
 
     //if the status is unknown, try to mark the status
     if (clade_extinction_status == 0) {
-        bool allleaf_extinction = isAllLeafExtinction(total_years);
+        bool allleaf_extinction = isAllLeafExtinction();
         if (allleaf_extinction) {
             //clade extinction
             clade_extinction_status = 1;
@@ -218,13 +219,13 @@ void Species::markNode(int total_years) {
         }
     }
     for (auto child : *children) {
-        child->markNode(total_years);
+        child->markNode();
     }
 
     if (children->size() == 0) {
         number_of_clade_extinction = 0;
         number_of_speciation = 0;
-        number_of_species_extinction = ((disappearedYearI == 0) || (disappearedYearI == total_years)) ? 0 : 1;
+        number_of_species_extinction = (disappearedYearI == (int)(timeLine->size()-1)) ? 0 : 1;
     } else {
         for (auto child : *children) {
             number_of_clade_extinction += child->getNumberOfCladeExtinction();
@@ -234,7 +235,7 @@ void Species::markNode(int total_years) {
         number_of_speciation++;
     }
 }
-void Species::getHTMLTree(int p_year, vector<string> *html_output) {
+void Species::getHTMLTree(vector<string> *html_output) {
     html_output->push_back(
             "<!DOCTYPE html><html lang=\"en\" xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">");
     html_output->push_back(
@@ -248,7 +249,7 @@ void Species::getHTMLTree(int p_year, vector<string> *html_output) {
     html_output->push_back("<script>");
     html_output->push_back("function load() {");
     html_output->push_back(
-            "var newick = Newick.parse(\"" + getNewickTree(true, true, p_year) + "\");");
+            "var newick = Newick.parse(\"" + getNewickTree(true, true) + "\");");
     html_output->push_back("var newickNodes = [];");
     html_output->push_back("function buildNewickNodes(node, callback) {");
     html_output->push_back("newickNodes.push(node);");
@@ -285,14 +286,14 @@ void Species::getHTMLTree(int p_year, vector<string> *html_output) {
     html_output->push_back("</body>");
     html_output->push_back("</html>");
 }
-string Species::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
+string Species::getNewickTree(bool isroot, bool iscolor) {
     string output = "";
     unsigned i = 0;
     if (children->size() > 0) {
         output += "(";
         for (auto child : *children) {
             i++;
-            output += child->getNewickTree(false, iscolor, p_year_i);
+            output += child->getNewickTree(false, iscolor);
             if (i < children->size()) {
                 output += ",";
             }
@@ -312,32 +313,32 @@ string Species::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
     if ((clade_extinction_status == 1) || (clade_extinction_status == 3)) {
         linecolor = "red";
     }
-    int t_disappearedYear = (disappearedYearI==0)?p_year_i:disappearedYearI;
-    int parent_year = (parent == NULL) ? 0 : parent->getDisappearedYearI();
-    if (appearedYearI == t_disappearedYear) {
+    int parent_year_i = (parent == NULL) ? 0 : parent->getDisappearedYearI();
+    if (appearedYearI == disappearedYearI) {
         if (iscolor) {
             char t_char[100];
-            sprintf(t_char, "SP%u[%u]:%u@%s~%s", id, timeLine->at(appearedYearI),
-                    timeLine->at(t_disappearedYear - parent_year), color.c_str(),
+            sprintf(t_char, "SP%d @ %d:%d@%s~%s", global_id, timeLine->at(appearedYearI),
+                    disappearedYearI - parent_year_i, color.c_str(),
                     linecolor.c_str());
             output += string(t_char);
         } else {
             char t_char[100];
-            sprintf(t_char, "SP%d[%d]:%d", id, timeLine->at(appearedYearI),
-                    timeLine->at(t_disappearedYear - parent_year));
+            sprintf(t_char, "SP%d @ %d:%d", global_id, timeLine->at(appearedYearI),
+                    disappearedYearI - parent_year_i);
             output += string(t_char);
         }
     } else {
         if (iscolor) {
             char t_char[100];
-            sprintf(t_char, "SP%d[%d-%d]:%d@%s~%s", id, timeLine->at(appearedYearI),
-                    timeLine->at(t_disappearedYear), timeLine->at(t_disappearedYear - parent_year),
+            sprintf(t_char, "SP%d @ %d-%d:%d@%s~%s", global_id, timeLine->at(appearedYearI),
+                    timeLine->at(disappearedYearI), disappearedYearI - parent_year_i,
                     color.c_str(), linecolor.c_str());
             output += string(t_char);
         } else {
             char t_char[100];
-            sprintf(t_char, "SP%d[%d-%d]:%d", id, timeLine->at(appearedYearI), timeLine->at(t_disappearedYear),
-                    timeLine->at(t_disappearedYear - parent_year));
+            sprintf(t_char, "SP%d @ %d-%d:%d", global_id, timeLine->at(appearedYearI),
+                    timeLine->at(disappearedYearI),
+                    disappearedYearI - parent_year_i);
             output += string(t_char);
         }
     }
@@ -433,7 +434,7 @@ set<int> *Species::getSeeds() {
     return seeds;
 }
 int Species::getID() {
-    return id;
+    return global_id;
 }
 int Species::getDispersalMethod() {
     return dispersalMethod;

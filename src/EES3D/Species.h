@@ -31,7 +31,7 @@ using namespace std;
 class Species {
 private:
     bool newSpecies;
-    int id;
+    int global_id;
     unordered_map<string, NicheBreadth*> *nicheBreadth;
     double* dispersalAbility;
     int dispersalAbilityLength;
@@ -175,7 +175,7 @@ public:
      * @brief set the time step when the species goes extinct.
      * @param p_disappeared_year
      */
-    void setDisappearedYearI(int p_disappeared_year_I);
+    void setDisappearedYearI(int p_disappeared_year_i);
     /**
      * @brief get the time step when the species goes extinct.
      */
@@ -201,12 +201,12 @@ public:
      * @param p_year the first time step to generate the tree
      * @return return a speciation tree in NEXUS format.
      */
-    string getNewickTree(bool isroot, bool iscolor, int p_year);
+    string getNewickTree(bool isroot, bool iscolor);
     /**
      * @brief count the number of speciation/species extinction/clade extinction in this species and its children.
      * @param total_years
      */
-    void markNode(int total_years);
+    void markNode();
     /**
      * @brief get the clade extinction status of this species. 0: not extinct 1: extinct
      * @param status 0: unknown, 1: extincted, 2: unextincted 3: parent_extincted
@@ -221,7 +221,7 @@ public:
      * @param total_years if the last appear year of the species is total_years, it means the species doesn't go extinct, or it goes extinct.
      * @return
      */
-    bool isAllLeafExtinction(int total_years);
+    bool isAllLeafExtinction();
     /**
      * @brief return the number of clade extinction
      */
@@ -239,14 +239,14 @@ public:
      * @param p_year
      * @return
      */
-    void getHTMLTree(int p_year, vector<string> *html_output);
+    void getHTMLTree(vector<string> *html_output);
     /**
      * @brief get the string with CSV format which saves the number of speciation/clade extinction/species extinction.
      * @param isroot
      * @param total_years
      * @return
      */
-    string getSpeciationExtinction(bool isroot, int total_years);
+    string getSpeciationExtinction(bool isroot);
     /**
      * @brief is a new species or the raw species from the configuration (JSON format)
      * @return TRUE or FALSE
