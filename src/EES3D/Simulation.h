@@ -38,7 +38,7 @@ private:
     double t1;
     double t2;
     vector<string> *logs;
-    unordered_map<string, Species*> species;
+    unordered_map<string, Species*> *all_species;
     vector<string> *environment_labels;
     unordered_map<string, EnvVar*> *environments;
     vector<int> *timeLine;
@@ -54,7 +54,7 @@ private:
     unsigned long memLimit;
     int indexSimulation;
     int totalSimulation;
-    unordered_map<int, unordered_map<Species*, unordered_map<int, vector<Organism*> *> *> *> *all_organisms;
+    unordered_map<int, vector<Organism*> *> *all_organisms;
 
 public:
     /**
@@ -85,7 +85,7 @@ public:
     string getTargetFolder();
     void createLogDB();
     void getDispersalMap_2(Organism *organism, set<int> *new_cells);
-    void getEnvironmentMap(int p_year_i, unordered_map<string, ISEA*> *maps);
+    void getEnvironmentMap(int p_year, unordered_map<string, ISEA*> *maps);
     int getUnmarkedID(unordered_map<int, vector<Organism*> *> *organisms);
     void markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, unordered_map<int, vector<Organism*> *> *organisms);
     void getNeighbors(int id, int distance, set<int> *cells);

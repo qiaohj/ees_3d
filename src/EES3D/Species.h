@@ -50,7 +50,7 @@ private:
     unsigned maxSpeciesDistribution;
     set<int> *seeds;
     Species* parent;
-    vector<Species*> children;
+    vector<Species*> *children;
     int number_of_clade_extinction;
     int number_of_speciation;
     int number_of_species_extinction;
@@ -188,7 +188,7 @@ public:
      * @brief get all the children species
      * @return
      */
-    vector<Species*> getChildren();
+    vector<Species*> *getChildren();
     /**
      * @brief add a child species.
      * @param child
@@ -239,7 +239,7 @@ public:
      * @param p_year
      * @return
      */
-    vector<string> getHTMLTree(int p_year);
+    void getHTMLTree(int p_year, vector<string> *html_output);
     /**
      * @brief get the string with CSV format which saves the number of speciation/clade extinction/species extinction.
      * @param isroot

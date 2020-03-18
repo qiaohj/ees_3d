@@ -30,7 +30,6 @@ private:
     Species* species;
     int year_i;
     Organism* parent;
-//    vector<Organism*> children;
 
 public:
     /**
@@ -156,10 +155,6 @@ public:
      * @param p_species
      */
     void setSpecies(Species* p_species);
-//    void addChild(Organism* child);
-//    void clearChildren();
-//    void removeChild(Organism* child);
-
     /**
      * @brief return the memory usage of the object (for debug).
      */

@@ -218,7 +218,7 @@ int run(int argc, const char *argv[]) {
         LOG(DEBUG)<<i<<". "<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
                 <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
         sleep(10);
-        LOG(DEBUG)<<i<<". "<<": "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
+        LOG(DEBUG)<<i<<"10 Sec later "<<": "<<CommonFun::getCurrentRSS(1)<<" VS "<<CommonFun::GetProcessMemory().physicalMem
                 <<" VS "<<CommonFun::GetProcessMemory().virtualMem;
     }
     return EXIT_SUCCESS;
@@ -244,13 +244,13 @@ void testEnvVar(int times){
             timeLine->push_back(j);
         }
         LOG(INFO) << i << ". 3.1" << ": " << CommonFun::getCurrentRSS(1);
-        EnvVar *env1 = new EnvVar(p_env_name1, env_db, timeLine);
+        EnvVar *env1 = new EnvVar(p_env_name1, env_db);
         LOG(INFO) << i << ". 4.1" << ": " << CommonFun::getCurrentRSS(1);
         delete env1;
         LOG(INFO) << i << ". 5.1" << ": " << CommonFun::getCurrentRSS(1);
 
         LOG(INFO) << i << ". 3.2" << ": " << CommonFun::getCurrentRSS(1);
-        EnvVar *env2 = new EnvVar(p_env_name2, env_db, timeLine);
+        EnvVar *env2 = new EnvVar(p_env_name2, env_db);
         LOG(INFO) << i << ". 4.2" << ": " << CommonFun::getCurrentRSS(1);
         delete env2;
         LOG(INFO) << i << ". 5.2" << ": " << CommonFun::getCurrentRSS(1);

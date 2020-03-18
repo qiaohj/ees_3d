@@ -37,7 +37,7 @@ public:
      * @param p_env_db database
      * @param timeLine timeline the simulation
      */
-	EnvVar(string p_env_name, sqlite3* p_env_db, vector<int> *timeLine);
+	EnvVar(string p_env_name, sqlite3* p_env_db);
 
 	/**
 	 * @brief Destructor of EnvVar class
@@ -51,7 +51,7 @@ public:
      * @param p_year time step
      * @return A ISEA object of the environmental layer of the given time step.
      */
-    ISEA* getValues(int p_year_i);
+    ISEA* getValues(int p_year);
 
     /**
      * @brief Get the value based on the id of the face
@@ -59,7 +59,7 @@ public:
      * @param p_id face id
      * @return the value on the id
      */
-	float readByID(int p_year_i, int p_id);
+	float readByID(int p_year, int p_id);
 
 };
 

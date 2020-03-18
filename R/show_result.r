@@ -6,7 +6,7 @@ library(RSQLite)
 library(DBI)
 
 
-logdb<-"/home/huijieqiao/git/ees_3d_data/TEST/Results/1072_GOOD_NARROW/1072_GOOD_NARROW.sqlite"
+logdb<-"/home/huijieqiao/git/ees_3d_data/TEST/Results_TEST/10143_POOR_NARROW/10143_POOR_NARROW.sqlite"
 mydb <- dbConnect(RSQLite::SQLite(), logdb)
 trees<-dbReadTable(mydb, "trees")
 suitable<-dbReadTable(mydb, "suitable")

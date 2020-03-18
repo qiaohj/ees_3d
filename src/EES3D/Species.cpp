@@ -15,6 +15,7 @@
 
 Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
     seeds = new set<int>();
+    children = new vector<Species*>();
     int from = sqlite3_column_int(stmt, SIMULATION_from);
     int to = sqlite3_column_int(stmt, SIMULATION_to);
     int step = sqlite3_column_int(stmt, SIMULATION_step);
@@ -91,6 +92,7 @@ string Species::getIDWithParentID(){
     }
 }
 Species::Species(int p_id, Species* p_parent, int p_year_i) {
+    this->children = new vector<Species*>();
     LOG(DEBUG)<<"y1";
     timeLine = new vector<int>();
     for (auto it : *(p_parent->getTimeLine())){
@@ -158,7 +160,7 @@ void Species::setCladeExtinctionStatus(int status) {
     clade_extinction_status = status;
 }
 void Species::markParentClade() {
-    for (auto child : children) {
+    for (auto child : *children) {
         child->setCladeExtinctionStatus(3);
         child->markParentClade();
     }
@@ -173,8 +175,8 @@ string Species::getSpeciationExtinction(bool isroot,
 }
 bool Species::isAllLeafExtinction(int total_years) {
     bool is_extinction = true;
-    for (auto child : children) {
-        if (child->getChildren().size() == 0) {
+    for (auto child : *children) {
+        if (child->getChildren()->size() == 0) {
             if (child->getDisappearedYearI() == total_years) {
                 return false;
             }
@@ -215,16 +217,16 @@ void Species::markNode(int total_years) {
             clade_extinction_status = 2;
         }
     }
-    for (auto child : children) {
+    for (auto child : *children) {
         child->markNode(total_years);
     }
 
-    if (children.size() == 0) {
+    if (children->size() == 0) {
         number_of_clade_extinction = 0;
         number_of_speciation = 0;
         number_of_species_extinction = ((disappearedYearI == 0) || (disappearedYearI == total_years)) ? 0 : 1;
     } else {
-        for (auto child : children) {
+        for (auto child : *children) {
             number_of_clade_extinction += child->getNumberOfCladeExtinction();
             number_of_speciation += child->getNumberOfSpeciation();
             number_of_species_extinction += child->getNumberOfSpeciesExtinction();
@@ -232,68 +234,66 @@ void Species::markNode(int total_years) {
         number_of_speciation++;
     }
 }
-vector<string> Species::getHTMLTree(int p_year) {
-    vector<string> html_output;
-    html_output.push_back(
+void Species::getHTMLTree(int p_year, vector<string> *html_output) {
+    html_output->push_back(
             "<!DOCTYPE html><html lang=\"en\" xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">");
-    html_output.push_back(
+    html_output->push_back(
             "<head><meta content=\"text/html;charset=UTF-8\" http-equiv=\"content-type\"><title>Phylogram Tree</title>");
-    html_output.push_back(
+    html_output->push_back(
             "<script src=\"d3.v3.min.js\" type=\"text/javascript\"></script>");
-    html_output.push_back(
+    html_output->push_back(
             "<script src=\"newick.js\" type=\"text/javascript\"></script>");
-    html_output.push_back(
+    html_output->push_back(
             "<script src=\"d3.phylogram.js\" type=\"text/javascript\"></script>");
-    html_output.push_back("<script>");
-    html_output.push_back("function load() {");
-    html_output.push_back(
+    html_output->push_back("<script>");
+    html_output->push_back("function load() {");
+    html_output->push_back(
             "var newick = Newick.parse(\"" + getNewickTree(true, true, p_year) + "\");");
-    html_output.push_back("var newickNodes = [];");
-    html_output.push_back("function buildNewickNodes(node, callback) {");
-    html_output.push_back("newickNodes.push(node);");
-    html_output.push_back("if (node.branchset) {");
-    html_output.push_back("for (var i=0; i < node.branchset.length; i++) {");
-    html_output.push_back("buildNewickNodes(node.branchset[i])");
-    html_output.push_back("}");
-    html_output.push_back("}");
-    html_output.push_back("};");
-    html_output.push_back("buildNewickNodes(newick);");
-    html_output.push_back(
+    html_output->push_back("var newickNodes = [];");
+    html_output->push_back("function buildNewickNodes(node, callback) {");
+    html_output->push_back("newickNodes.push(node);");
+    html_output->push_back("if (node.branchset) {");
+    html_output->push_back("for (var i=0; i < node.branchset.length; i++) {");
+    html_output->push_back("buildNewickNodes(node.branchset[i])");
+    html_output->push_back("}");
+    html_output->push_back("}");
+    html_output->push_back("};");
+    html_output->push_back("buildNewickNodes(newick);");
+    html_output->push_back(
             "          d3.phylogram.build(\"#phylogram\", newick, {");
-    html_output.push_back("width: 1200,");
-    html_output.push_back("height: 300");
-    html_output.push_back("});");
-    html_output.push_back("}");
-    html_output.push_back("</script>");
-    html_output.push_back("<style type=\"text/css\" media=\"screen\">");
-    html_output.push_back(
+    html_output->push_back("width: 1200,");
+    html_output->push_back("height: 300");
+    html_output->push_back("});");
+    html_output->push_back("}");
+    html_output->push_back("</script>");
+    html_output->push_back("<style type=\"text/css\" media=\"screen\">");
+    html_output->push_back(
             "body { font-family: \"Helvetica Neue\", Helvetica, sans-serif; }");
-    html_output.push_back("td { vertical-align: top; }");
-    html_output.push_back("</style>");
-    html_output.push_back("</head>");
-    html_output.push_back("<body onload=\"load()\">");
-    html_output.push_back("<table>");
-    html_output.push_back("<tr>");
-    html_output.push_back("<td>");
-    html_output.push_back("<h2>Phylogram tree</h2>");
-    html_output.push_back("<div id=\"phylogram\"></div>");
-    html_output.push_back("</td>");
+    html_output->push_back("td { vertical-align: top; }");
+    html_output->push_back("</style>");
+    html_output->push_back("</head>");
+    html_output->push_back("<body onload=\"load()\">");
+    html_output->push_back("<table>");
+    html_output->push_back("<tr>");
+    html_output->push_back("<td>");
+    html_output->push_back("<h2>Phylogram tree</h2>");
+    html_output->push_back("<div id=\"phylogram\"></div>");
+    html_output->push_back("</td>");
 
-    html_output.push_back("      </tr>");
-    html_output.push_back("</table>");
-    html_output.push_back("</body>");
-    html_output.push_back("</html>");
-    return html_output;
+    html_output->push_back("      </tr>");
+    html_output->push_back("</table>");
+    html_output->push_back("</body>");
+    html_output->push_back("</html>");
 }
 string Species::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
     string output = "";
     unsigned i = 0;
-    if (children.size() > 0) {
+    if (children->size() > 0) {
         output += "(";
-        for (auto child : children) {
+        for (auto child : *children) {
             i++;
             output += child->getNewickTree(false, iscolor, p_year_i);
-            if (i < children.size()) {
+            if (i < children->size()) {
                 output += ",";
             }
 
@@ -301,7 +301,7 @@ string Species::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
         output += ")";
     }
     string color = "white";
-    if (children.size() > 0) {
+    if (children->size() > 0) {
         color = "red";
     } else {
         if ((number_of_species_extinction == 1)) {
@@ -346,11 +346,11 @@ string Species::getNewickTree(bool isroot, bool iscolor, int p_year_i) {
     }
     return output;
 }
-vector<Species*> Species::getChildren() {
+vector<Species*> *Species::getChildren() {
     return children;
 }
 void Species::addChild(Species* child) {
-    children.push_back(child);
+    children->push_back(child);
 }
 void Species::setDisappearedYearI(int p_disappeared_year_i) {
     disappearedYearI = p_disappeared_year_i;

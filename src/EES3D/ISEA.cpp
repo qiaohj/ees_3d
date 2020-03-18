@@ -42,6 +42,7 @@ float ISEA::readByID(int p_id) {
 }
 
 ISEA::~ISEA() {
+    unordered_map<int, float>().swap(*values);
     delete values;
 }
 

@@ -42,7 +42,7 @@ private:
 	/// @brief The environmental variables used in the simulation.
 	unordered_map<string, EnvVar*> *environments_base;
 	/// @brief The virtual species in the simulation, including the initial species, and new species after the speciation events.
-	void initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite, Neighbor* neighborInfo, vector<Simulation*> &simulations);
+	void initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite, Neighbor* neighborInfo, vector<Simulation*> *simulations);
 	/// @brief Burn-in year of the simulation
 	int burnInYear;
 	/// @brief Whether outputing the details of the simulation, for debug only.

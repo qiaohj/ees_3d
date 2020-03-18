@@ -13,8 +13,7 @@
 
 #include "Utility.h"
 
-void Utility::readEnvInfo(sqlite3 *db, string tablename, bool with_year,
-        unordered_map<int, ISEA*> *values) {
+void Utility::readEnvInfo(sqlite3 *db, string tablename, bool with_year, unordered_map<int, ISEA*> *values) {
     string sql = "SELECT * FROM " + tablename;
     sqlite3_stmt *stmt;
    //LOG(INFO) << "Query: "<< sql;

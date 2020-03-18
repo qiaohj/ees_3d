@@ -43,23 +43,8 @@ void Organism::setParent(Organism* p_parent) {
 Organism* Organism::getParent() {
     return parent;
 }
-//void Organism::removeChild(Organism* child) {
-//    vector<Organism*>::iterator iter = children.begin();
-//    while (iter != children.end()) {
-//        if (*iter == child) {
-//            iter = children.erase(iter);
-//        } else {
-//            ++iter;
-//        }
-//    }
-//}
-//void Organism::clearChildren(){
-//    for (auto child : children){
-//        child->setParent(NULL);
-//    }
-//}
+
 Organism::~Organism() {
-    //delete species;
 }
 int Organism::getNextRunYearI() {
     return year_i + species->getDispersalSpeed();
@@ -83,7 +68,7 @@ void Organism::setRandomDispersalAbility(){
 			break;
 		}
 	}
-	//LOG(INFO)<<"Dispersal ability is " <<dispersal_ability << " calculated by "<<r;
+	//LOG(DEBUG)<<"Dispersal ability is " <<dispersal_ability << " calculated by "<<r;
 	dispersalAbility = dispersal_ability;
 	//dispersalAbility = 1;
 }
@@ -98,6 +83,7 @@ int Organism::getSpeciationYears(){
 //    children.push_back(child);
 //}
 bool Organism::isSuitable(unordered_map<string, ISEA*>* p_current_environments, ISEA* mask) {
+
     unordered_map<string, NicheBreadth*> *nicheBreadth = species->getNicheBreadth();
     for (auto item : *nicheBreadth) {
 
@@ -106,13 +92,12 @@ bool Organism::isSuitable(unordered_map<string, ISEA*>* p_current_environments, 
             LOG(DEBUG)<<"NO MASK";
             return false;
         }
-        float env_value = (*p_current_environments)[item.first]->readByID(id);
+        float env_value = p_current_environments->at(item.first)->readByID(id);
         if ((int) env_value == NODATA) {
             LOG(DEBUG)<<"NO DATA";
             return false;
         }
 
-        //LOG(INFO)<<env_value<<"FALSE";
         if ((env_value > item.second->getMax())
                 || (env_value < item.second->getMin())) {
             //LOG(DEBUG)<<"env_value is "<<env_value<<". Max is "<<item.second->getMax()<<" and Min is "<<item.second->getMin();

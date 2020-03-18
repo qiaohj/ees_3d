@@ -67,9 +67,9 @@ void CommonFun::writeFile(vector<string> *s, const char *path) {
     string joined = boost::algorithm::join(*s, "\n");
     writeFile(&joined, path);
 }
-void CommonFun::executeSQL(const vector<string> s, sqlite3 *db, bool output) {
-    string joined = boost::algorithm::join(s, " ");
-    CommonFun::executeSQL(joined, db, output);
+void CommonFun::executeSQL(const vector<string> *s, sqlite3 *db, bool output) {
+    string joined = boost::algorithm::join(*s, " ");
+    CommonFun::executeSQL(&joined, db, output);
 }
 processMem_t CommonFun::GetProcessMemory() {
     FILE *file = fopen("/proc/self/status", "r");
@@ -100,14 +100,14 @@ int CommonFun::parseLine(char *line) {
     i = atoi(p);
     return i;
 }
-string CommonFun::quoteSql(const string &s) {
-    return string("'") + s + string("'");
+string CommonFun::quoteSql(const string *s) {
+    return string("'") + (*s) + string("'");
 }
-void CommonFun::executeSQL(string s, sqlite3 *db, bool output) {
+void CommonFun::executeSQL(string *s, sqlite3 *db, bool output) {
     char *zErr;
     string data("CALLBACK FUNCTION");
     //LOG(DEBUG) << "Query: "<< s;
-    int rc = sqlite3_exec(db, s.c_str(), callback, (void*)data.c_str() , &zErr);
+    int rc = sqlite3_exec(db, s->c_str(), callback, (void*)data.c_str() , &zErr);
 
     if (rc != SQLITE_OK) {
         if (zErr != NULL) {
