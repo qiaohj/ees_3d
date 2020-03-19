@@ -13,6 +13,7 @@ mydb <- dbConnect(RSQLite::SQLite(), confdb)
 simulations<-dbReadTable(mydb, "simulations")
 dbDisconnect(mydb)
 simulations<-simulations[which(simulations$is_run==1),]
+simulations<-simulations[which(simulations$nb!="NARROW"),]
 cmd_templete<-"./ees_3d %s %s %s %d 64 0 0"
 rm_template<-"rm -rf %s/%s"
 cmd<-c()

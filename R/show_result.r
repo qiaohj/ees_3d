@@ -4,6 +4,12 @@ library(stringr)
 library(dplyr)
 library(RSQLite)
 library(DBI)
+library("ape")
+library("phangorn")
+library("phytools")
+library("geiger")
+library("stringr")
+
 
 
 logdb<-"/home/huijieqiao/git/ees_3d_data/TEST/Results_Test/10392_GOOD_NARROW/10392_GOOD_NARROW.sqlite"
@@ -11,6 +17,14 @@ mydb <- dbConnect(RSQLite::SQLite(), logdb)
 trees<-dbReadTable(mydb, "trees")
 suitable<-dbReadTable(mydb, "suitable")
 dbDisconnect(mydb)
+text.string<-trees[1,2]
+text.string<-gsub("\\]", "#", gsub("\\[", "#", text.string))
+vert.tree<-read.tree(text=text.string)
+
+plotTree(vert.tree, ftype="i")
+#tiplabels(vert.tree$tip.label)
+nodelabels(vert.tree$node.label)
+
 map<-read.table(gsub("sqlite", "log", logdb), head=F, sep=",")
 colnames(map)<-c("YEAR", "ID", "group_id", "sp_id")
 
@@ -41,17 +55,5 @@ for (y in c(1100:0)){
 }
 length(unique(map$sp_id))
 
-library("ape")
-library("phangorn")
-library("phytools")
-library("geiger")
-library("stringr")
-text.string<-trees[1,2]
-text.string<-gsub("\\]", "#", gsub("\\[", "#", text.string))
-vert.tree<-read.tree(text=text.string)
-
-plotTree(vert.tree, ftype="i")
-#tiplabels(vert.tree$tip.label)
-nodelabels(vert.tree$node.label)
 
 unique(map[which(map$sp_id=='20667-1-1-1'), "YEAR"])
