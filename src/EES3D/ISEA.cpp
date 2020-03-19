@@ -14,35 +14,33 @@
 #include "ISEA.h"
 
 ISEA::ISEA() {
-    values = new unordered_map<int, float>();
+
 }
-ISEA::ISEA(unordered_map<int, float> *p_values){
+ISEA::ISEA(unordered_map<int, float> &p_values){
     values = p_values;
 }
 
 int ISEA::getCellSize() {
-	return values->size();
+	return values.size();
 }
 
 void ISEA::setValue(int p_id, float p_value) {
-    values->erase(p_id);
-    values->insert({p_id, p_value});
+    values[p_id] = p_value;
 }
 
-unordered_map<int, float>* ISEA::getValues() {
-	return values;
+unordered_map<int, float> ISEA::getValues() {
+    return values;
 }
 
 float ISEA::readByID(int p_id) {
-    if (values->find(p_id)==values->end()){
+    if (values.find(p_id)==values.end()){
         return ((float)NODATA);
     }else{
-        return values->at(p_id);
+        return values[p_id];
     }
 }
 
 ISEA::~ISEA() {
-    unordered_map<int, float>().swap(*values);
-    delete values;
+    unordered_map<int, float>().swap(values);
 }
 

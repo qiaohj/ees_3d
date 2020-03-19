@@ -32,7 +32,7 @@ class Species {
 private:
     bool newSpecies;
     int global_id;
-    unordered_map<string, NicheBreadth*> *nicheBreadth;
+    unordered_map<string, NicheBreadth*> nicheBreadth;
     double* dispersalAbility;
     int dispersalAbilityLength;
     int dispersalSpeed;
@@ -48,16 +48,16 @@ private:
     int currentSpeciesExtinctionTimeSteps;
     double speciesExtinctionThreaholdPercentage;
     unsigned maxSpeciesDistribution;
-    set<int> *seeds;
+    set<int> seeds;
     Species* parent;
-    vector<Species*> *children;
+    vector<Species*> children;
     int number_of_clade_extinction;
     int number_of_speciation;
     int number_of_species_extinction;
     /// @brief 0: unknown, 1: extincted, 2: unextincted 3: parent_extincted
     int clade_extinction_status;
-    vector<string> *environment_labels;
-    vector<int> *timeLine;
+    vector<string> environment_labels;
+    vector<int> timeLine;
 public:
     /**
      * @brief Constructor of Species class No.1 (Create a species object based on the configuration in JSON format)
@@ -82,7 +82,7 @@ public:
      * @return
      */
     double* getDispersalAbility();
-    vector<int> *getTimeLine();
+    vector<int> getTimeLine();
     int getBurnInYear();
 
     /**
@@ -146,7 +146,7 @@ public:
      * @brief get the seed of the species.
      * @return
      */
-    set<int> *getSeeds();
+    set<int> getSeeds();
     /**
 	 * @brief get the species ID
 	 * @return
@@ -161,7 +161,7 @@ public:
      * @brief return the niche breadths of the species
      * @return
      */
-    unordered_map<string, NicheBreadth*> *getNicheBreadth();
+    unordered_map<string, NicheBreadth*> getNicheBreadth();
     /**
      * @brief return the speciation year
      */
@@ -188,7 +188,7 @@ public:
      * @brief get all the children species
      * @return
      */
-    vector<Species*> *getChildren();
+    vector<Species*> getChildren();
     /**
      * @brief add a child species.
      * @param child
@@ -239,7 +239,7 @@ public:
      * @param p_year
      * @return
      */
-    void getHTMLTree(vector<string> *html_output);
+    vector<string> getHTMLTree();
     /**
      * @brief get the string with CSV format which saves the number of speciation/clade extinction/species extinction.
      * @param isroot
@@ -262,7 +262,7 @@ public:
      * @return
      */
     string getIDWithParentID();
-    vector<string> *getEnvironmentLabels();
+    vector<string> getEnvironmentLabels();
 };
 
 #endif /* DEFINITIONS_SPECIESOBJECT_H_ */

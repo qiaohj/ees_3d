@@ -86,7 +86,7 @@ public:
      * @param p_current_environments
      * @return True: suitable False: unsuitable
      */
-    bool isSuitable(unordered_map<string, ISEA*>* p_current_environments, ISEA* mask);
+    bool isSuitable(unordered_map<string, ISEA*> &p_current_environments, ISEA* mask);
 
     /**
      * @brief return the species object of the individual

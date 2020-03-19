@@ -14,10 +14,9 @@
 #include "EnvVar.h"
 
 EnvVar::EnvVar(){
-    layers = new unordered_map<int, ISEA*>();
+
 }
 EnvVar::EnvVar(string p_env_name, sqlite3 *p_env_db) {
-    layers = new unordered_map<int, ISEA*>();
     envName = p_env_name;
     Utility::readEnvInfo(p_env_db, p_env_name, true, layers);
 }
@@ -28,18 +27,17 @@ ISEA* EnvVar::getValues(int p_year) {
     for (auto it : *layers){
         LOG(DEBUG)<<it.first<<" in the list";
     }*/
-    return layers->at(p_year);
+    return layers[p_year];
 }
 
 float EnvVar::readByID(int p_year, int p_id) {
-    float value = layers->at(p_year)->readByID(p_id);
+    float value = layers[p_year]->readByID(p_id);
     return value;
 }
 
 EnvVar::~EnvVar() {
-    for (auto it : *layers){
+    for (auto it : layers){
         delete it.second;
     }
-    delete layers;
 }
 

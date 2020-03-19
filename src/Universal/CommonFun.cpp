@@ -55,21 +55,21 @@ string CommonFun::removeSuffix(const string &path, const string &extension) {
         return string("");
     return path.substr(0, path.length() - extension.length());
 }
-void CommonFun::writeFile(string *s, const char *path) {
+void CommonFun::writeFile(string &s, const char *path) {
     ofstream outfile(path);
     if (!outfile.is_open()) {
         cerr << "Couldn't open " << path << endl;
     }
-    outfile << *s << endl;
+    outfile << s << endl;
     outfile.close();
 }
-void CommonFun::writeFile(vector<string> *s, const char *path) {
-    string joined = boost::algorithm::join(*s, "\n");
-    writeFile(&joined, path);
+void CommonFun::writeFile(vector<string> &s, const char *path) {
+    string joined = boost::algorithm::join(s, "\n");
+    writeFile(joined, path);
 }
-void CommonFun::executeSQL(const vector<string> *s, sqlite3 *db, bool output) {
-    string joined = boost::algorithm::join(*s, " ");
-    CommonFun::executeSQL(&joined, db, output);
+void CommonFun::executeSQL(const vector<string> &s, sqlite3 *db, bool output) {
+    string joined = boost::algorithm::join(s, " ");
+    CommonFun::executeSQL(joined, db, output);
 }
 processMem_t CommonFun::GetProcessMemory() {
     FILE *file = fopen("/proc/self/status", "r");
@@ -103,11 +103,11 @@ int CommonFun::parseLine(char *line) {
 string CommonFun::quoteSql(const string *s) {
     return string("'") + (*s) + string("'");
 }
-void CommonFun::executeSQL(string *s, sqlite3 *db, bool output) {
+void CommonFun::executeSQL(const string &s, sqlite3 *db, bool output) {
     char *zErr;
     string data("CALLBACK FUNCTION");
     //LOG(DEBUG) << "Query: "<< s;
-    int rc = sqlite3_exec(db, s->c_str(), callback, (void*)data.c_str() , &zErr);
+    int rc = sqlite3_exec(db, s.c_str(), callback, (void*)data.c_str() , &zErr);
 
     if (rc != SQLITE_OK) {
         if (zErr != NULL) {
@@ -153,15 +153,17 @@ string CommonFun::fixedLength(int value, int digits = 3) {
 bool CommonFun::fileExist(const string &name) {
     return (access(name.c_str(), F_OK) != -1);
 }
-void CommonFun::splitStr(string s, string delimiter, vector<string> * v){
+vector<string> CommonFun::splitStr(string s, string delimiter){
+    vector<string> v;
     size_t pos = 0;
     std::string token;
     while ((pos = s.find(delimiter)) != std::string::npos) {
         token = s.substr(0, pos);
-        v->push_back(token);
+        v.push_back(token);
         s.erase(0, pos + delimiter.length());
     }
-    v->push_back(s);
+    v.push_back(s);
+    return v;
 }
 /**
  * Returns the peak (maximum so far) resident set size (physical

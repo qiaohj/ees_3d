@@ -29,7 +29,7 @@ using namespace std;
  */
 class Neighbor {
 private:
-    unordered_map<int, set<int>*> *neighbors;
+    unordered_map<int, set<int>> neighbors;
 public:
 
     /**
@@ -49,10 +49,10 @@ public:
      * @brief return all the neighbors of a given face within a given distance
      * @return
      */
-    void getNeighborByID(int p_id, int distance, set<int> *neighbors, set<int> *handled_neighbors);
+    void getNeighborByID(int p_id, int distance, set<int> &neighbors, set<int> &handled_neighbors);
 
     int distance(int p_id1, int p_id2, int limited);
-    unordered_map<int, set<int>*>* getNeighbors();
+    unordered_map<int, set<int>> getNeighbors();
 };
 
 #endif /* Neighbor_H */

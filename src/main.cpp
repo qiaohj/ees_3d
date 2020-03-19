@@ -210,11 +210,12 @@ int run(int argc, const char *argv[]) {
     bool is_overwrite = atoi(argv[6]);
     //initialize the main scenario
     LOG(DEBUG)<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1);
-    Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
-    LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
-    //delete a;
-    LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
-
+    for (int i=0; i<1; i++){
+        Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
+        LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
+        //delete a;
+        LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
+    }
 
     return EXIT_SUCCESS;
 }
@@ -233,10 +234,10 @@ void testEnvVar(int times){
     }
     for (int i = 1; i <= times; i++) {
         LOG(INFO) << i << ". 1" << ": " << CommonFun::getCurrentRSS(1);
-        vector<int> *timeLine = new vector<int>();
+        vector<int> timeLine;
         LOG(INFO) << i << ". 2" << ": " << CommonFun::getCurrentRSS(1);
         for (int j = 1200; j <= 0; j++) {
-            timeLine->push_back(j);
+            timeLine.push_back(j);
         }
         LOG(INFO) << i << ". 3.1" << ": " << CommonFun::getCurrentRSS(1);
         EnvVar *env1 = new EnvVar(p_env_name1, env_db);
@@ -249,13 +250,26 @@ void testEnvVar(int times){
         LOG(INFO) << i << ". 4.2" << ": " << CommonFun::getCurrentRSS(1);
         delete env2;
         LOG(INFO) << i << ". 5.2" << ": " << CommonFun::getCurrentRSS(1);
-
-        delete timeLine;
+        timeLine.clear();
         LOG(INFO) << i << ". 6" << ": " << CommonFun::getCurrentRSS(1);
     }
     sqlite3_close(env_db);
     LOG(INFO)<<"END "<<": "<<CommonFun::getCurrentRSS(1);
 }
+
+void testMap(){
+    unordered_map<int, int> a;
+    a[1] = 2;
+    LOG(INFO)<<a[1];
+    a[1] = 3;
+    LOG(INFO)<<a[1];
+    a.insert({1,  4});
+    LOG(INFO)<<a[1];
+    a.erase(1);
+    a.insert({1,  4});
+    LOG(INFO)<<a[1];
+}
+
 
 int main(int argc, const char *argv[]){
     //testEnvVar(stoi(argv[1]));
@@ -263,9 +277,12 @@ int main(int argc, const char *argv[]){
     //return 0;
     int status = run(argc, argv);
     return status;
+
+    //testMap();
+    //return 0;
 }
 
-int mainxxx(int argc, const char *argv[]) {
+int testMalloc_trim(int argc, const char *argv[]) {
 	class C {
 	private:
 		map<int, float> v;
@@ -302,5 +319,7 @@ int mainxxx(int argc, const char *argv[]) {
 	malloc_trim(0);
 	LOG(INFO)<< "6" << CommonFun::getCurrentRSS(1);
 	sleep(100);
+	return 0;
 }
+
 

@@ -36,12 +36,12 @@ class Scenario {
 private:
 	/// @brief a sqlite db connection to save the results.
 	unsigned long memLimit;
-	vector<int> *timeLine;
+	vector<int> timeLine;
 	Neighbor* neighborInfo;
-	unordered_map<string, ISEA*> *masks;
+	unordered_map<string, ISEA*> masks;
 	/// @brief If save the results to a sqlite database. Suggested to set it to true
 	/// @brief The environmental variables used in the simulation.
-	unordered_map<string, EnvVar*> *environments_base;
+	unordered_map<string, EnvVar*> environments_base;
 	/// @brief The virtual species in the simulation, including the initial species, and new species after the speciation events.
 	void initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite, Neighbor* neighborInfo, vector<Simulation*> *simulations);
 	/// @brief Burn-in year of the simulation

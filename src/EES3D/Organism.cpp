@@ -82,17 +82,17 @@ int Organism::getSpeciationYears(){
 //void Organism::addChild(Organism* child){
 //    children.push_back(child);
 //}
-bool Organism::isSuitable(unordered_map<string, ISEA*>* p_current_environments, ISEA* mask) {
+bool Organism::isSuitable(unordered_map<string, ISEA*> &p_current_environments, ISEA* mask) {
 
-    unordered_map<string, NicheBreadth*> *nicheBreadth = species->getNicheBreadth();
-    for (auto item : *nicheBreadth) {
+    unordered_map<string, NicheBreadth*> nicheBreadth = species->getNicheBreadth();
+    for (auto item : nicheBreadth) {
 
         float mask_value = mask->readByID(id);
         if ((int) mask_value == NODATA) {
             LOG(DEBUG)<<"NO MASK";
             return false;
         }
-        float env_value = p_current_environments->at(item.first)->readByID(id);
+        float env_value = p_current_environments[item.first]->readByID(id);
         if ((int) env_value == NODATA) {
             LOG(DEBUG)<<"NO DATA";
             return false;

@@ -26,7 +26,7 @@ private:
 	/**
 	 * @brief A hash map to save the environmental layers used in the simulation time step by time step. The keys are the time steps, and the values are the environmental layers on the time step.
 	 */
-    unordered_map<int, ISEA*> *layers;
+    unordered_map<int, ISEA*> layers;
 
     string envName;
 public:

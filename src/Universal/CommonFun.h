@@ -14,7 +14,7 @@
 #ifndef CommonFun_H
 #define CommonFun_H
 
-using namespace std;
+
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +35,7 @@ using namespace std;
 #include "Const.h"
 #include "easylogging.h"
 
+using namespace std;
 
 #ifndef M_PI
 #define M_PI    3.1415926535897932384626433832795
@@ -69,7 +70,7 @@ public:
      * @param delimiter
      * @return
      */
-    static void splitStr(string s, string delimiter, vector<string> *v);
+    static vector<string> splitStr(string s, string delimiter);
 
     static bool fileExist (const string& name);
 
@@ -86,7 +87,7 @@ public:
      * @param s the string to save
      * @param path the path to the text file
      */
-    static void writeFile(string *s, const char *path);
+    static void writeFile(string &s, const char *path);
     /**
      * @brief create a folder
      * @param path the folder's path
@@ -102,19 +103,19 @@ public:
      * @param s the string array to save
      * @param path the path to the text file
      */
-    static void writeFile(vector<string> *s, const char *path);
+    static void writeFile(vector<string> &s, const char *path);
     /**
      * @brief execute a sql command
      * @param s the string array contains the SQL commend
      * @param db the database to execute the command
      */
-    static void executeSQL(const vector<string> *s, sqlite3 *db, bool output);
+    static void executeSQL(const vector<string> &s, sqlite3 *db, bool output);
     /**
      * @brief execute a sql command
      * @param s the string contains the SQL commend
      * @param db the database to execute the command
      */
-    static void executeSQL(string *s, sqlite3 *db, bool output);
+    static void executeSQL(const string &s, sqlite3 *db, bool output);
     /**
      * @brief add leading ZERO to a number and convert the number to a string with fixed length
      * @param value the number to convert

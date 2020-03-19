@@ -28,6 +28,6 @@ public:
      * @param year the year to read, -1 means all data.
      */
     static void readEnvInfo(sqlite3 *db, string tablename, bool with_year,
-            unordered_map<int, ISEA*> *values);
+            unordered_map<int, ISEA*> &values);
 };
 #endif /* UTILITY_ */

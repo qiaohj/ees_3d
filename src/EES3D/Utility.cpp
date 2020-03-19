@@ -13,7 +13,7 @@
 
 #include "Utility.h"
 
-void Utility::readEnvInfo(sqlite3 *db, string tablename, bool with_year, unordered_map<int, ISEA*> *values) {
+void Utility::readEnvInfo(sqlite3 *db, string tablename, bool with_year, unordered_map<int, ISEA*> &values) {
     string sql = "SELECT * FROM " + tablename;
     sqlite3_stmt *stmt;
    //LOG(INFO) << "Query: "<< sql;
@@ -29,10 +29,10 @@ void Utility::readEnvInfo(sqlite3 *db, string tablename, bool with_year, unorder
             }
             int id = sqlite3_column_int(stmt, ENVIRONMENT_global_id);
             float v = (float)sqlite3_column_double(stmt, ENVIRONMENT_v);
-            if (values->find(year)==values->end()){
-                values->insert({year, new ISEA()});
+            if (values.find(year)==values.end()){
+                values[year] = new ISEA();
             }
-            values->at(year)->setValue(id, v);
+            values[year]->setValue(id, v);
 
             break;
         }

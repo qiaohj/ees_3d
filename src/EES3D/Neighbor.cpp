@@ -15,7 +15,6 @@
 
 
 Neighbor::Neighbor(sqlite3 *env_db) {
-    neighbors = new unordered_map<int, set<int>*>();
     sqlite3_stmt *stmt;
     string sql = "SELECT * FROM neighbor";
     sqlite3_prepare(env_db, sql.c_str(), -1, &stmt, NULL);
@@ -27,15 +26,12 @@ Neighbor::Neighbor(sqlite3 *env_db) {
         case SQLITE_ROW: {
             int key = (int) sqlite3_column_int(stmt, NEIGHBOR_ID);
             string neighbor = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, NEIGHBOR_NEIGHBOR)));
-            vector<string> *tokens = new vector<string>();
-            CommonFun::splitStr(neighbor, ",", tokens);
-            set<int> * values = new set<int>();
-            for (string token : *tokens) {
-                values->insert(stoul(token));
+            vector<string> tokens = CommonFun::splitStr(neighbor, ",");
+            set<int> values;
+            for (string token : tokens) {
+                values.insert(stoul(token));
             }
-            neighbors->erase(key);
-            neighbors->insert({key, values});
-            delete tokens;
+            neighbors[key] = values;
             break;
         }
 
@@ -51,22 +47,22 @@ Neighbor::Neighbor(sqlite3 *env_db) {
 
     sqlite3_finalize(stmt);
 }
-void Neighbor::getNeighborByID(int p_id, int distance, set<int> *p_neighbors, set<int> *handled_ids) {
+void Neighbor::getNeighborByID(int p_id, int distance, set<int> &p_neighbors, set<int> &handled_ids) {
     //LOG(DEBUG)<<"ID is "<<p_id<<" and distance is "<<distance;
     if (distance > 0) {
-        set<int> *v = neighbors->at(p_id);
-        handled_ids->insert(p_id);
-        for (int nei_id : *v) {
-            if (handled_ids->find(nei_id) == handled_ids->end()) {
+        set<int> v = neighbors[p_id];
+        handled_ids.insert(p_id);
+        for (int nei_id : v) {
+            if (handled_ids.find(nei_id) == handled_ids.end()) {
                 getNeighborByID(nei_id, distance - 1, p_neighbors, handled_ids);
             }
         }
     }
 
-    p_neighbors->insert(p_id);
+    p_neighbors.insert(p_id);
 
 }
-unordered_map<int, set<int>*> *Neighbor::getNeighbors(){
+unordered_map<int, set<int>> Neighbor::getNeighbors(){
     return this->neighbors;
 }
 int Neighbor::distance(int p_id1, int p_id2, int limited) {
@@ -75,9 +71,9 @@ int Neighbor::distance(int p_id1, int p_id2, int limited) {
         //LOG(INFO)<<"distance "<<distance;
         set<int> neighbors;
         set<int> handled_ids;
-        getNeighborByID(p_id1, distance, &neighbors, &handled_ids);
+        getNeighborByID(p_id1, distance, neighbors, handled_ids);
         if (find(neighbors.begin(), neighbors.end(), p_id2) == neighbors.end()) {
-            getNeighborByID(p_id1, ++distance, &neighbors, &handled_ids);
+            getNeighborByID(p_id1, ++distance, neighbors, handled_ids);
             if (distance >= limited) {
                 return distance;
             }
@@ -88,11 +84,6 @@ int Neighbor::distance(int p_id1, int p_id2, int limited) {
 }
 
 Neighbor::~Neighbor() {
-
-    for (auto it : *neighbors){
-        delete it.second;
-    }
-    delete neighbors;
 
 }
 
