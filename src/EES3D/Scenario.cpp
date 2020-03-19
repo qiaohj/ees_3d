@@ -98,6 +98,8 @@ Scenario::Scenario(string p_env_db, string p_conf_db, string p_target, bool p_ov
             LOG(INFO) << "MEMORY USAGE BEFORE RELEASE: " << CommonFun::getCurrentRSS(1);
             delete simulation;
             LOG(INFO) << "MEMORY USAGE AFTER RELEASE: " << CommonFun::getCurrentRSS(1);
+            malloc_trim(0);
+            LOG(INFO) << "MEMORY USAGE AFTER RETURN MEMORY TO OS: " << CommonFun::getCurrentRSS(1);
         }
         if ((CommonFun::getCurrentRSS(pow(1024, 3)) > memLimit)) {
             LOG(INFO) << "Current memory is " << CommonFun::getCurrentRSS(pow(1024, 3)) << "GB. Memory limit is " << memLimit << "GB";

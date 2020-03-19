@@ -17,6 +17,7 @@
 using namespace std;
 #include <string>
 #include <sqlite3.h>
+#include <malloc.h>
 #include "../Universal/easylogging.h"
 #include "../Universal/CommonFun.h"
 #include "Neighbor.h"

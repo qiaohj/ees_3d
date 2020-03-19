@@ -294,7 +294,7 @@ int Simulation::run() {
         end = clock();
         double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
 
-        LOG(INFO) << "v3.6 Current year:" << timeLine->at(year_i) << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"<<totalSimulation<<") N_sp:"<<
+        LOG(INFO) << "v3.7 Current year:" << timeLine->at(year_i) << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"<<totalSimulation<<") N_sp:"<<
                 //organisms_in_current_year->size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
                 organisms_in_current_year->size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
         LOG(DEBUG) << "Load environments of year " << timeLine->at(year_i) << " via index " << year_i;
