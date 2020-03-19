@@ -27,6 +27,7 @@ using namespace std;
 #include <math.h>
 #include <sqlite3.h>
 #include <unistd.h>
+#include <malloc.h>
 
 #include "Universal/easylogging.h"
 #include "Universal/CommonFun.h"
@@ -263,3 +264,43 @@ int main(int argc, const char *argv[]){
     int status = run(argc, argv);
     return status;
 }
+
+int mainxxx(int argc, const char *argv[]) {
+	class C {
+	private:
+		map<int, float> v;
+	public:
+		C() {
+			//v = new map<int, float>();
+		}
+		virtual ~C() {
+			//CommonFun::freeContainerRemoved(v);
+			//delete v;
+			malloc_trim(0);
+		}
+		void setValue(int p_id, float p_value) {
+			v[p_id] = p_value;
+		}
+	};
+	int times = stoi(argv[1]);
+	LOG(INFO) << "Object";
+	for (int j = 0; j < times; j++) {
+		ISEA *a = new ISEA();
+		int v1 = rand() % 10000000;
+		LOG(INFO) <<j<<". "<< 1 << ". " << CommonFun::getCurrentRSS(1) <<" SIZE is "<<v1;
+		for (int i = 0; i < v1; i++) {
+			a->setValue(i, 1);
+		}
+		LOG(INFO) <<j<<". "<< 2 << ". " << CommonFun::getCurrentRSS(1) <<" SIZE is "<<v1;
+
+		delete a;
+		LOG(INFO) <<j<<". "<< 4 << ". " << CommonFun::getCurrentRSS(1) <<" SIZE is "<<v1;
+		malloc_trim(0);
+		LOG(INFO) <<j<<". "<< 5 << ". " << CommonFun::getCurrentRSS(1) <<" SIZE is "<<v1;
+	}
+
+	malloc_trim(0);
+	LOG(INFO)<< "6" << CommonFun::getCurrentRSS(1);
+	sleep(100);
+}
+
