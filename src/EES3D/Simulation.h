@@ -61,8 +61,8 @@ public:
     /**
      * @brief Constructor of Simulation
      */
-    Simulation(Species *species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit, vector<int> *p_timeLine, Neighbor *neighborInfo,
-            vector<string> *environment_labels, string mask_table);
+    Simulation(Species *species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit, vector<int> &p_timeLine, Neighbor *neighborInfo,
+            vector<string> &environment_labels, string mask_table);
     int getMinDividedYear_old(int speciation_year, vector<Organism*> group_1, vector<Organism*> group_2, int current_year_i);
     int getMinDividedYear_Disjoint(int speciation_year, vector<Organism*> &group_1, vector<Organism*> &group_2, int current_year_i);
     int getDividedYearI(Organism *o_1, Organism *o_2);

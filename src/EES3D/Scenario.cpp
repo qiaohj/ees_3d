@@ -69,7 +69,7 @@ Scenario::Scenario(string p_env_db, string p_conf_db, string p_target, bool p_ov
     LOG(INFO) << "Init the simulations";
     LOG(INFO) << "MEMORY USAGE BEFORE INIT SMULATIONS: " << CommonFun::getCurrentRSS(1);
     vector<Simulation*> simulations;
-    initSimulations(conf_db, env_db, p_id, p_target, p_overwrite, neighborInfo, &simulations);
+    initSimulations(conf_db, env_db, p_id, p_target, p_overwrite, neighborInfo, simulations);
 
     LOG(INFO) << "Run the simulations. Simulation size is " << simulations.size();
     int i = 1;
@@ -146,7 +146,7 @@ void Scenario::initEnvironments(sqlite3* env_db) {
 
 
 void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, string p_target, bool p_overwrite,
-        Neighbor* neighborInfo, vector<Simulation*> *simulations) {
+        Neighbor* neighborInfo, vector<Simulation*> &simulations) {
     string sql;
 
     if (p_id == -1) {
@@ -173,8 +173,8 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
             string mask_table = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_mask)));
             vector<string> environment_labels = CommonFun::splitStr(environments_str, ",");
 
-            Simulation *simulation = new Simulation(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, &timeLine, neighborInfo,
-                    &environment_labels, mask_table);
+            Simulation *simulation = new Simulation(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, timeLine, neighborInfo,
+                    environment_labels, mask_table);
 
             /*-------------------
              * If the target folder exists and the is_overwrite parameter is false, skip the simulation,
@@ -187,7 +187,7 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
                 continue;
             }
 
-            simulations->push_back(simulation);
+            simulations.push_back(simulation);
             break;
         }
 
@@ -206,6 +206,7 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
 
 Scenario::~Scenario() {
     delete neighborInfo;
+
     for (auto it : environments_base){
         LOG(DEBUG)<<"DELETE ENVIRONMENT";
         delete it.second;

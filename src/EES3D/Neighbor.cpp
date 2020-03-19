@@ -84,6 +84,6 @@ int Neighbor::distance(int p_id1, int p_id2, int limited) {
 }
 
 Neighbor::~Neighbor() {
-
+    neighbors.clear();
 }
 

@@ -174,19 +174,19 @@ public:
      * @brief clear a hash map and release the memory
      * @param v
      */
-    template<typename T> static void clearVectorObjRemoved(T *v);
-    template<typename T> static void clearUnorderedMapObjIntRemoved(T *v);
-    template<typename T> static void clearUnorderedMapObjStringRemoved(T *v);
-    template<typename T> static void clearUnorderedMapKeyRemoved(T *v);
-    template<typename T> static void freeContainerRemoved(T& p_container);
-    static void clearUnorderedMapRemoved(vector<string> *v);
+    template<typename T> static void clearVectorObj(T *v);
+    template<typename T> static void clearUnorderedMapObjInt(T *v);
+    template<typename T> static void clearUnorderedMapObjString(T *v);
+    template<typename T> static void clearUnorderedMapKey(T *v);
+    template<typename T> static void freeContainer(T& p_container);
+    static void clearUnorderedMap(vector<string> *v);
 
 };
-template<typename T> void CommonFun::freeContainerRemoved(T &p_container) {
+template<typename T> void CommonFun::freeContainer(T &p_container) {
     T empty;
     swap(p_container, empty);
 }
-template<typename T> void CommonFun::clearUnorderedMapObjStringRemoved(T *v) {
+template<typename T> void CommonFun::clearUnorderedMapObjString(T *v) {
     vector<string> erased_key;
     for (auto it : *v) {
         erased_key.push_back(it.first);
@@ -197,10 +197,10 @@ template<typename T> void CommonFun::clearUnorderedMapObjStringRemoved(T *v) {
         }
         v->erase(key);
     }
-    freeContainerRemoved(erased_key);
-    freeContainerRemoved(v);
+    freeContainer(erased_key);
+    freeContainer(v);
 }
-template<typename T> void CommonFun::clearUnorderedMapObjIntRemoved(T *v) {
+template<typename T> void CommonFun::clearUnorderedMapObjInt(T *v) {
     vector<int> erased_key;
     for (auto it : *v) {
         erased_key.push_back(it.first);
@@ -211,16 +211,16 @@ template<typename T> void CommonFun::clearUnorderedMapObjIntRemoved(T *v) {
         }
         v->erase(key);
     }
-    freeContainerRemoved(erased_key);
-    freeContainerRemoved(v);
+    freeContainer(erased_key);
+    freeContainer(v);
 }
-template<typename T> void CommonFun::clearUnorderedMapKeyRemoved(T *v) {
+template<typename T> void CommonFun::clearUnorderedMapKey(T *v) {
     for (auto it : *v) {
         delete it;
     }
 }
 
-template<typename T> void CommonFun::clearVectorObjRemoved(T *v) {
+template<typename T> void CommonFun::clearVectorObj(T *v) {
     for (typename T::iterator it = v->begin(); it != v->end(); ++it) {
         delete *it;
         *it = NULL;

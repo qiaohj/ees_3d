@@ -213,7 +213,7 @@ int run(int argc, const char *argv[]) {
     for (int i=0; i<1; i++){
         Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
         LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
-        //delete a;
+        delete a;
         LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
     }
 

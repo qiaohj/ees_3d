@@ -14,7 +14,7 @@
 
 #include <utility>
 Simulation::Simulation(Species *p_species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
-        vector<int> *p_timeLine, Neighbor* neighborInfo, vector<string> *environment_labels, string mask_table) {
+        vector<int> &p_timeLine, Neighbor* neighborInfo, vector<string> &environment_labels, string mask_table) {
     this->t1 = 0;
     this->t2 = 0;
     this->all_species[p_species->getIDWithParentID()] = p_species;
@@ -23,12 +23,12 @@ Simulation::Simulation(Species *p_species, string label, int burnInYear, string 
     this->overwrite = p_overwrite;
     this->memLimit = memLimit;
     this->label = label;
-    this->timeLine = *p_timeLine;
+    this->timeLine = p_timeLine;
     this->indexSimulation = indexSimulation;
     this->totalSimulation = totalSimulation;
     this->log_db = NULL;
     this->neighborInfo = neighborInfo;
-    this->environment_labels = *environment_labels;
+    this->environment_labels = environment_labels;
     this->mask_table = mask_table;
     this->mask = NULL;
     this->targetFolder = target + "/" + label;
@@ -524,7 +524,7 @@ int Simulation::run() {
         }
         LOG(DEBUG)<<"x11";
 
-        LOG(DEBUG)<<"End to rebuild the organism structure in this year. organisms size is "<<organisms_in_current_year.size();
+        LOG(DEBUG)<<"End to rebuild the organism structure in this year. species size is "<<organisms_in_current_year.size();
         LOG(DEBUG)<<"begin to generate group maps";
         unordered_map<Species*, ISEA*> group_maps;
         for (auto sp_it : organisms_in_current_year) {
