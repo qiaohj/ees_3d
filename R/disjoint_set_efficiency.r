@@ -52,6 +52,8 @@ df$rate<-df$old_time/df$new_time
 hist(df$rate)
 write.table(df, "/home/huijieqiao/git/ees_3d_data/TEST/test_disjoint_set.csv", row.names = F, sep=",")
 
+df<-read.table("/home/huijieqiao/git/ees_3d_data/TEST/test_disjoint_set.csv", head=T, sep=",", stringsAsFactors = F)
+
 head(df[which((df$old_time>0.1)&(df$old_time<df$new_time)),], 100)
 range(df$rate)
 df[which(df$rate==min(df$rate)),]

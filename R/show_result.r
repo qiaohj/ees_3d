@@ -12,7 +12,7 @@ library("stringr")
 
 
 
-logdb<-"/home/huijieqiao/git/ees_3d_data/TEST/Results/22980_POOR_MODERATE/22980_POOR_MODERATE.sqlite"
+logdb<-"/home/huijieqiao/git/ees_3d_data/TEST/Results/22816_GOOD_BROAD/22816_GOOD_BROAD.sqlite"
 mydb <- dbConnect(RSQLite::SQLite(), logdb)
 trees<-dbReadTable(mydb, "trees")
 suitable<-dbReadTable(mydb, "suitable")
