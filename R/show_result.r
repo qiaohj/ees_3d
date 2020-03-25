@@ -9,6 +9,12 @@ library("phangorn")
 library("phytools")
 library("geiger")
 library("stringr")
+library(tidyverse)
+library(plotKML)
+data(eberg_contours)
+## Not run: 
+plotKML(eberg_contours)
+
 
 
 
