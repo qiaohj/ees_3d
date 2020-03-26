@@ -21,8 +21,8 @@ map<-read.table("../../ees_3d_data/22816_GOOD_BROAD.log", head=F, sep=",")
 colnames(map)<-c("YEAR", "ID", "group_id", "sp_id")
 
 shape <- readOGR(dsn = "../../ees_3d_data", layer = "isea3h8p")
-y=1000
-for (y in c(1199:0)){
+y=999
+for (y in c(999:0)){
   
   item <- map[which(map$YEAR==y),]
   shape_t<-shape
@@ -30,8 +30,8 @@ for (y in c(1199:0)){
   shape_t@data$global_id<-as.numeric(as.character(shape_t@data$global_id))
   shape_t@data<-subset(shape_t@data, shape_t$global_id %in% item$ID)
   shape_t@data<-inner_join(shape_t@data, item, by=c("global_id"="ID"))
-  #plot(shape_t, col=rainbow(20)[shape_t@data$group_id+1], cex=0.2, pch=as.numeric(shape_t@data$sp_id))
-  plotKML(shape_t, colour="group_id", size="YEAR")
+  plot(shape_t, col=rainbow(length(unique(item$group_id))+1)[shape_t@data$group_id+1], cex=0.2)
+  #plotKML(shape_t, colour="group_id", size="YEAR")
   print(table(item$group_id))
   writeOGR(shape_t, dsn = "../../ees_3d_data", 
            layer = as.character(y), driver="ESRI Shapefile", overwrite_layer=T)

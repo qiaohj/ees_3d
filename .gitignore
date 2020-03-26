@@ -3,3 +3,5 @@ Debug
 /.project
 /core
 R/shape_t.kml
+*.RData
+*.Rhistory
