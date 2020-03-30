@@ -44,6 +44,9 @@ public:
 	 * @return
 	 */
     double getMin();
+    void setMax(double v);
+    void setMin(double v);
+
 };
 
 #endif /* DEFINITIONS_NICHEBREADTH_H_ */

@@ -38,8 +38,11 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         double r = 1 - 2 * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
         r = p_species->getNicheBreadthEvolutionRandomRange() * r + 1;
         LOG(DEBUG) << "niche breadth ratio is " << r;
-
-        for (auto it : p_species->getNicheBreadth()) {
+        unordered_map<string, NicheBreadth*> niche_breadth = p_parent->getNicheBreadth();
+        if (!parent){
+            niche_breadth = parent->getNicheBreadth();
+        }
+        for (auto it : niche_breadth) {
             NicheBreadth *p_NicheBreadth = it.second;
             double change = (p_NicheBreadth->getMax() - p_NicheBreadth->getMin()) * r;
             NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin() + change, p_NicheBreadth->getMax() + change);
@@ -48,6 +51,44 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         break;
     }
     case 2: {
+        unordered_map<string, NicheBreadth*> niche_breadth = p_parent->getNicheBreadth();
+        if (!parent) {
+            niche_breadth = parent->getNicheBreadth();
+        }else{
+            for (auto it : niche_breadth) {
+                NicheBreadth *p_NicheBreadth = it.second;
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                nicheBreadth[it.first] = new_NicheBreadth;
+            }
+            break;
+        }
+        for (auto it : niche_breadth) {
+            ssamodel s;
+            std::vector<double> X;
+            Organism *temp_org = this;
+            for (unsigned i = this->species->getNicheBreadthEvolutionParentLevel1(); i <= 0; i--) {
+                X[i] = temp_org->envs[it.first];
+                temp_org = temp_org->getParent();
+
+                if (temp_org){
+                    break;
+                }
+            }
+            if (X.size()!=this->species->getNicheBreadthEvolutionParentLevel1()+1){
+                break;
+            }
+            alglib::real_1d_array AX;
+            AX.setcontent(X.size(), &(X[0]));
+            ssacreate(s);
+            ssasetwindow(s, 3);
+            ssaaddsequence(s, AX);
+            ssasetalgotopkdirect(s, 2);
+            real_1d_array trend;
+            ssaforecastlast(s, 1, trend);
+            double change = trend[0] - this->envs[it.first];
+            NicheBreadth *new_NicheBreadth = new NicheBreadth(it.second->getMin() + change, it.second->getMax() + change);
+            nicheBreadth[it.first] = new_NicheBreadth;
+        }
         break;
     }
     case 3: {

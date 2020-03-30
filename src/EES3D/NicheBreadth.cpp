@@ -27,4 +27,10 @@ double NicheBreadth::getMin(){
 double NicheBreadth::getMax(){
     return max;
 }
+void NicheBreadth::setMax(double v){
+    max = v;
+}
+void NicheBreadth::setMin(double v){
+    min = v;
+}
 

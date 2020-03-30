@@ -35,6 +35,9 @@ using namespace std;
 #include "EES3D/ISEA.h"
 #include "EES3D/Neighbor.h"
 #include "EES3D/EnvVar.h"
+#include "alglib/dataanalysis.h"
+#include "alglib/stdafx.h"
+using namespace alglib;
 
 INITIALIZE_EASYLOGGINGPP;
 
@@ -268,6 +271,53 @@ void testMap(){
     a.erase(1);
     a.insert({1,  4});
     LOG(INFO)<<a[1];
+}
+int mainx(int argc, char **argv)
+{
+    //
+    // Here we demonstrate SSA forecasting on some toy problem with clearly
+    // visible linear trend and small amount of noise.
+    //
+    ssamodel s;
+    real_1d_array x = "[0.05,0.96,2.04,3.11,3.97,5.03,5.98,7.02,8.02]";
+
+    //
+    // First, we create SSA model, set its properties and add dataset.
+    //
+    // We use window with width=3 and configure model to use direct SSA
+    // algorithm - one which runs exact O(N*W^2) analysis - to extract
+    // two top singular vectors. Well, it is toy problem :)
+    //
+    // NOTE: SSA model may store and analyze more than one sequence
+    //       (say, different sequences may correspond to data collected
+    //       from different devices)
+    //
+    ssacreate(s);
+    ssasetwindow(s, 3);
+    ssaaddsequence(s, x);
+    ssasetalgotopkdirect(s, 2);
+
+    //
+    // Now we begin analysis. Internally SSA model stores everything it needs:
+    // data, settings, solvers and so on. Right after first call to analysis-
+    // related function it will analyze dataset, build basis and perform analysis.
+    //
+    // Subsequent calls to analysis functions will reuse previously computed
+    // basis, unless you invalidate it by changing model settings (or dataset).
+    //
+    // In this example we show how to use ssaforecastlast() function, which
+    // predicts changed in the last sequence of the dataset. If you want to
+    // perform prediction for some other sequence, use ssaforecastsequence().
+    //
+    real_1d_array trend;
+    ssaforecastlast(s, 3, trend);
+
+    //
+    // Well, we expected it to be [9,10,11]. There exists some difference,
+    // which can be explained by the artificial noise in the dataset.
+    //
+    printf("%s\n", trend.tostring(2).c_str()); // EXPECTED: [9.0005,9.9322,10.8051]
+    return 0;
 }
 
 

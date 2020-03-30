@@ -14,7 +14,17 @@
 #ifndef DEFINITIONS_INDIVIDUALORGANISM_H_
 #define DEFINITIONS_INDIVIDUALORGANISM_H_
 
+
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include "../alglib/stdafx.h"
+#include "../alglib/dataanalysis.h"
+
 using namespace std;
+using namespace alglib;
+
 #include "Species.h"
 #include "ISEA.h"
 #include "../Universal/easylogging.h"
