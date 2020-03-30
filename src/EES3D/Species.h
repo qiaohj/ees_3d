@@ -46,6 +46,10 @@ private:
     int groupExtinctionThreshold;
     int speciesExtinctionTimeSteps;
     int currentSpeciesExtinctionTimeSteps;
+    vector<double> nicheBreadthEvolutionRatio;
+    double nicheBreadthEvolutionRandomRange;
+    int nicheBreadthEvolutionParentLevel1;
+    int nicheBreadthEvolutionParentsLevel2;
     double speciesExtinctionThreaholdPercentage;
     unsigned maxSpeciesDistribution;
     set<int> seeds;
@@ -105,6 +109,11 @@ public:
 	 * @return
 	 */
     int getGroupExtinctionThreshold();
+
+    vector<double> getNicheBreadthEvolutionRatio();
+    int getNicheBreadthEvolutionParentLevel1();
+    int getNicheBreadthEvolutionParentLevels2();
+    double getNicheBreadthEvolutionRandomRange();
     /**
 	 * @brief The maximum time steps for a species to go extinct when its distribution is smaller than a threshold defined with SpeciesExtinctionThreshold or SpeciesExtinctionThreaholdPercentage
 	 * @return

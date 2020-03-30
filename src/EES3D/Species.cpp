@@ -36,9 +36,9 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
     dispersalAbilityLength = dispersalAbility_str.size();
     dispersalAbility = new double[dispersalAbilityLength];
 	for (int index = 0; index < dispersalAbilityLength; ++index) {
-		dispersalAbility[index] = stod(dispersalAbility_str.at(index));
+		dispersalAbility[index] = stod(dispersalAbility_str[index]);
 	}
-	this->burninYear = burn_in_year;
+	burninYear = burn_in_year;
 
     dispersalSpeed = sqlite3_column_int(stmt, SIMULATION_dispersal_speed);
     dispersalMethod = sqlite3_column_int(stmt, SIMULATION_dispersal_method);
@@ -48,7 +48,18 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
     speciesExtinctionThreshold = (unsigned)sqlite3_column_int(stmt, SIMULATION_species_extinction_threshold);
     groupExtinctionThreshold = sqlite3_column_int(stmt, SIMULATION_group_extinction_threshold);
     speciesExtinctionTimeSteps = sqlite3_column_int(stmt, SIMULATION_species_extinction_time_steps);
-    speciesExtinctionThreaholdPercentage = 1 - sqlite3_column_double(stmt, SIMULATION_species_extinction_threahold_percentage);;
+    speciesExtinctionThreaholdPercentage = 1 - sqlite3_column_double(stmt, SIMULATION_species_extinction_threahold_percentage);
+
+    vector<string> nicheBreadthEvolutionRatio_str = CommonFun::splitStr(string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_niche_breadth_evolution_ratio))), ",");
+
+    for (unsigned index = 0; index < nicheBreadthEvolutionRatio_str.size(); ++index) {
+        nicheBreadthEvolutionRatio[index] = stod(nicheBreadthEvolutionRatio_str[index]);
+    }
+
+    nicheBreadthEvolutionRandomRange = sqlite3_column_double(stmt, SIMULATION_niche_breadth_evolution_random_range);
+    nicheBreadthEvolutionParentLevel1 = sqlite3_column_int(stmt, SIMULATION_niche_breadth_evolution_parent_level_1);
+    nicheBreadthEvolutionParentsLevel2 = sqlite3_column_int(stmt, SIMULATION_niche_breadth_evolution_parents_level_2);
+
     //LOG(INFO)<<"speciesExtinctionThreaholdPercentage"<<speciesExtinctionThreaholdPercentage;
     maxSpeciesDistribution = 0;
     appearedYearI = 0;
@@ -81,10 +92,26 @@ string Species::getIDWithParentID(){
         return id_str;
     }
 }
+
+vector<double> Species::getNicheBreadthEvolutionRatio(){
+    return nicheBreadthEvolutionRatio;
+}
+int Species::getNicheBreadthEvolutionParentLevel1(){
+    return nicheBreadthEvolutionParentLevel1;
+}
+int Species::getNicheBreadthEvolutionParentLevels2(){
+    return nicheBreadthEvolutionParentsLevel2;
+}
+double Species::getNicheBreadthEvolutionRandomRange(){
+    return nicheBreadthEvolutionRandomRange;
+}
 Species::Species(int p_id, Species* p_parent, int p_year_i) {
     timeLine = p_parent->getTimeLine();
 	currentSpeciesExtinctionTimeSteps = 0;
-
+	nicheBreadthEvolutionRatio = parent->getNicheBreadthEvolutionRatio();
+	nicheBreadthEvolutionRandomRange = p_parent->getNicheBreadthEvolutionRandomRange();
+	nicheBreadthEvolutionParentLevel1 = p_parent->getNicheBreadthEvolutionParentLevel1();
+	nicheBreadthEvolutionParentsLevel2 = p_parent->getNicheBreadthEvolutionParentLevels2();
     newSpecies = true;
     parent = p_parent;
     //id = p_id;
@@ -108,14 +135,12 @@ Species::Species(int p_id, Species* p_parent, int p_year_i) {
         NicheBreadth* new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
         nicheBreadth[it.first] = new_NicheBreadth;
     }
-    LOG(DEBUG)<<"y10";
     dispersalAbilityLength = parent->getDispersalAbilityLength();
     burninYear = parent->getBurnInYear();
 
     parent->setDisappearedYearI(p_year_i);
     appearedYearI = p_year_i;
     disappearedYearI = timeLine.size() - 1;
-    LOG(DEBUG)<<"y11";
     parent->addChild(this);
     clade_extinction_status = 0;
     number_of_clade_extinction = 0;

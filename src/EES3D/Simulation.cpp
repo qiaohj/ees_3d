@@ -62,7 +62,7 @@ void Simulation::saveGroupmap(int year_i, unordered_map<Species*, ISEA*> &specie
         Species *sp = sp_it.first;
         ISEA *map = sp_it.second;
         if (map) {
-            unordered_map<int, float> values = map->getValues();
+            unordered_map<int, double> values = map->getValues();
             for (auto item : values) {
                 int id = item.first;
                 int group_id = (int) item.second;
@@ -215,7 +215,7 @@ void Simulation::generateSuitable() {
     set<int> values;
     LOG(DEBUG) << "Begin to generate the suitable area";
     auto it = current_environments.begin();
-    unordered_map<int, float> env_v = it->second->getValues();
+    unordered_map<int, double> env_v = it->second->getValues();
     for (auto item : env_v) {
         int id = item.first;
         int  v = 0;

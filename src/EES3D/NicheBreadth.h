@@ -19,15 +19,15 @@
  */
 class NicheBreadth {
 private:
-    float min;
-    float max;
+    double min;
+    double max;
 public:
     /**
 	 * @brief Constructor of NicheBreadth class
 	 * @param min lower limit of the niche breadth
 	 * @param max upper limit of the niche breadth
 	 */
-    NicheBreadth(float min, float max);
+    NicheBreadth(double min, double max);
     /**
 	 * @brief Destructor of NicheBreadth class
 	 *
@@ -38,12 +38,12 @@ public:
      * @brief return the upper limit of the niche breadth
      * @return
      */
-    float getMax();
+    double getMax();
     /**
 	 * @brief return the lower limit of the niche breadth
 	 * @return
 	 */
-    float getMin();
+    double getMin();
 };
 
 #endif /* DEFINITIONS_NICHEBREADTH_H_ */

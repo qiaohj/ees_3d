@@ -26,14 +26,14 @@
  */
 class ISEA {
 private:
-	unordered_map<int, float> values;
+	unordered_map<int, double> values;
 public:
 	/**
 	 * @brief Constructor of ISEA class No.2 (Create a blank map)
 	 */
 	ISEA();
 
-	ISEA(unordered_map<int, float> &p_values);
+	ISEA(unordered_map<int, double> &p_values);
 	/**
 	 * @brief Constructor of ISEA class No.1 (load an ISEA from a file)
 	 * @param p_filename the file to load the map info
@@ -51,7 +51,7 @@ public:
 	 * @brief read value by ID of face
 	 * @return
 	 */
-	float readByID(int p_id);
+	double readByID(int p_id);
 
 	/**
 	 * @brief return the number of faces.
@@ -64,12 +64,12 @@ public:
 	 * @brief set value to a given face by id.
 	 * @return
 	 */
-	void setValue(int p_id, float p_value);
+	void setValue(int p_id, double p_value);
 	/**
 	 * @brief return the face/value map.
 	 * @return
 	 */
-	unordered_map<int, float> getValues();
+	unordered_map<int, double> getValues();
 
 };
 

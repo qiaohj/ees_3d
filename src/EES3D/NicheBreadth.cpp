@@ -13,7 +13,7 @@
 
 #include "NicheBreadth.h"
 
-NicheBreadth::NicheBreadth(float p_min, float p_max) {
+NicheBreadth::NicheBreadth(double p_min, double p_max) {
     min = p_min;
     max = p_max;
 }
@@ -21,10 +21,10 @@ NicheBreadth::NicheBreadth(float p_min, float p_max) {
 NicheBreadth::~NicheBreadth() {
 
 }
-float NicheBreadth::getMin(){
+double NicheBreadth::getMin(){
     return min;
 }
-float NicheBreadth::getMax(){
+double NicheBreadth::getMax(){
     return max;
 }
 

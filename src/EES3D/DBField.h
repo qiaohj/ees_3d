@@ -33,10 +33,14 @@
 #define SIMULATION_mask    21
 #define SIMULATION_burn_in_year      22
 #define SIMULATION_is_run       23
+#define SIMULATION_niche_breadth_evolution_ratio   24
+#define SIMULATION_niche_breadth_evolution_random_range   25
+#define SIMULATION_niche_breadth_evolution_parent_level_1   26
+#define SIMULATION_niche_breadth_evolution_parents_level_2  27
 #define ENVIRONMENTS_names       0
-#define ENVIRONMENTS_begin       0
-#define ENVIRONMENTS_end       0
-#define ENVIRONMENTS_step       0
+#define ENVIRONMENTS_begin       1
+#define ENVIRONMENTS_end       2
+#define ENVIRONMENTS_step       3
 #define TIMELINE_from       0
 #define TIMELINE_to       1
 #define TIMELINE_step       2

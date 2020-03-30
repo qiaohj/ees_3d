@@ -16,7 +16,7 @@
 ISEA::ISEA() {
 
 }
-ISEA::ISEA(unordered_map<int, float> &p_values){
+ISEA::ISEA(unordered_map<int, double> &p_values){
     values = p_values;
 }
 
@@ -24,15 +24,15 @@ int ISEA::getCellSize() {
 	return values.size();
 }
 
-void ISEA::setValue(int p_id, float p_value) {
+void ISEA::setValue(int p_id, double p_value) {
     values[p_id] = p_value;
 }
 
-unordered_map<int, float> ISEA::getValues() {
+unordered_map<int, double> ISEA::getValues() {
     return values;
 }
 
-float ISEA::readByID(int p_id) {
+double ISEA::readByID(int p_id) {
     if (values.find(p_id)==values.end()){
         return ((float)NODATA);
     }else{
@@ -41,8 +41,8 @@ float ISEA::readByID(int p_id) {
 }
 
 ISEA::~ISEA() {
-    LOG(DEBUG)<<"I DO";
+    //LOG(DEBUG)<<"I DO";
     values.clear();
-    unordered_map<int, float>().swap(values);
+    unordered_map<int, double>().swap(values);
 }
 

@@ -30,7 +30,9 @@ private:
     Species* species;
     int year_i;
     Organism* parent;
-
+    unordered_map<string, NicheBreadth*> nicheBreadth;
+    int nicheBreadthType;
+    unordered_map<string, double> envs;
 public:
     /**
      * @brief Constructor of Organism class
@@ -41,7 +43,8 @@ public:
      */
     Organism(int p_year, Species* p_species,
             Organism* p_parent, int p_id);
-
+    int getNicheBreadthType();
+    int setNicheBreadthType(vector<double> typeRatio, int parentType);
     /**
 	 * @brief Destructor of Organism class
 	 *
@@ -159,6 +162,7 @@ public:
      * @brief return the memory usage of the object (for debug).
      */
     int long getMemoryUsage();
+    unordered_map<string, NicheBreadth*> getNicheBreadth();
 };
 
 #endif /* DEFINITIONS_INDIVIDUALORGANISM_H_ */
