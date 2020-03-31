@@ -104,20 +104,20 @@ double Species::getNicheBreadthEvolutionRandomRange(){
     return nicheBreadthEvolutionRandomRange;
 }
 Species::Species(int p_id, Species* p_parent, int p_year_i) {
-    timeLine = p_parent->getTimeLine();
-	currentSpeciesExtinctionTimeSteps = 0;
-	nicheBreadthEvolutionRatio = parent->getNicheBreadthEvolutionRatio();
-	nicheBreadthEvolutionRandomRange = p_parent->getNicheBreadthEvolutionRandomRange();
-	nicheBreadthEvolutionParentLevel1 = p_parent->getNicheBreadthEvolutionParentLevel1();
-	nicheBreadthEvolutionParentsLevel2 = p_parent->getNicheBreadthEvolutionParentLevels2();
     newSpecies = true;
     parent = p_parent;
+    timeLine = parent->getTimeLine();
+    currentSpeciesExtinctionTimeSteps = 0;
+	nicheBreadthEvolutionRatio = parent->getNicheBreadthEvolutionRatio();
+	nicheBreadthEvolutionRandomRange = parent->getNicheBreadthEvolutionRandomRange();
+	nicheBreadthEvolutionParentLevel1 = parent->getNicheBreadthEvolutionParentLevel1();
+	nicheBreadthEvolutionParentsLevel2 = parent->getNicheBreadthEvolutionParentLevels2();
     //id = p_id;
     global_id = p_id;
     speciesExtinctionThreshold = parent->getSpeciesExtinctionThreshold();
     groupExtinctionThreshold = parent->getGroupExtinctionThreshold();
-    speciesExtinctionTimeSteps = p_parent->getSpeciesExtinctionTimeSteps();
-    speciesExtinctionThreaholdPercentage = p_parent->getSpeciesExtinctionThreaholdPercentage();
+    speciesExtinctionTimeSteps = parent->getSpeciesExtinctionTimeSteps();
+    speciesExtinctionThreaholdPercentage = parent->getSpeciesExtinctionThreaholdPercentage();
     maxSpeciesDistribution = 0;
     dispersalAbility = new double[parent->getDispersalAbilityLength()];
     for (int i=0; i<parent->getDispersalAbilityLength();i++){
@@ -127,7 +127,6 @@ Species::Species(int p_id, Species* p_parent, int p_year_i) {
     dispersalMethod = parent->getDispersalMethod();
     numberOfPath = parent->getNumOfPath();
     speciationYears = parent->getSpeciationYears();
-
     for (auto it : parent->getNicheBreadth()){
         NicheBreadth* p_NicheBreadth = it.second;
         NicheBreadth* new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
@@ -139,14 +138,14 @@ Species::Species(int p_id, Species* p_parent, int p_year_i) {
     parent->setDisappearedYearI(p_year_i);
     appearedYearI = p_year_i;
     disappearedYearI = timeLine.size() - 1;
-    parent->addChild(this);
     clade_extinction_status = 0;
     number_of_clade_extinction = 0;
     number_of_speciation = 0;
     number_of_species_extinction = 0;
-    LOG(DEBUG)<<"y12";
     environment_labels = parent->getEnvironmentLabels();
     seeds = parent->getSeeds();
+
+    parent->addChild(this);
 }
 vector<string> Species::getEnvironmentLabels(){
     return environment_labels;

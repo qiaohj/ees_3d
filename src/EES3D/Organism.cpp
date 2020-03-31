@@ -28,7 +28,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
     }
     switch (nicheBreadthType) {
     case 0:{
-        LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+        //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
         for (auto it : p_species->getNicheBreadth()) {
             NicheBreadth *p_NicheBreadth = it.second;
             NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
@@ -37,7 +37,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         break;
     }
     case 1: {
-        LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+        //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
         double r = 1 - 2 * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
         r = p_species->getNicheBreadthEvolutionRandomRange() * r + 1;
         LOG(DEBUG) << "niche breadth ratio is " << r;
@@ -54,7 +54,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         break;
     }
     case 2: {
-        LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+        //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
         unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
         if (parent) {
             niche_breadth = parent->getNicheBreadth();
@@ -217,12 +217,12 @@ bool Organism::isSuitable(unordered_map<string, ISEA*> &p_current_environments, 
 
         float mask_value = mask->readByID(id);
         if ((int) mask_value == NODATA) {
-            LOG(DEBUG)<<"NO MASK";
+            //LOG(DEBUG)<<"NO MASK";
             return false;
         }
         float env_value = p_current_environments[item.first]->readByID(id);
         if ((int) env_value == NODATA) {
-            LOG(DEBUG)<<"NO DATA";
+            //LOG(DEBUG)<<"NO DATA";
             return false;
         }
 

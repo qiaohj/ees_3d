@@ -10,15 +10,15 @@ library("phytools")
 library("geiger")
 library("stringr")
 library(tidyverse)
-library(plotKML)
-data(eberg_contours)
+#library(plotKML)
+#data(eberg_contours)
 ## Not run: 
-plotKML(eberg_contours)
+#plotKML(eberg_contours)
 
 
 
 
-logdb<-"/home/huijieqiao/git/ees_3d_data/TEST/Results/22816_GOOD_BROAD/22816_GOOD_BROAD.sqlite"
+logdb<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/Results_TEST/1198_GOOD_BROAD_1/1198_GOOD_BROAD_1.sqlite"
 mydb <- dbConnect(RSQLite::SQLite(), logdb)
 trees<-dbReadTable(mydb, "trees")
 suitable<-dbReadTable(mydb, "suitable")
