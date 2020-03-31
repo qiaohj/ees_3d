@@ -22,24 +22,27 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
     tempSpeciesID = 0;
     dispersalAbility = 0;
     if (p_parent){
-        nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), -1);
-    }else{
         nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), p_parent->getNicheBreadthType());
+    }else{
+        nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), -1);
     }
     switch (nicheBreadthType) {
-    case 0:
+    case 0:{
+        LOG(DEBUG)<<"I DO "<<nicheBreadthType;
         for (auto it : p_species->getNicheBreadth()) {
             NicheBreadth *p_NicheBreadth = it.second;
             NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
             nicheBreadth[it.first] = new_NicheBreadth;
         }
         break;
+    }
     case 1: {
+        LOG(DEBUG)<<"I DO "<<nicheBreadthType;
         double r = 1 - 2 * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
         r = p_species->getNicheBreadthEvolutionRandomRange() * r + 1;
         LOG(DEBUG) << "niche breadth ratio is " << r;
-        unordered_map<string, NicheBreadth*> niche_breadth = p_parent->getNicheBreadth();
-        if (!parent){
+        unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
+        if (parent){
             niche_breadth = parent->getNicheBreadth();
         }
         for (auto it : niche_breadth) {
@@ -51,8 +54,9 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         break;
     }
     case 2: {
-        unordered_map<string, NicheBreadth*> niche_breadth = p_parent->getNicheBreadth();
-        if (!parent) {
+        LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+        unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
+        if (parent) {
             niche_breadth = parent->getNicheBreadth();
         }else{
             for (auto it : niche_breadth) {
@@ -74,7 +78,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
                     break;
                 }
             }
-            if (X.size()!=this->species->getNicheBreadthEvolutionParentLevel1()+1){
+            if (X.size()!=(unsigned)this->species->getNicheBreadthEvolutionParentLevel1()+1){
                 break;
             }
             alglib::real_1d_array AX;
@@ -104,31 +108,32 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
 int Organism::setNicheBreadthType(vector<double> typeRatio, int parentType){
     vector<double> newRatio = typeRatio;
     int type = parentType;
+    //LOG(DEBUG)<<"Parent Type is "<< type;
+    //for (unsigned i = 0; i < newRatio.size(); i++) {
+    //    LOG(DEBUG) << "old Type " << i << " is  " << newRatio[i];
+    //}
     if (parentType!=-1){
-        for (unsigned i=0; i<newRatio.size(); i++){
-            LOG(DEBUG)<<"old Type " << i << " is  "<< newRatio[i];
-        }
-        for (unsigned i=1; i<newRatio.size(); i++){
+        for (unsigned i=newRatio.size()-1; i>0; i--){
             newRatio[i] -= newRatio[i-1];
         }
-        newRatio[parentType] = (newRatio[parentType] + 1)/2;
+        newRatio[parentType] = newRatio[parentType] + 1;
         for (unsigned i=0; i<newRatio.size(); i++){
             newRatio[i] /= 2;
         }
-        double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+    }
+    double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
 
-        for (unsigned i = 0; i < newRatio.size(); i++) {
-            if (r <= newRatio[i - 1]) {
-                type = i;
-                break;
-            }
-        }
-        for (unsigned i=0; i<newRatio.size(); i++){
-            LOG(DEBUG)<<"new Type " << i << " is  "<< newRatio[i];
+    for (unsigned i = 0; i < newRatio.size(); i++) {
+        if (r <= newRatio[i]) {
+            type = i;
+            break;
         }
     }
+    //for (unsigned i=0; i<newRatio.size(); i++){
+    //    LOG(DEBUG)<<"new Type " << i << " is  "<< newRatio[i];
+    //}
 
-    LOG(DEBUG)<<"Type is "<< type;
+    //LOG(DEBUG)<<"Type is "<< type;
     return type;
 }
 int Organism::getNicheBreadthType(){
@@ -201,7 +206,13 @@ unordered_map<string, NicheBreadth*> Organism::getNicheBreadth() {
 //    children.push_back(child);
 //}
 bool Organism::isSuitable(unordered_map<string, ISEA*> &p_current_environments, ISEA* mask) {
+    /*
 
+    for (auto item : nicheBreadth) {
+        float env_value = p_current_environments[item.first]->readByID(id);
+        LOG(DEBUG)<<item.first<<" is "<<env_value<<". Max is "<<item.second->getMax()<<" and Min is "<<item.second->getMin();
+    }
+    */
     for (auto item : nicheBreadth) {
 
         float mask_value = mask->readByID(id);
@@ -217,12 +228,12 @@ bool Organism::isSuitable(unordered_map<string, ISEA*> &p_current_environments, 
 
         if ((env_value > item.second->getMax())
                 || (env_value < item.second->getMin())) {
-            //LOG(DEBUG)<<"env_value is "<<env_value<<". Max is "<<item.second->getMax()<<" and Min is "<<item.second->getMin();
+            //LOG(DEBUG)<<"UNSUITABLE";
             return false;
         }
         envs[item.first] = env_value;
     }
-
+    //LOG(DEBUG)<<"SUITABLE";
     return true;
 }
 Species* Organism::getSpecies() {

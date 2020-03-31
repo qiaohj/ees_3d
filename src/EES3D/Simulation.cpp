@@ -339,9 +339,11 @@ int Simulation::run() {
                         //create a new organism
                         Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, it);
                         new_organism->setRandomDispersalAbility();
+
                         if (new_organism->isSuitable(current_environments, mask)){
                             new_organisms.push_back(new_organism);
                         }else{
+                            LOG(DEBUG)<<"Remove it because of unsuitable";
                             delete new_organism;
                         }
                     }
@@ -357,7 +359,7 @@ int Simulation::run() {
             //LOG(DEBUG)<<"end to simulate organism by organism.";
         }
 
-        LOG(DEBUG)<<"end to simulate organism by species. Count of species is " << actived_organisms.size();
+        LOG(DEBUG)<<"end to simulate organism by species. Count of species is " << actived_organisms.size()<< " and organism size is "<<all_organisms[year_i].size();
 
         //Clean actived_organisms
         actived_organisms.clear();
@@ -365,10 +367,13 @@ int Simulation::run() {
         for (auto sp_it =organisms_in_current_year.begin(); sp_it!=organisms_in_current_year.end();) {
             Species *species = sp_it->first;
             //for some wired extinction conditions.
+            //LOG(DEBUG)<<sp_it->second.size()<<" "<<species->getCurrentSpeciesExtinctionTimeSteps()<<" "<<species->getSpeciesExtinctionTimeSteps()<<" "
+            //        <<species->getMaxSpeciesDistribution()<<" "<<species->getSpeciesExtinctionThreaholdPercentage()<<" "
+            //        <<species->getMaxSpeciesDistribution() * species->getSpeciesExtinctionThreaholdPercentage();
+
             if ((sp_it->second.size() > 0) &&
                     ((species->getCurrentSpeciesExtinctionTimeSteps() < species->getSpeciesExtinctionTimeSteps())) &&
                     (sp_it->second.size() >= (species->getMaxSpeciesDistribution() * species->getSpeciesExtinctionThreaholdPercentage()))) {
-
                 species->setMaxSpeciesDistribution((sp_it->second.size() > species->getMaxSpeciesDistribution()) ? sp_it->second.size() : species->getMaxSpeciesDistribution());
                 if ((sp_it->second.size() <= species->getSpeciesExtinctionThreshold()) && ((int)year_i >= species->getSpeciationYears())) {
                     species->addCurrentSpeciesExtinctionTimeSteps();
@@ -472,6 +477,7 @@ int Simulation::run() {
         LOG(DEBUG)<<"end to mark the group id, and detect the speciation. species size is "<<organisms_in_current_year.size();
 
         LOG(DEBUG)<<"Begin to rebuild the organism structure in this year";
+        //here is a bug to solve.
         for (auto sp_it = organisms_in_current_year.begin(); sp_it!= organisms_in_current_year.end();) {
             LOG(DEBUG)<<"get all organisms in this year";
             unordered_map<int, vector<Organism*> > organisms = sp_it->second;
@@ -479,7 +485,6 @@ int Simulation::run() {
             unordered_map<int, int> species_ids;
             set<int> temp_species_ids;
             for (auto c_it : organisms) {
-                LOG(DEBUG)<<"go from the first species in this year";
                 if (c_it.second.size() > 0) {
                     Organism *organism_item = c_it.second.front();
                     temp_species_ids.insert(organism_item->getTempSpeciesId());
@@ -522,7 +527,6 @@ int Simulation::run() {
             }
             species_ids.clear();
         }
-        LOG(DEBUG)<<"x11";
 
         LOG(DEBUG)<<"End to rebuild the organism structure in this year. species size is "<<organisms_in_current_year.size();
         LOG(DEBUG)<<"begin to generate group maps";
@@ -882,7 +886,6 @@ Simulation::~Simulation() {
     for (auto it1 : all_organisms){
         for (auto it2 : it1.second){
             if (it2){
-                LOG(DEBUG)<<"z3.1 "<<it2;
                 delete it2;
             }
         }

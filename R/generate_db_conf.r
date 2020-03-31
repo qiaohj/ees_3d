@@ -63,7 +63,7 @@ for (i in c(1:nrow(mask))){
       item$speciation_years<-100
       item$species_extinction_threshold<-0
       item$species_extinction_time_steps<-1
-      item$species_extinction_threahold_percentage<-0.8
+      item$species_extinction_threahold_percentage<-1
       item$group_extinction_threshold<-0
       item$initial_seeds<-item$global_id
       item$environments<-("Debiased_Mean_Annual_Temperature,Debiased_Mean_Annual_Precipitation")
@@ -83,6 +83,7 @@ for (i in c(1:nrow(mask))){
 dim(simulations)
 head(simulations)
 simulations$is_run<-0
+#simulations$species_extinction_threahold_percentage<-1
 simulations[which(simulations$random_index<=1000), "is_run"]<-1
 simulations[which(simulations$global_id==10143), "is_run"]<-1
 simulations[which(simulations$is_run==1),]

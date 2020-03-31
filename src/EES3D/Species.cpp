@@ -51,11 +51,9 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
     speciesExtinctionThreaholdPercentage = 1 - sqlite3_column_double(stmt, SIMULATION_species_extinction_threahold_percentage);
 
     vector<string> nicheBreadthEvolutionRatio_str = CommonFun::splitStr(string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_niche_breadth_evolution_ratio))), ",");
-
     for (unsigned index = 0; index < nicheBreadthEvolutionRatio_str.size(); ++index) {
-        nicheBreadthEvolutionRatio[index] = stod(nicheBreadthEvolutionRatio_str[index]);
+        nicheBreadthEvolutionRatio.push_back(stod(nicheBreadthEvolutionRatio_str[index]));
     }
-
     nicheBreadthEvolutionRandomRange = sqlite3_column_double(stmt, SIMULATION_niche_breadth_evolution_random_range);
     nicheBreadthEvolutionParentLevel1 = sqlite3_column_int(stmt, SIMULATION_niche_breadth_evolution_parent_level_1);
     nicheBreadthEvolutionParentsLevel2 = sqlite3_column_int(stmt, SIMULATION_niche_breadth_evolution_parents_level_2);

@@ -165,9 +165,9 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
         case SQLITE_ROW: {
             int burn_in_year = sqlite3_column_int(stmt, SIMULATION_burn_in_year);
             string label = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_label)));
-            //LOG(DEBUG) << "init Species";
+            LOG(DEBUG) << "init Species";
             Species *new_species = new Species(stmt, burn_in_year);
-            //LOG(DEBUG) << "Finished to init Species";
+            LOG(DEBUG) << "Finished to init Species";
 
             string environments_str = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments)));
             string mask_table = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_mask)));
