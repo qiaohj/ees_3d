@@ -18,7 +18,7 @@ library(tidyverse)
 
 
 
-logdb<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/Results_TEST/1198_GOOD_BROAD_1/1198_GOOD_BROAD_1.sqlite"
+logdb<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/Results_TEST/11202_GOOD_BROAD_2/11202_GOOD_BROAD_2.sqlite"
 mydb <- dbConnect(RSQLite::SQLite(), logdb)
 trees<-dbReadTable(mydb, "trees")
 suitable<-dbReadTable(mydb, "suitable")

@@ -74,7 +74,7 @@ public:
     void setNeighbor(Neighbor *neighborInfo);
     void generateSuitable();
     bool getOverwrite();
-    void saveGroupmap(int year_i, unordered_map<Species*, ISEA*> &species_group_maps);
+    void saveGroupmap(int year_i, unordered_map<Species*, vector<ISEA*>> &species_group_maps);
     int run();
     Species *ancestor;
     void addEnvironment(string environment_label, EnvVar *env);

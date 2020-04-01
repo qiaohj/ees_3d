@@ -39,9 +39,9 @@ if (F){
 dbDisconnect(envdb)
 mask$random_index<-sample(nrow(mask))
 
-nb_range<-list("BROAD"=c(50, 15),
-               "MODERATE"=c(40, 10),
-               "Narrow"=c(30, 5))
+nb_range<-list("BROAD"=c(80, 15),
+               "MODERATE"=c(60, 10),
+               "Narrow"=c(40, 5))
 simulations<-NULL
 i=1
 id = 1
@@ -81,7 +81,7 @@ for (i in c(1:nrow(mask))){
         item$speciation_years<-100
         item$species_extinction_threshold<-0
         item$species_extinction_time_steps<-1
-        item$species_extinction_threahold_percentage<-0.8
+        item$species_extinction_threahold_percentage<-1
         item$group_extinction_threshold<-0
         item$initial_seeds<-item$global_id
         item$environments<-("Debiased_Minimum_Monthly_Temperature,Debiased_Maximum_Monthly_Temperature,Debiased_Maximum_Monthly_Precipitation")

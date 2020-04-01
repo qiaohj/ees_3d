@@ -56,7 +56,7 @@ public:
     Organism(int p_year, Species *p_species, Organism *p_parent, int p_id, int p_uid, sqlite3 *p_log_db, bool details,
             unordered_map<string, ISEA*> &p_current_environments, ISEA* mask);
     int getNicheBreadthType();
-    unordered_map<string, double> getEnvs();
+    double getEnv(string key);
     int setNicheBreadthType(vector<double> typeRatio, int parentType);
     /**
 	 * @brief Destructor of Organism class

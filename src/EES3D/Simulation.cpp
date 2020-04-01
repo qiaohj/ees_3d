@@ -52,7 +52,7 @@ bool Simulation::getOverwrite(){
 /*-------------------------
  * Save the population information for a specific time step to a db
  *-----------------------*/
-void Simulation::saveGroupmap(int year_i, unordered_map<Species*, ISEA*> &species_group_maps) {
+void Simulation::saveGroupmap(int year_i, unordered_map<Species*, vector<ISEA*>> &species_group_maps) {
     LOG(DEBUG)<<"Save result to db";
     if (species_group_maps.size() == 0) {
         LOG(ERROR)<<"NO MAP, RETURN";
@@ -62,12 +62,14 @@ void Simulation::saveGroupmap(int year_i, unordered_map<Species*, ISEA*> &specie
     int i = 0;
     for (auto sp_it : species_group_maps) {
         Species *sp = sp_it.first;
-        ISEA *map = sp_it.second;
-        if (map) {
-            unordered_map<int, double> values = map->getValues();
+        ISEA *group_map = sp_it.second[0];
+        ISEA *n_map = sp_it.second[1];
+        if (group_map) {
+            unordered_map<int, double> values = group_map->getValues();
             for (auto item : values) {
                 int id = item.first;
                 int group_id = (int) item.second;
+                int n = (int) n_map->readByID(id);
                 if (group_id >= 0) {
                     string sp_id = sp->getIDWithParentID();
                     char line[sp_id.size() + 100];
@@ -77,7 +79,7 @@ void Simulation::saveGroupmap(int year_i, unordered_map<Species*, ISEA*> &specie
                         //sprintf(line, " ,(%u,%u,%u,%s) ", timeLine[year_i], id, group_id, sp_id.c_str());
                     }
                     i = 1;
-                    sprintf(line, "%u,%u,%u,%s", timeLine[year_i], id, group_id, sp_id.c_str());
+                    sprintf(line, "%u,%u,%u,%u,%s", timeLine[year_i], id, group_id, n, sp_id.c_str());
                     logs.push_back(line);
                 }
             }
@@ -542,29 +544,35 @@ int Simulation::run() {
         }
         LOG(DEBUG)<<"End to rebuild the organism structure in this year. species size is "<<organisms_in_current_year.size();
         LOG(DEBUG)<<"begin to generate group maps";
-        unordered_map<Species*, ISEA*> group_maps;
+        unordered_map<Species*, vector<ISEA*>> group_maps;
         for (auto sp_it : organisms_in_current_year) {
             Species *species = sp_it.first;
             if (group_maps.find(species) == group_maps.end()) {
-                group_maps[sp_it.first] = new ISEA();
+                group_maps[sp_it.first].push_back(new ISEA());
+                group_maps[sp_it.first].push_back(new ISEA());
             }
             if (sp_it.second.size() > 0) {
                 for (auto o_id : sp_it.second) {
                     if (o_id.second.size() > 0) {
-                        group_maps[sp_it.first]->setValue(o_id.second.front()->getID(), o_id.second.front()->getGroupId());
+                        group_maps[sp_it.first][0]->setValue(o_id.second.front()->getID(), o_id.second.front()->getGroupId());
+                        group_maps[sp_it.first][1]->setValue(o_id.second.front()->getID(), o_id.second.size());
                     }
                 }
             } else {
-                delete group_maps[sp_it.first];
+                delete group_maps[sp_it.first][0];
+                delete group_maps[sp_it.first][1];
             }
 
         }
 
         saveGroupmap(year_i, group_maps);
-        for (auto it : group_maps){
-            if (it.second){
-                delete it.second;
+        for (auto it : group_maps) {
+            for (auto it2 : it.second) {
+                if (it2) {
+                    delete it2;
+                }
             }
+
         }
         group_maps.clear();
 
