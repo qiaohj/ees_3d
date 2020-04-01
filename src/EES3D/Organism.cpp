@@ -13,8 +13,11 @@
 
 #include "Organism.h"
 
-Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_id) {
+Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_id, int p_uid, sqlite3 *p_log_db, bool details,
+        unordered_map<string, ISEA*> &p_current_environments, ISEA* mask) {
     species = p_species;
+    log_db = p_log_db;
+    uid = p_uid;
     year_i = p_year_i;
     parent = p_parent;
     id = p_id;
@@ -26,84 +29,130 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
     }else{
         nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), -1);
     }
+    string memo = "";
+    int parent_uid = 0;
+    if (parent){
+        parent_uid = parent->getUid();
+    }
+    for (auto item : p_species->getNicheBreadth()) {
+        double env_value = p_current_environments[item.first]->readByID(id);
+        envs[item.first] = env_value;
+    }
     switch (nicheBreadthType) {
-    case 0:{
-        //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
-        for (auto it : p_species->getNicheBreadth()) {
-            NicheBreadth *p_NicheBreadth = it.second;
-            NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
-            nicheBreadth[it.first] = new_NicheBreadth;
-        }
-        break;
-    }
-    case 1: {
-        //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
-        double r = 1 - 2 * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
-        r = p_species->getNicheBreadthEvolutionRandomRange() * r + 1;
-        LOG(DEBUG) << "niche breadth ratio is " << r;
-        unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
-        if (parent){
-            niche_breadth = parent->getNicheBreadth();
-        }
-        for (auto it : niche_breadth) {
-            NicheBreadth *p_NicheBreadth = it.second;
-            double change = (p_NicheBreadth->getMax() - p_NicheBreadth->getMin()) * r;
-            NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin() + change, p_NicheBreadth->getMax() + change);
-            nicheBreadth[it.first] = new_NicheBreadth;
-        }
-        break;
-    }
-    case 2: {
-        //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
-        unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
-        if (parent) {
-            niche_breadth = parent->getNicheBreadth();
-        }else{
-            for (auto it : niche_breadth) {
+        case 0:{
+            //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+            for (auto it : p_species->getNicheBreadth()) {
                 NicheBreadth *p_NicheBreadth = it.second;
                 NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
                 nicheBreadth[it.first] = new_NicheBreadth;
             }
             break;
         }
-        for (auto it : niche_breadth) {
-            ssamodel s;
-            std::vector<double> X;
-            Organism *temp_org = this;
-            for (unsigned i = this->species->getNicheBreadthEvolutionParentLevel1(); i <= 0; i--) {
-                X[i] = temp_org->envs[it.first];
-                temp_org = temp_org->getParent();
-
-                if (temp_org){
-                    break;
-                }
+        case 1: {
+            //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+            double r = 1 - 2 * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
+            r = p_species->getNicheBreadthEvolutionRandomRange() * r;
+            memo = to_string(r);
+            //LOG(DEBUG) << "niche breadth ratio is " << r;
+            unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
+            if (parent){
+                niche_breadth = parent->getNicheBreadth();
             }
-            if (X.size()!=(unsigned)this->species->getNicheBreadthEvolutionParentLevel1()+1){
+            for (auto it : niche_breadth) {
+                NicheBreadth *p_NicheBreadth = it.second;
+                double change = (p_NicheBreadth->getMax() - p_NicheBreadth->getMin()) * r;
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin() + change, p_NicheBreadth->getMax() + change);
+                nicheBreadth[it.first] = new_NicheBreadth;
+            }
+            break;
+        }
+        case 2: {
+            //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+            details = false;
+            unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
+            if (parent) {
+                niche_breadth = parent->getNicheBreadth();
+            }else{
+                for (auto it : niche_breadth) {
+                    NicheBreadth *p_NicheBreadth = it.second;
+                    NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                    nicheBreadth[it.first] = new_NicheBreadth;
+                }
                 break;
             }
-            alglib::real_1d_array AX;
-            AX.setcontent(X.size(), &(X[0]));
-            ssacreate(s);
-            ssasetwindow(s, 3);
-            ssaaddsequence(s, AX);
-            ssasetalgotopkdirect(s, 2);
-            real_1d_array trend;
-            ssaforecastlast(s, 1, trend);
-            double change = trend[0] - this->envs[it.first];
-            NicheBreadth *new_NicheBreadth = new NicheBreadth(it.second->getMin() + change, it.second->getMax() + change);
-            nicheBreadth[it.first] = new_NicheBreadth;
+            for (auto it : niche_breadth) {
+                ssamodel s;
+                std::vector<double> X;
+                Organism *temp_org = this;
+                for (unsigned i = this->species->getNicheBreadthEvolutionParentLevel1(); i > 0; i--) {
+                    double v = temp_org->getEnvs()[it.first];
+                    if (CommonFun::AlmostEqualRelative(v, (double)NODATA)){
+                        break;
+                    }
+                    X.push_back(v);
+                    temp_org = temp_org->getParent();
+
+                    if (!temp_org){
+                        break;
+                    }
+                }
+                if (X.size()!=(unsigned)this->species->getNicheBreadthEvolutionParentLevel1()){
+                    for (auto it : niche_breadth) {
+                        NicheBreadth *p_NicheBreadth = it.second;
+                        NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                        nicheBreadth[it.first] = new_NicheBreadth;
+                    }
+                    break;
+                }
+                reverse(X.begin(), X.end());
+                alglib::real_1d_array AX;
+                AX.setcontent(X.size(), &(X[0]));
+                ssacreate(s);
+                int windows = X.size()/2;
+                windows = (windows>5)?5:windows;
+                windows = (windows<3)?3:windows;
+                ssasetwindow(s, windows);
+                ssaaddsequence(s, AX);
+                ssasetalgotopkdirect(s, 2);
+                real_1d_array trend;
+                ssaforecastlast(s, 3, trend);
+                double change = trend[0] - this->envs[it.first];
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(it.second->getMin() + change, it.second->getMax() + change);
+                nicheBreadth[it.first] = new_NicheBreadth;
+                memo += AX.tostring(3);
+                memo += ":" + trend.tostring(3) + ":" + to_string(this->envs[it.first]) + ":" + to_string(change) + ":" + to_string(windows) + "|";
+                details = true;
+            }
+            break;
         }
-        break;
-    }
-    case 3: {
-        break;
-    }
-    default: {
-        break;
-    }
+        case 3: {
+            break;
+        }
+        default: {
+            break;
+        }
     }
 
+    if (details){
+        char sql[5000]; // string which will contain the number
+        string nb_str = "";
+        for (auto it : nicheBreadth){
+            char nb[500];
+            sprintf(nb, "%s:%f,%f|", it.first.c_str(), it.second->getMin(), it.second->getMax());
+            nb_str += nb;
+        }
+        sprintf(sql, "INSERT INTO nichebreadth (YEAR, ID, uid, parent_uid, nb_type, nb, memo) VALUES (%d,%d,%d,%d,%d,'%s','%s')",
+                year_i, id, uid, parent_uid, nicheBreadthType, nb_str.c_str(), memo.c_str());
+        string sql_c = sql;
+        CommonFun::executeSQL(sql_c, log_db, true);
+    }
 
+}
+unordered_map<string, double> Organism::getEnvs(){
+    return envs;
+}
+int Organism::getUid(){
+    return uid;
 }
 int Organism::setNicheBreadthType(vector<double> typeRatio, int parentType){
     vector<double> newRatio = typeRatio;

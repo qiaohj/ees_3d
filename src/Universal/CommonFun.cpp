@@ -67,7 +67,7 @@ void CommonFun::writeFile(vector<string> &s, const char *path) {
     string joined = boost::algorithm::join(s, "\n");
     writeFile(joined, path);
 }
-void CommonFun::executeSQL(const vector<string> &s, sqlite3 *db, bool output) {
+void CommonFun::executeSQL(vector<string> &s, sqlite3 *db, bool output) {
     string joined = boost::algorithm::join(s, " ");
     CommonFun::executeSQL(joined, db, output);
 }
@@ -100,10 +100,10 @@ int CommonFun::parseLine(char *line) {
     i = atoi(p);
     return i;
 }
-string CommonFun::quoteSql(const string *s) {
+string CommonFun::quoteSql(string *s) {
     return string("'") + (*s) + string("'");
 }
-void CommonFun::executeSQL(const string &s, sqlite3 *db, bool output) {
+void CommonFun::executeSQL(string &s, sqlite3 *db, bool output) {
     char *zErr;
     string data("CALLBACK FUNCTION");
     //LOG(DEBUG) << "Query: "<< s;

@@ -55,7 +55,7 @@ class CommonFun {
 public:
     static processMem_t GetProcessMemory();
     static int parseLine(char *line);
-    static string quoteSql(const string *s);
+    static string quoteSql(string *s);
     static bool checkKey();
     static int callback(void *NotUsed, int argc, char **argv, char **azColName);
     /**
@@ -109,13 +109,13 @@ public:
      * @param s the string array contains the SQL commend
      * @param db the database to execute the command
      */
-    static void executeSQL(const vector<string> &s, sqlite3 *db, bool output);
+    static void executeSQL(vector<string> &s, sqlite3 *db, bool output);
     /**
      * @brief execute a sql command
      * @param s the string contains the SQL commend
      * @param db the database to execute the command
      */
-    static void executeSQL(const string &s, sqlite3 *db, bool output);
+    static void executeSQL(string &s, sqlite3 *db, bool output);
     /**
      * @brief add leading ZERO to a number and convert the number to a string with fixed length
      * @param value the number to convert

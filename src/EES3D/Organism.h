@@ -34,6 +34,7 @@ using namespace alglib;
 class Organism {
 private:
     int id;
+    int uid;
     int groupId;
     int tempSpeciesID;
     int dispersalAbility;
@@ -43,6 +44,7 @@ private:
     unordered_map<string, NicheBreadth*> nicheBreadth;
     int nicheBreadthType;
     unordered_map<string, double> envs;
+    sqlite3 *log_db;
 public:
     /**
      * @brief Constructor of Organism class
@@ -51,9 +53,10 @@ public:
      * @param p_parent the parent species ID of the individual
      * @param p_id the id of the face of the individual's locality.
      */
-    Organism(int p_year, Species* p_species,
-            Organism* p_parent, int p_id);
+    Organism(int p_year, Species *p_species, Organism *p_parent, int p_id, int p_uid, sqlite3 *p_log_db, bool details,
+            unordered_map<string, ISEA*> &p_current_environments, ISEA* mask);
     int getNicheBreadthType();
+    unordered_map<string, double> getEnvs();
     int setNicheBreadthType(vector<double> typeRatio, int parentType);
     /**
 	 * @brief Destructor of Organism class
@@ -173,6 +176,7 @@ public:
      */
     int long getMemoryUsage();
     unordered_map<string, NicheBreadth*> getNicheBreadth();
+    int getUid();
 };
 
 #endif /* DEFINITIONS_INDIVIDUALORGANISM_H_ */

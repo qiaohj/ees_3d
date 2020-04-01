@@ -13,7 +13,7 @@
 
 #include "Scenario.h"
 
-Scenario::Scenario(string p_env_db, string p_conf_db, string p_target, bool p_overwrite, int p_id, unsigned long p_mem_limit) {
+Scenario::Scenario(string p_env_db, string p_conf_db, string p_target, bool p_overwrite, int p_id, unsigned long p_mem_limit, bool details) {
     //initialize the required parameters for the simulation.
     memLimit = p_mem_limit;
 
@@ -69,7 +69,7 @@ Scenario::Scenario(string p_env_db, string p_conf_db, string p_target, bool p_ov
     LOG(INFO) << "Init the simulations";
     LOG(INFO) << "MEMORY USAGE BEFORE INIT SMULATIONS: " << CommonFun::getCurrentRSS(1);
     vector<Simulation*> simulations;
-    initSimulations(conf_db, env_db, p_id, p_target, p_overwrite, neighborInfo, simulations);
+    initSimulations(conf_db, env_db, p_id, p_target, p_overwrite, neighborInfo, simulations, details);
 
     LOG(INFO) << "Run the simulations. Simulation size is " << simulations.size();
     int i = 1;
@@ -144,9 +144,8 @@ void Scenario::initEnvironments(sqlite3* env_db) {
     sqlite3_finalize(stmt);
 }
 
-
 void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, string p_target, bool p_overwrite,
-        Neighbor* neighborInfo, vector<Simulation*> &simulations) {
+        Neighbor* neighborInfo, vector<Simulation*> &simulations, bool details) {
     string sql;
 
     if (p_id == -1) {
@@ -174,7 +173,7 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
             vector<string> environment_labels = CommonFun::splitStr(environments_str, ",");
 
             Simulation *simulation = new Simulation(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, timeLine, neighborInfo,
-                    environment_labels, mask_table);
+                    environment_labels, mask_table, details);
 
             /*-------------------
              * If the target folder exists and the is_overwrite parameter is false, skip the simulation,

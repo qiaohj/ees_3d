@@ -183,6 +183,7 @@ int run(int argc, const char *argv[]) {
     string target = argv[3];
     int id = atoi(argv[4]);
     int is_debug = atoi(argv[7]);
+    bool is_detail = (atoi(argv[8])==1);
     //initialize the logger
 
     string LOGFILE = target + "/runtime.log";
@@ -214,7 +215,7 @@ int run(int argc, const char *argv[]) {
     //initialize the main scenario
     LOG(DEBUG)<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1);
     for (int i=0; i<1; i++){
-        Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit);
+        Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit, is_detail);
         LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
         delete a;
         LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
@@ -279,7 +280,7 @@ int mainx(int argc, char **argv)
     // visible linear trend and small amount of noise.
     //
     ssamodel s;
-    real_1d_array x = "[0.05,0.96,2.04,3.11,3.97,5.03,5.98,7.02,8.02]";
+    real_1d_array x = "[34.211,34.195,34.405,34.627,34.389,34.337,35.014,35.502,35.986,35.141]";
 
     //
     // First, we create SSA model, set its properties and add dataset.
@@ -293,7 +294,7 @@ int mainx(int argc, char **argv)
     //       from different devices)
     //
     ssacreate(s);
-    ssasetwindow(s, 3);
+    ssasetwindow(s, 5);
     ssaaddsequence(s, x);
     ssasetalgotopkdirect(s, 2);
 
@@ -350,24 +351,17 @@ int testMalloc_trim(int argc, const char *argv[]) {
 		}
 	};
 	int times = stoi(argv[1]);
-	LOG(INFO) << "Object";
 	for (int j = 0; j < times; j++) {
 		ISEA *a = new ISEA();
 		int v1 = rand() % 10000000;
-		LOG(INFO) <<j<<". "<< 1 << ". " << CommonFun::getCurrentRSS(1) <<" SIZE is "<<v1;
 		for (int i = 0; i < v1; i++) {
 			a->setValue(i, 1);
 		}
-		LOG(INFO) <<j<<". "<< 2 << ". " << CommonFun::getCurrentRSS(1) <<" SIZE is "<<v1;
-
 		delete a;
-		LOG(INFO) <<j<<". "<< 4 << ". " << CommonFun::getCurrentRSS(1) <<" SIZE is "<<v1;
 		malloc_trim(0);
-		LOG(INFO) <<j<<". "<< 5 << ". " << CommonFun::getCurrentRSS(1) <<" SIZE is "<<v1;
 	}
 
 	malloc_trim(0);
-	LOG(INFO)<< "6" << CommonFun::getCurrentRSS(1);
 	sleep(100);
 	return 0;
 }

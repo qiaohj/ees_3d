@@ -43,7 +43,7 @@ private:
 	/// @brief The environmental variables used in the simulation.
 	unordered_map<string, EnvVar*> environments_base;
 	/// @brief The virtual species in the simulation, including the initial species, and new species after the speciation events.
-	void initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite, Neighbor* neighborInfo, vector<Simulation*> &simulations);
+	void initSimulations(sqlite3* conf_db, sqlite3* env_db, int p_id, string p_target, bool p_overwrite, Neighbor* neighborInfo, vector<Simulation*> &simulations, bool details);
 	/// @brief Burn-in year of the simulation
 	int burnInYear;
 	/// @brief Whether outputing the details of the simulation, for debug only.
@@ -64,7 +64,7 @@ public:
 	 * @param p_overwrite Overwrite the folder or not if the folder is existed.
 	 * @param p_mem_limit The maximum memory allocated to the application.
 	 */
-	Scenario(string p_env_db, string p_conf_db, string p_target, bool p_overwrite, int p_id, unsigned long p_mem_limit);
+	Scenario(string p_env_db, string p_conf_db, string p_target, bool p_overwrite, int p_id, unsigned long p_mem_limit, bool details);
 
 	/**
 	 * @brief Destructor of Scenario class

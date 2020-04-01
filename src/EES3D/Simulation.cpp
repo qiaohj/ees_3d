@@ -14,7 +14,7 @@
 
 #include <utility>
 Simulation::Simulation(Species *p_species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
-        vector<int> &p_timeLine, Neighbor* neighborInfo, vector<string> &environment_labels, string mask_table) {
+        vector<int> &p_timeLine, Neighbor* neighborInfo, vector<string> &environment_labels, string mask_table, bool p_details) {
     this->t1 = 0;
     this->t2 = 0;
     this->all_species[p_species->getIDWithParentID()] = p_species;
@@ -32,6 +32,8 @@ Simulation::Simulation(Species *p_species, string label, int burnInYear, string 
     this->mask_table = mask_table;
     this->mask = NULL;
     this->targetFolder = target + "/" + label;
+    this->organism_uid = 0;
+    this->details = p_details;
 }
 void Simulation::setIndexSimulation(int indexSimulation){
     this->indexSimulation = indexSimulation;
@@ -117,6 +119,8 @@ void Simulation::createLogDB() {
     CommonFun::executeSQL(sql, log_db, true);
     sql = "CREATE TABLE trees(TYPE CHAR(255) NOT NULL, CONTENT TEXT NOT NULL);";
     CommonFun::executeSQL(sql, log_db, true);
+    sql = "CREATE TABLE nichebreadth(YEAR INT NOT NULL, ID INT NOT NULL, uid INT NOT NULL, parent_uid INT NOT NULL, nb_type INT NOT NULL, nb CHAR(255), memo CHAR(2000));";
+    CommonFun::executeSQL(sql, log_db, true);
 
 }
 void Simulation::commitLog(){
@@ -183,8 +187,10 @@ bool Simulation::init(unordered_map<string, EnvVar*> &environments_base, sqlite3
      * because it hasn't be tested strictly.
      *-------------------------*/
     vector<Organism*> orgamisms;
+    organism_uid = 0;
+    unordered_map<string, ISEA*> current_environments = getEnvironmentMap(timeLine.front());
     for (int seed : seeds) {
-        Organism *organism = new Organism(0, ancestor, NULL, seed);
+        Organism *organism = new Organism(0, ancestor, NULL, seed, ++organism_uid, log_db, details, current_environments, mask);
         orgamisms.push_back(organism);
     }
 
@@ -337,7 +343,7 @@ int Simulation::run() {
                     for (auto it : next_cells) {
 
                         //create a new organism
-                        Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, it);
+                        Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, it, ++organism_uid, log_db, details, current_environments, mask);
                         new_organism->setRandomDispersalAbility();
 
                         if (new_organism->isSuitable(current_environments, mask)){
