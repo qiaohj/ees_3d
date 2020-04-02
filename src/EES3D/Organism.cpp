@@ -13,10 +13,9 @@
 
 #include "Organism.h"
 
-Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_id, int p_uid, sqlite3 *p_log_db, bool details,
+Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_id, int p_uid, vector<string> &nb_logs, bool details,
         unordered_map<string, ISEA*> &p_current_environments, ISEA* mask) {
     species = p_species;
-    log_db = p_log_db;
     uid = p_uid;
     year_i = p_year_i;
     parent = p_parent;
@@ -24,16 +23,19 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
     groupId = 0;
     tempSpeciesID = 0;
     dispersalAbility = 0;
-    if (p_parent){
+    int parent_uid = 0;
+    if (parent){
+        evoDirection = p_parent->getEvoDirection();
         nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), p_parent->getNicheBreadthType());
+        parent_uid = parent->getUid();
     }else{
+        for (auto item : p_species->getNicheBreadth()) {
+            evoDirection[item.first] = 0;
+        }
         nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), -1);
     }
     string memo = "";
-    int parent_uid = 0;
-    if (parent){
-        parent_uid = parent->getUid();
-    }
+
     for (auto item : p_species->getNicheBreadth()) {
         double env_value = p_current_environments[item.first]->readByID(id);
         envs[item.first] = env_value;
@@ -41,16 +43,18 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
     bool t_details = details;
     switch (nicheBreadthType) {
         case 0:{
+            t_details = false;
             //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
             for (auto it : p_species->getNicheBreadth()) {
                 NicheBreadth *p_NicheBreadth = it.second;
                 NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
                 nicheBreadth[it.first] = new_NicheBreadth;
-                memo += it.first + ":" + to_string(envs[it.first]) + "|";
+                memo += it.first + "," + to_string(envs[it.first]) + ",";
             }
             break;
         }
         case 1: {
+            t_details = false;
             //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
             double r = 1 - 2 * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
             r = p_species->getNicheBreadthEvolutionRandomRange() * r;
@@ -60,12 +64,20 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             if (parent){
                 niche_breadth = parent->getNicheBreadth();
             }
+            double rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+            if (rr >= p_species->getNicheEnvolutionIndividualRatio()) {
+                r = 0;
+            }
             for (auto it : niche_breadth) {
                 NicheBreadth *p_NicheBreadth = it.second;
                 double change = (p_NicheBreadth->getMax() - p_NicheBreadth->getMin()) * r;
                 NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin() + change, p_NicheBreadth->getMax() + change);
                 nicheBreadth[it.first] = new_NicheBreadth;
-                memo += it.first + ":" + to_string(envs[it.first]) + "|";
+                if ((r!=0)&&(details)){
+                    memo += it.first + "," + to_string(envs[it.first]) + ",";
+                    t_details = true;
+                }
+
             }
             break;
         }
@@ -76,101 +88,132 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             if (parent) {
                 niche_breadth = parent->getNicheBreadth();
             }
-            double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
-            if (r>=0.01){
-                for (auto it : niche_breadth) {
-                    NicheBreadth *p_NicheBreadth = it.second;
-                    NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
-                    nicheBreadth[it.first] = new_NicheBreadth;
-                }
+            for (auto it : niche_breadth) {
+                NicheBreadth *p_NicheBreadth = it.second;
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                nicheBreadth[it.first] = new_NicheBreadth;
+            }
+            //if it is unsuitable, skip directly
+            if (!isSuitable(mask)){
                 break;
             }
-
-
-            for (auto it : niche_breadth) {
-                clock_t start, end;
-                start = clock();
-                ssamodel s;
-                std::vector<double> X;
-                Organism *temp_org = this;
-                for (unsigned i = this->species->getNicheBreadthEvolutionParentLevel1(); i > 0; i--) {
-                    double v = temp_org->getEnv(it.first);
-                    if (CommonFun::AlmostEqualRelative(v, (double)NODATA)){
-                        break;
-                    }
-                    X.push_back(v);
-                    temp_org = temp_org->getParent();
-
-                    if (!temp_org){
-                        break;
-                    }
-                }
-            end = clock();
-            LOG(DEBUG) << "1. time taken " << (end - start);
-            start = clock();
-                if (X.size()!=(unsigned)this->species->getNicheBreadthEvolutionParentLevel1()){
-                    for (auto it : niche_breadth) {
-                        NicheBreadth *p_NicheBreadth = it.second;
-                        NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
-                        nicheBreadth[it.first] = new_NicheBreadth;
-                    }
+            //if it is not a smart species, try to be a smart species
+            if (evoDirection[niche_breadth.begin()->first]==0){
+                double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+                if (r>=p_species->getNicheEnvolutionIndividualRatio()){
                     break;
                 }
-            end = clock();
-            LOG(DEBUG) << "2. time taken " << (end - start);
-            start = clock();
-                reverse(X.begin(), X.end());
-            end = clock();
-            LOG(DEBUG) << "3. time taken " << (end - start);
-            start = clock();
-                alglib::real_1d_array AX;
-                AX.setcontent(X.size(), &(X[0]));
-                ssacreate(s);
-            end = clock();
-            LOG(DEBUG) << "4. time taken " << (end - start);
-            start = clock();
+            }
 
-                int windows = X.size()/2;
-                windows = (windows>5)?5:windows;
-                windows = (windows<3)?3:windows;
-                ssasetwindow(s, windows);
-            end = clock();
-            LOG(DEBUG) << "5. time taken " << (end - start);
-            start = clock();
-
-                ssaaddsequence(s, AX);
-            end = clock();
-            LOG(DEBUG) << "6. time taken " << (end - start);
-            start = clock();
-
-                ssasetalgotopkdirect(s, 2);
-            end = clock();
-            LOG(DEBUG) << "7. time taken " << (end - start);
-            start = clock();
-
-                real_1d_array trend;
-                ssaforecastlast(s, 1, trend);
-            end = clock();
-            LOG(DEBUG) << "8. time taken " << (end - start);
-            start = clock();
-
-                double change = trend[0] - this->envs[it.first];
-                NicheBreadth *new_NicheBreadth = new NicheBreadth(it.second->getMin() + change, it.second->getMax() + change);
-                nicheBreadth[it.first] = new_NicheBreadth;
-
-                if (details){
-                    memo += AX.tostring(3);
-                    memo += ":" + trend.tostring(3) + ":" + to_string(this->envs[it.first]) + ":" + to_string(change) + ":" + to_string(windows) + "|";
-                    t_details = true;
+            for (auto it : niche_breadth) {
+                if (evoDirection[it.first]==0){
+                    ssamodel s;
+                    std::vector<double> X;
+                    Organism *temp_org = this->getParent();
+                    for (unsigned i = this->species->getNicheBreadthEvolutionParentLevel(); i > 0; i--) {
+                        if (!temp_org) {
+                            break;
+                        }
+                        double v = temp_org->getEnv(it.first);
+                        if (CommonFun::AlmostEqualRelative(v, (double)NODATA)){
+                            break;
+                        }
+                        X.push_back(v);
+                        temp_org = temp_org->getParent();
+                    }
+                    if (X.size()!=(unsigned)this->species->getNicheBreadthEvolutionParentLevel()){
+                        break;
+                    }
+                    //A group of code of SSA
+                    reverse(X.begin(), X.end()); alglib::real_1d_array AX; AX.setcontent(X.size(), &(X[0])); ssacreate(s);
+                    int windows = X.size()/2; windows = (windows>5)?5:windows; windows = (windows<3)?3:windows;
+                    ssasetwindow(s, windows); ssaaddsequence(s, AX); ssasetalgotopkdirect(s, 2);
+                    real_1d_array trend; ssaforecastlast(s, 1, trend);
+                    if (details) {
+                        memo += "'" + AX.tostring(3) + "'";
+                        memo += ",'" + trend.tostring(3) + "'," + to_string(this->envs[it.first]) + "," + to_string(windows) + ",";
+                        t_details = true;
+                    }
+                    double change = trend[0] - this->envs[it.first];
+                    evoDirection[it.first] = (change>0)?1:-1;
                 }
-            end = clock();
-            LOG(DEBUG) << "9. time taken " << (end - start);
-            start = clock();
+                double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+                r = p_species->getNicheBreadthEvolutionRandomRange() * r * evoDirection[it.first];
 
+                double change = (it.second->getMax() - it.second->getMin()) * r;
+                if (details) {
+                    memo += to_string(r) + "," + to_string(evoDirection[it.first]) + "," + to_string(change);
+                }
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(it.second->getMin() + change, it.second->getMax() + change);
+                delete nicheBreadth[it.first];
+                nicheBreadth[it.first] = new_NicheBreadth;
             }
             break;
         }
         case 3: {
+            //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+            t_details = false;
+            unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
+            if (parent) {
+                niche_breadth = parent->getNicheBreadth();
+            }
+            for (auto it : niche_breadth) {
+                NicheBreadth *p_NicheBreadth = it.second;
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                nicheBreadth[it.first] = new_NicheBreadth;
+            }
+            //if it is unsuitable, skip directly
+            if (!isSuitable(mask)){
+                break;
+            }
+            double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+            if (r >= p_species->getNicheEnvolutionIndividualRatio()) {
+                break;
+            }
+
+            for (auto it : niche_breadth) {
+                if (true){
+                    ssamodel s;
+                    std::vector<double> X;
+                    Organism *temp_org = this->getParent();
+                    for (unsigned i = this->species->getNicheBreadthEvolutionParentLevel(); i > 0; i--) {
+                        if (!temp_org) {
+                            break;
+                        }
+                        double v = temp_org->getEnv(it.first);
+                        if (CommonFun::AlmostEqualRelative(v, (double)NODATA)){
+                            break;
+                        }
+                        X.push_back(v);
+                        temp_org = temp_org->getParent();
+                    }
+                    if (X.size()!=(unsigned)this->species->getNicheBreadthEvolutionParentLevel()){
+                        break;
+                    }
+                    //A group of code of SSA
+                    reverse(X.begin(), X.end()); alglib::real_1d_array AX; AX.setcontent(X.size(), &(X[0])); ssacreate(s);
+                    int windows = X.size()/2; windows = (windows>5)?5:windows; windows = (windows<3)?3:windows;
+                    ssasetwindow(s, windows); ssaaddsequence(s, AX); ssasetalgotopkdirect(s, 2);
+                    real_1d_array trend; ssaforecastlast(s, 1, trend);
+                    if (details) {
+                        memo += "'" + AX.tostring(3) + "'";
+                        memo += ",'" + trend.tostring(3) + "'," + to_string(this->envs[it.first]) + "," + to_string(windows) + ",";
+                        t_details = true;
+                    }
+                    double change = trend[0] - this->envs[it.first];
+                    evoDirection[it.first] = (change>0)?1:-1;
+                }
+                double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+                r = p_species->getNicheBreadthEvolutionRandomRange() * r * evoDirection[it.first];
+
+                double change = (it.second->getMax() - it.second->getMin()) * r;
+                if (details) {
+                    memo += to_string(r) + "," + to_string(evoDirection[it.first]) + "," + to_string(change);
+                }
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(it.second->getMin() + change, it.second->getMax() + change);
+                delete nicheBreadth[it.first];
+                nicheBreadth[it.first] = new_NicheBreadth;
+            }
             break;
         }
         default: {
@@ -183,15 +226,22 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         string nb_str = "";
         for (auto it : nicheBreadth){
             char nb[500];
-            sprintf(nb, "%s:%f,%f|", it.first.c_str(), it.second->getMin(), it.second->getMax());
+            sprintf(nb, "%s,%f,%f,", it.first.c_str(), it.second->getMin(), it.second->getMax());
             nb_str += nb;
         }
-        sprintf(sql, "INSERT INTO nichebreadth (YEAR, ID, uid, parent_uid, nb_type, nb, memo) VALUES (%d,%d,%d,%d,%d,'%s','%s')",
-                year_i, id, uid, parent_uid, nicheBreadthType, nb_str.c_str(), memo.c_str());
+
+        //sprintf(sql, "INSERT INTO nichebreadth (YEAR, ID, uid, parent_uid, nb_type, nb, memo) VALUES (%d,%d,%d,%d,%d,'%s','%s')",
+        //        year_i, id, uid, parent_uid, nicheBreadthType, nb_str.c_str(), memo.c_str());
+        sprintf(sql, "%d,%d,%d,%d,%d,%s,%s,%s",
+                        year_i, id, uid, parent_uid, nicheBreadthType, species->getIDWithParentID().c_str(), nb_str.c_str(), memo.c_str());
         string sql_c = sql;
-        CommonFun::executeSQL(sql_c, log_db, true);
+        nb_logs.push_back(sql_c);
+        //CommonFun::executeSQL(sql_c, log_db, true);
     }
 
+}
+unordered_map<string, int> Organism::getEvoDirection(){
+    return evoDirection;
 }
 double Organism::getEnv(string key){
     return envs[key];
@@ -300,22 +350,14 @@ unordered_map<string, NicheBreadth*> Organism::getNicheBreadth() {
 //void Organism::addChild(Organism* child){
 //    children.push_back(child);
 //}
-bool Organism::isSuitable(unordered_map<string, ISEA*> &p_current_environments, ISEA* mask) {
-    /*
-
+bool Organism::isSuitable(ISEA* mask) {
     for (auto item : nicheBreadth) {
-        float env_value = p_current_environments[item.first]->readByID(id);
-        LOG(DEBUG)<<item.first<<" is "<<env_value<<". Max is "<<item.second->getMax()<<" and Min is "<<item.second->getMin();
-    }
-    */
-    for (auto item : nicheBreadth) {
-
         float mask_value = mask->readByID(id);
         if ((int) mask_value == NODATA) {
             //LOG(DEBUG)<<"NO MASK";
             return false;
         }
-        float env_value = p_current_environments[item.first]->readByID(id);
+        float env_value = envs[item.first];
         if ((int) env_value == NODATA) {
             //LOG(DEBUG)<<"NO DATA";
             return false;
@@ -326,7 +368,6 @@ bool Organism::isSuitable(unordered_map<string, ISEA*> &p_current_environments, 
             //LOG(DEBUG)<<"UNSUITABLE";
             return false;
         }
-        envs[item.first] = env_value;
     }
     //LOG(DEBUG)<<"SUITABLE";
     return true;

@@ -131,6 +131,11 @@ void Simulation::commitLog(){
     LOG(INFO)<<"Outputting log file";
     string logFile = this->targetFolder + "/" + label + ".log";
     CommonFun::writeFile(logs, logFile.c_str());
+    if (details){
+        string nb_logFile = this->targetFolder + "/" + label + ".nb.log";
+        CommonFun::writeFile(nb_logs, nb_logFile.c_str());
+    }
+
     //LOG(INFO)<<"Outputting log db";
     //CommonFun::executeSQL(logs, log_db, true);
 }
@@ -192,7 +197,7 @@ bool Simulation::init(unordered_map<string, EnvVar*> &environments_base, sqlite3
     organism_uid = 0;
     unordered_map<string, ISEA*> current_environments = getEnvironmentMap(timeLine.front());
     for (int seed : seeds) {
-        Organism *organism = new Organism(0, ancestor, NULL, seed, ++organism_uid, log_db, details, current_environments, mask);
+        Organism *organism = new Organism(0, ancestor, NULL, seed, ++organism_uid, nb_logs, details, current_environments, mask);
         orgamisms.push_back(organism);
     }
 
@@ -345,10 +350,10 @@ int Simulation::run() {
                     for (auto it : next_cells) {
 
                         //create a new organism
-                        Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, it, ++organism_uid, log_db, details, current_environments, mask);
+                        Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, it, ++organism_uid, nb_logs, details, current_environments, mask);
                         new_organism->setRandomDispersalAbility();
 
-                        if (new_organism->isSuitable(current_environments, mask)){
+                        if (new_organism->isSuitable(mask)){
                             new_organisms.push_back(new_organism);
                         }else{
                             delete new_organism;

@@ -55,8 +55,8 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
         nicheBreadthEvolutionRatio.push_back(stod(nicheBreadthEvolutionRatio_str[index]));
     }
     nicheBreadthEvolutionRandomRange = sqlite3_column_double(stmt, SIMULATION_niche_breadth_evolution_random_range);
-    nicheBreadthEvolutionParentLevel1 = sqlite3_column_int(stmt, SIMULATION_niche_breadth_evolution_parent_level_1);
-    nicheBreadthEvolutionParentsLevel2 = sqlite3_column_int(stmt, SIMULATION_niche_breadth_evolution_parents_level_2);
+    nicheBreadthEvolutionParentLevel = sqlite3_column_int(stmt, SIMULATION_niche_breadth_evolution_parent_level);
+    nicheEnvolutionIndividualRatio = sqlite3_column_double(stmt, SIMULATION_niche_envolution_individual_ratio);
 
     //LOG(INFO)<<"speciesExtinctionThreaholdPercentage"<<speciesExtinctionThreaholdPercentage;
     maxSpeciesDistribution = 0;
@@ -94,11 +94,11 @@ string Species::getIDWithParentID(){
 vector<double> Species::getNicheBreadthEvolutionRatio(){
     return nicheBreadthEvolutionRatio;
 }
-int Species::getNicheBreadthEvolutionParentLevel1(){
-    return nicheBreadthEvolutionParentLevel1;
+int Species::getNicheBreadthEvolutionParentLevel(){
+    return nicheBreadthEvolutionParentLevel;
 }
-int Species::getNicheBreadthEvolutionParentLevels2(){
-    return nicheBreadthEvolutionParentsLevel2;
+int Species::getNicheEnvolutionIndividualRatio(){
+    return nicheEnvolutionIndividualRatio;
 }
 double Species::getNicheBreadthEvolutionRandomRange(){
     return nicheBreadthEvolutionRandomRange;
@@ -110,8 +110,8 @@ Species::Species(int p_id, Species* p_parent, int p_year_i) {
     currentSpeciesExtinctionTimeSteps = 0;
 	nicheBreadthEvolutionRatio = parent->getNicheBreadthEvolutionRatio();
 	nicheBreadthEvolutionRandomRange = parent->getNicheBreadthEvolutionRandomRange();
-	nicheBreadthEvolutionParentLevel1 = parent->getNicheBreadthEvolutionParentLevel1();
-	nicheBreadthEvolutionParentsLevel2 = parent->getNicheBreadthEvolutionParentLevels2();
+	nicheBreadthEvolutionParentLevel = parent->getNicheBreadthEvolutionParentLevel();
+	nicheEnvolutionIndividualRatio = parent->getNicheEnvolutionIndividualRatio();
     //id = p_id;
     global_id = p_id;
     speciesExtinctionThreshold = parent->getSpeciesExtinctionThreshold();

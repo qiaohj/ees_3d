@@ -39,6 +39,7 @@ private:
     double t1;
     double t2;
     vector<string> logs;
+    vector<string> nb_logs;
     unordered_map<string, Species*> all_species;
     vector<string> environment_labels;
     unordered_map<string, EnvVar*> environments;

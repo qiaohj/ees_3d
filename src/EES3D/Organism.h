@@ -44,7 +44,7 @@ private:
     unordered_map<string, NicheBreadth*> nicheBreadth;
     int nicheBreadthType;
     unordered_map<string, double> envs;
-    sqlite3 *log_db;
+    unordered_map<string, int> evoDirection;
 public:
     /**
      * @brief Constructor of Organism class
@@ -53,10 +53,11 @@ public:
      * @param p_parent the parent species ID of the individual
      * @param p_id the id of the face of the individual's locality.
      */
-    Organism(int p_year, Species *p_species, Organism *p_parent, int p_id, int p_uid, sqlite3 *p_log_db, bool details,
+    Organism(int p_year, Species *p_species, Organism *p_parent, int p_id, int p_uid, vector<string> &nb_logs, bool details,
             unordered_map<string, ISEA*> &p_current_environments, ISEA* mask);
     int getNicheBreadthType();
     double getEnv(string key);
+    unordered_map<string, int> getEvoDirection();
     int setNicheBreadthType(vector<double> typeRatio, int parentType);
     /**
 	 * @brief Destructor of Organism class
@@ -102,7 +103,7 @@ public:
      * @param p_current_environments
      * @return True: suitable False: unsuitable
      */
-    bool isSuitable(unordered_map<string, ISEA*> &p_current_environments, ISEA* mask);
+    bool isSuitable(ISEA* mask);
 
     /**
      * @brief return the species object of the individual

@@ -273,14 +273,15 @@ void testMap(){
     a.insert({1,  4});
     LOG(INFO)<<a[1];
 }
-int mainx(int argc, char **argv)
+void time_sei()
 {
     //
     // Here we demonstrate SSA forecasting on some toy problem with clearly
     // visible linear trend and small amount of noise.
     //
     ssamodel s;
-    real_1d_array x = "[34.211,34.195,34.405,34.627,34.389,34.337,35.014,35.502,35.986,35.141]";
+    //real_1d_array x = "[18.003,17.796,18.003,18.617,18.611,18.492,18.794,18.378,16.800,15.664]";
+    real_1d_array x = "[18.492,18.794,18.378,16.800,15.664]";
 
     //
     // First, we create SSA model, set its properties and add dataset.
@@ -318,7 +319,6 @@ int mainx(int argc, char **argv)
     // which can be explained by the artificial noise in the dataset.
     //
     printf("%s\n", trend.tostring(2).c_str()); // EXPECTED: [9.0005,9.9322,10.8051]
-    return 0;
 }
 
 
@@ -326,6 +326,8 @@ int main(int argc, const char *argv[]){
     //testEnvVar(stoi(argv[1]));
 
     //return 0;
+    //time_sei();
+    //exit(1);
     int status = run(argc, argv);
     return status;
 

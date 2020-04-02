@@ -35,8 +35,8 @@
 #define SIMULATION_is_run       27
 #define SIMULATION_niche_breadth_evolution_ratio   23
 #define SIMULATION_niche_breadth_evolution_random_range   24
-#define SIMULATION_niche_breadth_evolution_parent_level_1   25
-#define SIMULATION_niche_breadth_evolution_parents_level_2  26
+#define SIMULATION_niche_breadth_evolution_parent_level   25
+#define SIMULATION_niche_envolution_individual_ratio  26
 #define ENVIRONMENTS_names       0
 #define ENVIRONMENTS_begin       1
 #define ENVIRONMENTS_end       2

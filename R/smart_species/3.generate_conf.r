@@ -45,70 +45,73 @@ nb_range<-list("BROAD"=c(80, 15),
 simulations<-NULL
 i=1
 id = 1
-
-for (i in c(1:nrow(mask))){
-  print(paste(i, nrow(mask)))
-  item_t<-mask[i,]
+mask_seed<-mask[which(mask$random_index<=1000),]
+for (i in c(1:nrow(mask_seed))){
+  print(paste(i, nrow(mask_seed)))
+  item_t<-mask_seed[i,]
+  
   da<-da_list$da[1]
   for (da in da_list$da){
     nb<-names(nb_range)[1]
     for (nb in names(nb_range)){
-      for (niche_envolution_type in c(1:3)){
-        item<-item_t[, c("global_id", "random_index")]
-        item$id<-id
-        item<-item[, c("id", "global_id", "random_index")]
-        item$label<-paste(item$global_id, da, nb, niche_envolution_type, sep="_")
-        id<-id+1
-        item$da<-da
-        item$nb<-nb
-        nb_temp<-(v_max_temp[which(v_max_temp$global_id==item$global_id), "v"] + 
-          v_min_temp[which(v_min_temp$global_id==item$global_id), "v"])/2
-        nb1_min<-nb_temp-nb_range[[nb]][1]/2
-        nb1_max<-nb_temp+nb_range[[nb]][1]/2
-        
-        nb2_min<-v_max_prec[
-          which(v_max_prec$global_id==item$global_id), "v"]-nb_range[[nb]][2]/2
-        nb2_max<-v_max_prec[
-          which(v_max_prec$global_id==item$global_id), "v"]+nb_range[[nb]][2]/2
-        item$nb_v<-paste(paste(nb1_min, nb1_max, sep=","), 
-                         paste(nb1_min, nb1_max, sep=","),
-                         paste(nb2_min, nb2_max, sep=","),
-                         sep="|")
-        item$dispersal_ability<-da_list[which(da_list$da==da), "v"]
-        item$dispersal_speed<-1
-        item$dispersal_method<-2
-        item$number_of_path<--1
-        item$speciation_years<-100
-        item$species_extinction_threshold<-0
-        item$species_extinction_time_steps<-1
-        item$species_extinction_threahold_percentage<-1
-        item$group_extinction_threshold<-0
-        item$initial_seeds<-item$global_id
-        item$environments<-("Debiased_Minimum_Monthly_Temperature,Debiased_Maximum_Monthly_Temperature,Debiased_Maximum_Monthly_Precipitation")
-        item$from<-1200
-        item$to<-0
-        item$step<--1
-        item$mask<-"mask"
-        item$burn_in_year<-0
-        if (niche_envolution_type==1){
-          item$niche_breadth_evolution_ratio<-"1,1,1,1"
-        }
-        if (niche_envolution_type==2){
-          item$niche_breadth_evolution_ratio<-"0,1,1,1"
-        }
-        if (niche_envolution_type==3){
-          item$niche_breadth_evolution_ratio<-"0,0,1,1"
-        }
-        if (niche_envolution_type==4){
-          item$niche_breadth_evolution_ratio<-"0,0,0,1"
-        }
-        item$niche_breadth_evolution_random_range<-0.01
-        item$niche_breadth_evolution_parent_level_1<-10
-        item$niche_breadth_evolution_parents_level_2<-5
-        if (is.null(simulations)){
-          simulations<-item
-        }else{
-          simulations<-bind_rows(simulations, item)
+      for (niche_envolution_type in c(1:4)){
+        for (niche_envolution_individual_ratio in c(0.01, 0.1, 1)){
+          item<-item_t[, c("global_id", "random_index")]
+          item$id<-id
+          item<-item[, c("id", "global_id", "random_index")]
+          item$label<-paste(item$global_id, da, nb, niche_envolution_type, niche_envolution_individual_ratio, sep="_")
+          id<-id+1
+          item$da<-da
+          item$nb<-nb
+          nb_temp<-(v_max_temp[which(v_max_temp$global_id==item$global_id), "v"] + 
+            v_min_temp[which(v_min_temp$global_id==item$global_id), "v"])/2
+          nb1_min<-nb_temp-nb_range[[nb]][1]/2
+          nb1_max<-nb_temp+nb_range[[nb]][1]/2
+          
+          nb2_min<-v_max_prec[
+            which(v_max_prec$global_id==item$global_id), "v"]-nb_range[[nb]][2]/2
+          nb2_max<-v_max_prec[
+            which(v_max_prec$global_id==item$global_id), "v"]+nb_range[[nb]][2]/2
+          item$nb_v<-paste(paste(nb1_min, nb1_max, sep=","), 
+                           paste(nb1_min, nb1_max, sep=","),
+                           paste(nb2_min, nb2_max, sep=","),
+                           sep="|")
+          item$dispersal_ability<-da_list[which(da_list$da==da), "v"]
+          item$dispersal_speed<-1
+          item$dispersal_method<-2
+          item$number_of_path<--1
+          item$speciation_years<-100
+          item$species_extinction_threshold<-0
+          item$species_extinction_time_steps<-1
+          item$species_extinction_threahold_percentage<-1
+          item$group_extinction_threshold<-0
+          item$initial_seeds<-item$global_id
+          item$environments<-("Debiased_Minimum_Monthly_Temperature,Debiased_Maximum_Monthly_Temperature,Debiased_Maximum_Monthly_Precipitation")
+          item$from<-1200
+          item$to<-0
+          item$step<--1
+          item$mask<-"mask"
+          item$burn_in_year<-0
+          if (niche_envolution_type==1){
+            item$niche_breadth_evolution_ratio<-"1,1,1,1"
+          }
+          if (niche_envolution_type==2){
+            item$niche_breadth_evolution_ratio<-"0,1,1,1"
+          }
+          if (niche_envolution_type==3){
+            item$niche_breadth_evolution_ratio<-"0,0,1,1"
+          }
+          if (niche_envolution_type==4){
+            item$niche_breadth_evolution_ratio<-"0,0,0,1"
+          }
+          item$niche_breadth_evolution_random_range<-0.01
+          item$niche_breadth_evolution_parent_level<-5
+          item$niche_envolution_individual_ratio<-niche_envolution_individual_ratio
+          if (is.null(simulations)){
+            simulations<-item
+          }else{
+            simulations<-bind_rows(simulations, item)
+          }
         }
       }
     }
