@@ -97,7 +97,7 @@ vector<double> Species::getNicheBreadthEvolutionRatio(){
 int Species::getNicheBreadthEvolutionParentLevel(){
     return nicheBreadthEvolutionParentLevel;
 }
-int Species::getNicheEnvolutionIndividualRatio(){
+double Species::getNicheEnvolutionIndividualRatio(){
     return nicheEnvolutionIndividualRatio;
 }
 double Species::getNicheBreadthEvolutionRandomRange(){

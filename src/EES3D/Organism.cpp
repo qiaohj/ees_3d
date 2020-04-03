@@ -58,7 +58,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
             double r = 1 - 2 * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
             r = p_species->getNicheBreadthEvolutionRandomRange() * r;
-            memo = to_string(r);
+
             //LOG(DEBUG) << "niche breadth ratio is " << r;
             unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
             if (parent){
@@ -68,6 +68,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             if (rr >= p_species->getNicheEnvolutionIndividualRatio()) {
                 r = 0;
             }
+            memo = to_string(r);
             for (auto it : niche_breadth) {
                 NicheBreadth *p_NicheBreadth = it.second;
                 double change = (p_NicheBreadth->getMax() - p_NicheBreadth->getMin()) * r;
@@ -136,6 +137,12 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
                     }
                     double change = trend[0] - this->envs[it.first];
                     evoDirection[it.first] = (change>0)?1:-1;
+                    if (it.first=="Debiased_Minimum_Monthly_Temperature"){
+                        evoDirection["Debiased_Maximum_Monthly_Temperature"] = evoDirection[it.first];
+                    }
+                    if (it.first=="Debiased_Maximum_Monthly_Temperature"){
+                        evoDirection["Debiased_Minimum_Monthly_Temperature"] = evoDirection[it.first];
+                    }
                 }
                 double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
                 r = p_species->getNicheBreadthEvolutionRandomRange() * r * evoDirection[it.first];
@@ -202,6 +209,12 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
                     }
                     double change = trend[0] - this->envs[it.first];
                     evoDirection[it.first] = (change>0)?1:-1;
+                    if (it.first == "Debiased_Minimum_Monthly_Temperature") {
+                        evoDirection["Debiased_Maximum_Monthly_Temperature"] = evoDirection[it.first];
+                    }
+                    if (it.first == "Debiased_Maximum_Monthly_Temperature") {
+                        evoDirection["Debiased_Minimum_Monthly_Temperature"] = evoDirection[it.first];
+                    }
                 }
                 double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
                 r = p_species->getNicheBreadthEvolutionRandomRange() * r * evoDirection[it.first];

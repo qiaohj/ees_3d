@@ -361,6 +361,11 @@ int Simulation::run() {
                     }
                 }
             }
+            LOG(DEBUG)<<"new_organisms SIZE:"<<new_organisms.size();
+            if (new_organisms.size()==0){
+                LOG(DEBUG)<<"SET DisappearedYearI 0";
+                s_it.first->setDisappearedYearI(year_i);
+            }
             //LOG(DEBUG) << "new_organisms size is "<<new_organisms.size();
             for (auto it : new_organisms) {
                 int id = it->getID();
@@ -383,9 +388,11 @@ int Simulation::run() {
             //        <<species->getMaxSpeciesDistribution()<<" "<<species->getSpeciesExtinctionThreaholdPercentage()<<" "
             //        <<species->getMaxSpeciesDistribution() * species->getSpeciesExtinctionThreaholdPercentage();
 
-            if ((sp_it->second.size() > 0) &&
-                    ((species->getCurrentSpeciesExtinctionTimeSteps() < species->getSpeciesExtinctionTimeSteps())) &&
-                    (sp_it->second.size() >= (species->getMaxSpeciesDistribution() * species->getSpeciesExtinctionThreaholdPercentage()))) {
+            //if ((sp_it->second.size() > 0) &&
+            //        ((species->getCurrentSpeciesExtinctionTimeSteps() < species->getSpeciesExtinctionTimeSteps())) &&
+            //        (sp_it->second.size() >= (species->getMaxSpeciesDistribution() * species->getSpeciesExtinctionThreaholdPercentage())))
+            LOG(DEBUG)<<"Species SIZE:"<<organisms_in_current_year.size()<<" Current organism size:"<<sp_it->second.size();
+            if (sp_it->second.size() > 0){
                 species->setMaxSpeciesDistribution((sp_it->second.size() > species->getMaxSpeciesDistribution()) ? sp_it->second.size() : species->getMaxSpeciesDistribution());
                 if ((sp_it->second.size() <= species->getSpeciesExtinctionThreshold()) && ((int)year_i >= species->getSpeciationYears())) {
                     species->addCurrentSpeciesExtinctionTimeSteps();
@@ -399,6 +406,7 @@ int Simulation::run() {
                     it.second.clear();
                 }
                 sp_it->second.clear();
+                LOG(DEBUG)<<"SET DisappearedYearI 1";
                 sp_it->first->setDisappearedYearI(year_i);
                 sp_it = organisms_in_current_year.erase(sp_it);
             }
@@ -535,7 +543,6 @@ int Simulation::run() {
                 }
 
                 sp_it->second.clear();
-                //sp_it->first->setDisappearedYearI(year_i);
                 sp_it = organisms_in_current_year.erase(sp_it);
 
             } else {
@@ -548,10 +555,12 @@ int Simulation::run() {
             organisms_in_current_year[it.first] = it.second;
         }
         LOG(DEBUG)<<"End to rebuild the organism structure in this year. species size is "<<organisms_in_current_year.size();
+
         LOG(DEBUG)<<"begin to generate group maps";
         unordered_map<Species*, vector<ISEA*>> group_maps;
         for (auto sp_it : organisms_in_current_year) {
             Species *species = sp_it.first;
+
             if (group_maps.find(species) == group_maps.end()) {
                 group_maps[sp_it.first].push_back(new ISEA());
                 group_maps[sp_it.first].push_back(new ISEA());

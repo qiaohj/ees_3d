@@ -112,7 +112,7 @@ public:
 
     vector<double> getNicheBreadthEvolutionRatio();
     int getNicheBreadthEvolutionParentLevel();
-    int getNicheEnvolutionIndividualRatio();
+    double getNicheEnvolutionIndividualRatio();
     double getNicheBreadthEvolutionRandomRange();
     /**
 	 * @brief The maximum time steps for a species to go extinct when its distribution is smaller than a threshold defined with SpeciesExtinctionThreshold or SpeciesExtinctionThreaholdPercentage
