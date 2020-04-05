@@ -52,18 +52,25 @@ bool Simulation::getOverwrite(){
 /*-------------------------
  * Save the population information for a specific time step to a db
  *-----------------------*/
-void Simulation::saveGroupmap(int year_i, unordered_map<Species*, vector<ISEA*>> &species_group_maps) {
-    LOG(DEBUG)<<"Save result to db";
+void Simulation::saveGroupmap(int year_i, unordered_map<Species*, vector<ISEA*>> &species_group_maps, int suitable) {
     if (species_group_maps.size() == 0) {
         LOG(ERROR)<<"NO MAP, RETURN";
         return;
     }
     //logs.push_back("insert into map (YEAR, ID, group_id, sp_id ) values ");
     int i = 0;
+    //LOG(DEBUG)<<"Saving group map";
     for (auto sp_it : species_group_maps) {
         Species *sp = sp_it.first;
-        ISEA *group_map = sp_it.second[0];
-        ISEA *n_map = sp_it.second[1];
+        ISEA *group_map = NULL;
+        ISEA *n_map =NULL;
+        if (sp_it.second.size()==1){
+            group_map = sp_it.second[0];
+            n_map = sp_it.second[0];
+        }else{
+            group_map = sp_it.second[0];
+            n_map = sp_it.second[1];
+        }
         if (group_map) {
             unordered_map<int, double> values = group_map->getValues();
             for (auto item : values) {
@@ -79,19 +86,12 @@ void Simulation::saveGroupmap(int year_i, unordered_map<Species*, vector<ISEA*>>
                         //sprintf(line, " ,(%u,%u,%u,%s) ", timeLine[year_i], id, group_id, sp_id.c_str());
                     }
                     i = 1;
-                    sprintf(line, "%u,%u,%u,%u,%s", timeLine[year_i], id, group_id, n, sp_id.c_str());
+                    sprintf(line, "%u,%u,%u,%u,%s,%u", timeLine[year_i], id, group_id, n, sp_id.c_str(), suitable);
                     logs.push_back(line);
                 }
             }
 
         }
-    }
-    //logs.push_back(";");
-
-    if (i > 0) {
-
-    }else{
-        LOG(ERROR)<<"No map found";
     }
 }
 
@@ -324,10 +324,12 @@ int Simulation::run() {
 
         //Handle the active individual organisms one by one.
         LOG(DEBUG)<<"start to simulate organism by species. Count of species is " << actived_organisms.size();
-
+        unordered_map<Species*, unordered_map<int, vector<Organism*> > > unsuitable_organisms;
         for (auto s_it : actived_organisms) {
             //LOG(DEBUG)<<"start to simulate organism by organism. Current species is "<< s_it.first->getIDWithParentID() << ". Count of organisms is " << s_it.second.size();
             vector<Organism*> new_organisms;
+            vector<Organism*> unsuitable_organisms_item;
+
             for (auto o_it : s_it.second) {
                 Organism *organism = o_it.second;
                 //if current year no smaller than individual organism's next run year, then move this organism.
@@ -352,11 +354,23 @@ int Simulation::run() {
                         //create a new organism
                         Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, it, ++organism_uid, nb_logs, details, current_environments, mask);
                         new_organism->setRandomDispersalAbility();
-
-                        if (new_organism->isSuitable(mask)){
-                            new_organisms.push_back(new_organism);
-                        }else{
-                            delete new_organism;
+                        int suitable = new_organism->isSuitable(mask);
+                        switch (suitable) {
+                            case -1: {
+                                delete new_organism;
+                                break;
+                            }
+                            case 0: {
+                                unsuitable_organisms_item.push_back(new_organism);
+                                break;
+                            }
+                            case 1: {
+                                new_organisms.push_back(new_organism);
+                                break;
+                            }
+                            default: {
+                                break;
+                            }
                         }
                     }
                 }
@@ -372,6 +386,11 @@ int Simulation::run() {
                 //species id, index
                 organisms_in_current_year[s_it.first][id].push_back(it);
                 all_organisms[year_i].push_back(it);
+            }
+            for (auto it : unsuitable_organisms_item) {
+                int id = it->getID();
+                //species id, index
+                unsuitable_organisms[s_it.first][id].push_back(it);
             }
             //LOG(DEBUG)<<"end to simulate organism by organism.";
         }
@@ -579,7 +598,7 @@ int Simulation::run() {
 
         }
 
-        saveGroupmap(year_i, group_maps);
+        saveGroupmap(year_i, group_maps, 1);
         for (auto it : group_maps) {
             for (auto it2 : it.second) {
                 if (it2) {
@@ -590,6 +609,45 @@ int Simulation::run() {
         }
         group_maps.clear();
 
+        LOG(DEBUG) << "begin to generate unsuitable group maps";
+        unordered_map<Species*, vector<ISEA*>> un_group_maps;
+        for (auto sp_it : unsuitable_organisms) {
+            Species *species = sp_it.first;
+
+            if (un_group_maps.find(species) == un_group_maps.end()) {
+                un_group_maps[sp_it.first].push_back(new ISEA());
+
+            }
+            if (sp_it.second.size() > 0) {
+                for (auto o_id : sp_it.second) {
+                    if (o_id.second.size() > 0) {
+                        un_group_maps[sp_it.first][0]->setValue(o_id.second.front()->getID(), o_id.second.size());
+                    }
+                }
+            } else {
+                delete un_group_maps[sp_it.first][0];
+            }
+
+        }
+
+        saveGroupmap(year_i, un_group_maps, 0);
+        for (auto it : un_group_maps) {
+            for (auto it2 : it.second) {
+                if (it2) {
+                    delete it2;
+                }
+            }
+
+        }
+        un_group_maps.clear();
+
+        for (auto it : unsuitable_organisms){
+            for (auto it2 : it.second){
+                for (auto it3 : it2.second){
+                    delete it3;
+                }
+            }
+        }
         //remove the useless organism
         LOG(DEBUG) << "Remove the useless organisms. Before removing, Memory usage:" << CommonFun::getCurrentRSS(1);
         Species *sp_it = all_species.begin()->second;
@@ -613,10 +671,6 @@ int Simulation::run() {
             removed_year_i = (int) year_i - sp_it->getDispersalSpeed() - speciation_year;
         }
         if (removed_year_i >= 0) {
-            //LOG(DEBUG) << "Remove organism at " << removed_year_i;
-            //for (auto it : *all_organisms) {
-                //LOG(DEBUG) << "all_organisms keys " << it.first;
-            //}
             for (auto it : all_organisms[removed_year_i]) {
                 delete it;
             }
@@ -629,7 +683,6 @@ int Simulation::run() {
             }
             //              LOG(DEBUG)<<"Done!";
         }
-
         current_environments.clear();
         LOG(DEBUG)<<"Remove the useless organisms. After  removing, Memory usage:"<<CommonFun::getCurrentRSS(1);
 

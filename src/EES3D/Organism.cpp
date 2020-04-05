@@ -55,19 +55,19 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         }
         case 1: {
             t_details = false;
-            //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
-            double r = 1 - 2 * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
-            r = p_species->getNicheBreadthEvolutionRandomRange() * r;
 
+            double r = 0;
+            double rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+            if (rr < p_species->getNicheEnvolutionIndividualRatio()) {
+                r = 1 - 2 * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
+                r = p_species->getNicheBreadthEvolutionRandomRange() * r;
+            }
             //LOG(DEBUG) << "niche breadth ratio is " << r;
             unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
             if (parent){
                 niche_breadth = parent->getNicheBreadth();
             }
-            double rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
-            if (rr >= p_species->getNicheEnvolutionIndividualRatio()) {
-                r = 0;
-            }
+
             memo = to_string(r);
             for (auto it : niche_breadth) {
                 NicheBreadth *p_NicheBreadth = it.second;
@@ -78,7 +78,6 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
                     memo += it.first + "," + to_string(envs[it.first]) + ",";
                     t_details = true;
                 }
-
             }
             break;
         }
@@ -95,7 +94,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
                 nicheBreadth[it.first] = new_NicheBreadth;
             }
             //if it is unsuitable, skip directly
-            if (!isSuitable(mask)){
+            if (isSuitable(mask)!=1){
                 break;
             }
             //if it is not a smart species, try to be a smart species
@@ -363,27 +362,32 @@ unordered_map<string, NicheBreadth*> Organism::getNicheBreadth() {
 //void Organism::addChild(Organism* child){
 //    children.push_back(child);
 //}
-bool Organism::isSuitable(ISEA* mask) {
+/**
+ * -1 mean unsuitable because of map 0: mean unsuitable because of environment, 1: mean suitable
+ * @param mask
+ * @return
+ */
+int Organism::isSuitable(ISEA* mask) {
     for (auto item : nicheBreadth) {
         float mask_value = mask->readByID(id);
         if ((int) mask_value == NODATA) {
             //LOG(DEBUG)<<"NO MASK";
-            return false;
+            return -1;
         }
         float env_value = envs[item.first];
         if ((int) env_value == NODATA) {
             //LOG(DEBUG)<<"NO DATA";
-            return false;
+            return -1;
         }
 
         if ((env_value > item.second->getMax())
                 || (env_value < item.second->getMin())) {
             //LOG(DEBUG)<<"UNSUITABLE";
-            return false;
+            return 0;
         }
     }
     //LOG(DEBUG)<<"SUITABLE";
-    return true;
+    return 1;
 }
 Species* Organism::getSpecies() {
     return species;

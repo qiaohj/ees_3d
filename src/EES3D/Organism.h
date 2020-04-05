@@ -103,7 +103,7 @@ public:
      * @param p_current_environments
      * @return True: suitable False: unsuitable
      */
-    bool isSuitable(ISEA* mask);
+    int isSuitable(ISEA* mask);
 
     /**
      * @brief return the species object of the individual

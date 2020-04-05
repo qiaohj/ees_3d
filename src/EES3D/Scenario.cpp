@@ -149,8 +149,9 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
     string sql;
 
     if (p_id == -1) {
-        sql = "SELECT * FROM simulations WHERE is_run=1";
-        //sql = "SELECT * FROM simulations WHERE is_run=1 and global_id=10715";
+        //sql = "SELECT * FROM simulations WHERE is_run=1 order by random()";
+        //sql = "SELECT * FROM simulations WHERE is_run=1 and niche_breadth_evolution_ratio<>'0,1,1,1'";
+        sql = "SELECT * FROM simulations WHERE is_run=1 and global_id=10715";
     } else {
         sql = "SELECT * FROM simulations WHERE is_run=1 and id=" + to_string(p_id);
     }
@@ -165,9 +166,9 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
         case SQLITE_ROW: {
             int burn_in_year = sqlite3_column_int(stmt, SIMULATION_burn_in_year);
             string label = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_label)));
-            LOG(DEBUG) << "init Species";
+            //LOG(DEBUG) << "init Species";
             Species *new_species = new Species(stmt, burn_in_year);
-            LOG(DEBUG) << "Finished to init Species";
+            //LOG(DEBUG) << "Finished to init Species";
 
             string environments_str = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments)));
             string mask_table = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_mask)));
