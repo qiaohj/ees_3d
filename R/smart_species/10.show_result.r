@@ -10,7 +10,7 @@ library("phytools")
 library("geiger")
 library("stringr")
 library(tidyverse)
-#library(plotKML)
+library(plotKML)
 #data(eberg_contours)
 ## Not run: 
 #plotKML(eberg_contours)
@@ -18,7 +18,7 @@ library(tidyverse)
 
 
 
-logdb<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/Results_TEST/11198_GOOD_MODERATE_3/11198_GOOD_MODERATE_3.sqlite"
+logdb<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/Results/20048_POOR_BROAD_4_0.01/20048_POOR_BROAD_4_0.01.sqlite"
 mydb <- dbConnect(RSQLite::SQLite(), logdb)
 trees<-dbReadTable(mydb, "trees")
 suitable<-dbReadTable(mydb, "suitable")
@@ -41,7 +41,7 @@ shape_t@data<-subset(shape_t@data, shape_t$global_id %in% suitable$ID)
 shape_t@data$global_id<-as.numeric(as.character(shape_t@data$global_id))
 shape_t@data<-inner_join(shape_t@data, suitable, by=c("global_id"="ID"))
 writeOGR(shape_t, dsn = "/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/test", 
-         layer = "0000", driver="ESRI Shapefile", overwrite_layer=T)
+         layer = "suitable", driver="ESRI Shapefile", overwrite_layer=T)
 table(map$YEAR)
 y<-0
 for (y in c(1100:0)){

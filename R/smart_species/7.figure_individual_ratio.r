@@ -2,12 +2,14 @@ library(dplyr)
 library(ggplot2)
 base<-"C:/Users/Huijie Qiao/Downloads"
 
-result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
-result$Y<-result$Y*-1
-items<-strsplit(result$LABLE, "_")
-names(items)<-c(1:length(items))
-items_df<-bind_rows(items)
-
+if (F){
+  #fix result, add evo_type to the data frame.
+  result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
+  result$Y<-result$Y*-1
+  items<-strsplit(result$LABLE, "_")
+  names(items)<-c(1:length(items))
+  items_df<-bind_rows(items)
+}
 mean_df<-result %>%
   group_by(Y, SUITABLE, NB, DA, EVO_RATIO) %>%
   summarize(Mean_N_IND = mean(N_IND, na.rm=TRUE),
