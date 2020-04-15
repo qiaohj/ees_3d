@@ -1,7 +1,7 @@
 library(dplyr)
 library(ggplot2)
-base<-"C:/Users/Huijie Qiao/Downloads"
-
+base<-"~/Downloads"
+ 
 if (F){
   #fix result, add evo_type to the data frame.
   result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
