@@ -1,12 +1,14 @@
 library(dplyr)
 library(ggplot2)
 library(Rmisc)
-base<-"~/Downloads"
-
+#base<-"~/Downloads"
+base<-"C:/Users/Huijie Qiao/Downloads"
 
 result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
 result$Y<-result$Y*-1
 head(result)
+
+head(result[which(result$Y==-1199),])
 mean_df<-result %>%
   dplyr::group_by(Y, SUITABLE, NB, DA, EVO_RATIO, EVO_TYPE) %>%
   dplyr::summarize(Mean_N_IND = mean(N_IND, na.rm=TRUE),
