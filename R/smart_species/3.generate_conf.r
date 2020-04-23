@@ -41,7 +41,7 @@ mask$random_index<-sample(nrow(mask))
 
 nb_range<-list("BROAD"=c(80, 15),
                "MODERATE"=c(60, 10),
-               "Narrow"=c(40, 5))
+               "NARROW"=c(40, 5))
 simulations<-NULL
 i=1
 id = 1
