@@ -4,7 +4,7 @@ base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
 mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf.sqlite", base))  
 simulations<-dbReadTable(mydb, "simulations")
 dbDisconnect(mydb) 
-simulations<-simulations %>% filter(nb!="BROAD")
+#simulations<-simulations %>% filter(nb!="BROAD")
 simulations<-simulations %>% filter(is_run==1)
 i=6
 result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
@@ -39,6 +39,8 @@ for (i in c(1:nrow(simulations))){
   item$LABLE<-s$label
   item$NB<-s$nb
   item$DA<-s$da
+  ff<-strsplit(s$label, "_")[[1]]
+  item$EVO_TYPE<-as.numeric(ff[4])
   item$GLOBAL_ID<-s$global_id
   item$EVO_RATIO<-s$niche_envolution_individual_ratio
   if (nrow(result)==0){
