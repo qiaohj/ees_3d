@@ -55,19 +55,7 @@ int testFind(int argc, const char *argv[]) {
     }
     return 0;
 }
-/*-----------------------------------------
- * Main entrance for the simulation application
- * Parameters
- * 1. configure's base folder, which the application can load the configuration for species and scenario.
- * 2. scenario configuration. A JSON format configuration file to set up the parameter of the scenario
- * 3. species configuration. A JSON format configuration file to set up the parameter of the species in the simulation.
- * 4. result folder. A path to save the result
- * 5. memory limit (in MB). A number to set up the maximum memory allocate to the application
- * 6. is overwrite. An ZERO value means skip the simulation if the result folder exists and NONE-ZERO value means run the simulation no matter
- * that the folder exists or not.
- * 7. with detail. An ZERO value means output the details of the simulation or not.
- *
- *-----------------------------------------*/
+
 int testSQLITE(int argc, const char *argv[]) {
     //ISEA* t = new ISEA("/home/huijieqiao/git/ees__data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
     //LOG(INFO) <<t->readByID(55);
@@ -168,61 +156,7 @@ int testISEA(int argc, const char *argv[]){
     LOG(INFO)<<5<<". Time Taken:"<<time_taken;
     return 0;
 }
-int run(int argc, const char *argv[]) {
 
-    // Check the validity of the input
-    // If the length of parameters are not satisfied with the required number, the application will skip this simulation and show out a warning.
-    if (argc == 1) {
-        printf("env_db, conf_db, base_folder, id(-1=all), memLimit(in GB), Overwrite\n");
-        exit(1);
-    }
-    // Set up the timer.
-    srand(static_cast<unsigned>(time(0)));
-    string env_db = argv[1];
-    string conf_db = argv[2];
-    string target = argv[3];
-    int id = atoi(argv[4]);
-    int is_debug = atoi(argv[7]);
-    bool is_detail = (atoi(argv[8])==1);
-    //initialize the logger
-
-    string LOGFILE = target + "/runtime.log";
-    el::Configurations defaultConf;
-    defaultConf.setToDefault();
-    defaultConf.set(el::Level::Global, el::ConfigurationType::Enabled, "true");
-    defaultConf.setGlobally(el::ConfigurationType::ToStandardOutput, "true");
-    defaultConf.setGlobally(el::ConfigurationType::ToFile, "true");
-    defaultConf.setGlobally(el::ConfigurationType::Filename, LOGFILE);
-    el::Loggers::reconfigureLogger("default", defaultConf);
-    el::Loggers::setDefaultConfigurations(defaultConf, true);
-
-    el::Loggers::addFlag(el::LoggingFlag::HierarchicalLogging);
-    if (is_debug == 1) {
-        printf("Debug mode\n");
-        el::Loggers::setLoggingLevel(el::Level::Global);
-    } else {
-        printf("Release mode\n");
-        defaultConf.setGlobally(el::ConfigurationType::ToFile, "false");
-        el::Loggers::reconfigureLogger("default", defaultConf);
-        el::Loggers::setDefaultConfigurations(defaultConf, true);
-        el::Loggers::setLoggingLevel(el::Level::Error);
-    }
-    el::Loggers::flushAll();
-
-
-    unsigned long memory_limit = atoi(argv[5]);
-    bool is_overwrite = atoi(argv[6]);
-    //initialize the main scenario
-    LOG(DEBUG)<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1);
-    for (int i=0; i<1; i++){
-        Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit, is_detail);
-        LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
-        delete a;
-        LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
-    }
-
-    return EXIT_SUCCESS;
-}
 
 void testEnvVar(int times){
     LOG(INFO)<<"BEGIN"<<": "<<CommonFun::getCurrentRSS(1);
@@ -320,52 +254,248 @@ void time_sei()
     //
     printf("%s\n", trend.tostring(2).c_str()); // EXPECTED: [9.0005,9.9322,10.8051]
 }
+int testMalloc_trim(int argc, const char *argv[]) {
+    class C {
+    private:
+        map<int, float> v;
+    public:
+        C() {
+            //v = new map<int, float>();
+        }
+        virtual ~C() {
+            //CommonFun::freeContainerRemoved(v);
+            //delete v;
+            malloc_trim(0);
+        }
+        void setValue(int p_id, float p_value) {
+            v[p_id] = p_value;
+        }
+    };
+    int times = stoi(argv[1]);
+    for (int j = 0; j < times; j++) {
+        ISEA *a = new ISEA();
+        int v1 = rand() % 10000000;
+        for (int i = 0; i < v1; i++) {
+            a->setValue(i, 1);
+        }
+        delete a;
+        malloc_trim(0);
+    }
+
+    malloc_trim(0);
+    sleep(100);
+    return 0;
+}
+
+int testGenerateDistMatrix() {
+    //ISEA* t = new ISEA("/home/huijieqiao/git/ees__data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
+    //LOG(INFO) <<t->readByID(55);
+    sqlite3 *env_db;
+    string env_db_str = "/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite";
+    int rc = sqlite3_open(env_db_str.c_str(), &env_db);
+    if (rc) {
+        LOG(INFO) << "Can't open environment database: " << sqlite3_errmsg(env_db);
+        exit(0);
+    } else {
+        LOG(INFO) << "Opened environment database from <" << env_db_str << "> successfully.";
+    }
+
+    Neighbor *neighborInfo = new Neighbor(env_db);
+
+    vector<string> logs;
+
+    for (int i = 1; i<=65612; i++){
+        LOG(INFO)<<i;
+        unordered_map<int, int> neighbors;
+        neighborInfo->getNeighborByID(i, 4, neighbors);
+        for (auto j : neighbors){
+            if (i >= j.first) {
+                continue;
+            }
+            char sql[30];
+            sprintf(sql, "%d,%d,%d", i, j.first, j.second);
+            string sql_c = sql;
+            logs.push_back(sql_c);
+        }
+    }
+    CommonFun::writeFile(logs, "/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/neighbor_distancs.db");
+
+    unordered_map<int, int> neighbors;
+    int target = 1;
+    int distance = 4;
+    neighborInfo->getNeighborByID(target, distance, neighbors);
+    for (auto it : neighbors) {
+        LOG(INFO) << target<<" neighbor is "<<it.first <<" distance is "<<it.second;
+    }
 
 
+    sqlite3_close(env_db);
+    //LOG(INFO) <<"distance is "<< neighborInfo->distance(1, 13202, 5);
+    //LOG(INFO) <<"distance is "<< neighborInfo->distance(15992, 15912, 5);
+
+
+    return 0;
+}
+int testNeighbor() {
+    //ISEA* t = new ISEA("/home/huijieqiao/git/ees__data/ISEA3H8/CSV/Debiased_Maximum_Monthly_Precipitation/0000.csv");
+    //LOG(INFO) <<t->readByID(55);
+    sqlite3 *env_db;
+    string env_db_str = "/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite";
+    int rc = sqlite3_open(env_db_str.c_str(), &env_db);
+    if (rc) {
+        LOG(INFO) << "Can't open environment database: " << sqlite3_errmsg(env_db);
+        exit(0);
+    } else {
+        LOG(INFO) << "Opened environment database from <" << env_db_str << "> successfully.";
+    }
+
+    Neighbor *neighborInfo = new Neighbor(env_db);
+
+    vector<string> logs;
+
+
+    for (int dist=0; dist<=4; dist++){
+        clock_t start1, end1, start2, end2, start3, end3, start4, end4;
+        double time_taken1 = 0;
+        double time_taken2 = 0;
+        double time_taken3 = 0;
+        double time_taken4 = 0;
+        for (int i=0; i<10000; i++){
+            int j = static_cast<double>(rand()) * 60000 / static_cast<double>(RAND_MAX) + 1;
+
+            start1 = clock();
+            unordered_map<int, int> neighbors1;
+            neighborInfo->getNeighborByID_loop(j, dist, neighbors1);
+            end1 = clock();
+            time_taken1 += double(end1 - start1);
+
+            start2 = clock();
+            unordered_map<int, int> neighbors2;
+            set<int> handled;
+            neighborInfo->getNeighborByID_recursive(j, dist , neighbors2, handled);
+            end2 = clock();
+            time_taken2 += double(end2 - start2);
+
+            start3 = clock();
+            unordered_map<int, int> neighbors3;
+            neighborInfo->getNeighborByID_dict(j, dist, neighbors3);
+            end3 = clock();
+            time_taken3 += double(end3 - start3);
+
+            start4 = clock();
+            unordered_map<int, int> neighbors4;
+            neighborInfo->getNeighborByID(j, dist, neighbors4);
+            end4 = clock();
+            time_taken4 += double(end4 - start4);
+
+            if ((i==0)&&true){
+                LOG(INFO)<<"1. "<<neighbors1.size()<<" 2."<<neighbors2.size()<<" 3."<<neighbors3.size()<<" 4."<<neighbors4.size();
+            }
+            if ((i==0)&&(dist<=1)){
+                for (auto it : neighbors1) {
+                    LOG(INFO) << "1. " << it.first <<" dist:"<<it.second;
+                }
+
+                for (auto it : neighbors2) {
+                    LOG(INFO) << "2. " << it.first <<" dist:"<<it.second;
+                }
+
+                for (auto it : neighbors3) {
+                    LOG(INFO) << "3. " << it.first << " dist:" << it.second;
+                }
+
+                for (auto it : neighbors4) {
+                    LOG(INFO) << "4. " << it.first << " dist:" << it.second;
+                }
+            }
+        }
+        LOG(INFO)<<"DISTANCE:"<<dist<<" T1:"<<time_taken1 <<" T2:"<<time_taken2 << " T3:"<<time_taken3<<" T4:" << time_taken4;
+    }
+
+    return 0;
+}
+
+int run(int argc, const char *argv[]) {
+
+    // Check the validity of the input
+    // If the length of parameters are not satisfied with the required number, the application will skip this simulation and show out a warning.
+    if (argc == 1) {
+        printf("env_db, conf_db, base_folder, id(-1=all), memLimit(in GB), Overwrite\n");
+        exit(1);
+    }
+    // Set up the timer.
+    srand(static_cast<unsigned>(time(0)));
+    string env_db = argv[1];
+    string conf_db = argv[2];
+    string target = argv[3];
+    int id = atoi(argv[4]);
+    int is_debug = atoi(argv[7]);
+    bool is_detail = (atoi(argv[8])==1);
+    //initialize the logger
+
+    string LOGFILE = target + "/runtime.log";
+    el::Configurations defaultConf;
+    defaultConf.setToDefault();
+    defaultConf.set(el::Level::Global, el::ConfigurationType::Enabled, "true");
+    defaultConf.setGlobally(el::ConfigurationType::ToStandardOutput, "true");
+    defaultConf.setGlobally(el::ConfigurationType::ToFile, "true");
+    defaultConf.setGlobally(el::ConfigurationType::Filename, LOGFILE);
+    el::Loggers::reconfigureLogger("default", defaultConf);
+    el::Loggers::setDefaultConfigurations(defaultConf, true);
+
+    el::Loggers::addFlag(el::LoggingFlag::HierarchicalLogging);
+    if (is_debug == 1) {
+        printf("Debug mode\n");
+        el::Loggers::setLoggingLevel(el::Level::Global);
+    } else {
+        printf("Release mode\n");
+        defaultConf.setGlobally(el::ConfigurationType::ToFile, "false");
+        el::Loggers::reconfigureLogger("default", defaultConf);
+        el::Loggers::setDefaultConfigurations(defaultConf, true);
+        el::Loggers::setLoggingLevel(el::Level::Error);
+    }
+    el::Loggers::flushAll();
+
+
+    unsigned long memory_limit = atoi(argv[5]);
+    bool is_overwrite = atoi(argv[6]);
+    //initialize the main scenario
+    LOG(DEBUG)<<"MEMORY USAGE BEFORE INIT SCENARIO: "<<CommonFun::getCurrentRSS(1);
+    for (int i=0; i<1; i++){
+        Scenario* a = new Scenario(env_db, conf_db, target, is_overwrite, id, memory_limit, is_detail);
+        LOG(DEBUG)<<"MEMORY USAGE BEFORE RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
+        delete a;
+        LOG(DEBUG)<<"MEMORY USAGE AFTER RELEASE SCENARIO: "<<CommonFun::getCurrentRSS(1);
+    }
+
+    return EXIT_SUCCESS;
+}
+/*-----------------------------------------
+ * Main entrance for the simulation application
+ * Parameters
+ * 1. configure's base folder, which the application can load the configuration for species and scenario.
+ * 2. scenario configuration. A JSON format configuration file to set up the parameter of the scenario
+ * 3. species configuration. A JSON format configuration file to set up the parameter of the species in the simulation.
+ * 4. result folder. A path to save the result
+ * 5. memory limit (in MB). A number to set up the maximum memory allocate to the application
+ * 6. is overwrite. An ZERO value means skip the simulation if the result folder exists and NONE-ZERO value means run the simulation no matter
+ * that the folder exists or not.
+ * 7. with detail. An ZERO value means output the details of the simulation or not.
+ *
+ *-----------------------------------------*/
 int main(int argc, const char *argv[]){
     //testEnvVar(stoi(argv[1]));
 
     //return 0;
     //time_sei();
     //exit(1);
+    //testNeighbor();
+    //testGenerateDistMatrix();
     int status = run(argc, argv);
     return status;
 
     //testMap();
     //return 0;
-}
-
-int testMalloc_trim(int argc, const char *argv[]) {
-	class C {
-	private:
-		map<int, float> v;
-	public:
-		C() {
-			//v = new map<int, float>();
-		}
-		virtual ~C() {
-			//CommonFun::freeContainerRemoved(v);
-			//delete v;
-			malloc_trim(0);
-		}
-		void setValue(int p_id, float p_value) {
-			v[p_id] = p_value;
-		}
-	};
-	int times = stoi(argv[1]);
-	for (int j = 0; j < times; j++) {
-		ISEA *a = new ISEA();
-		int v1 = rand() % 10000000;
-		for (int i = 0; i < v1; i++) {
-			a->setValue(i, 1);
-		}
-		delete a;
-		malloc_trim(0);
-	}
-
-	malloc_trim(0);
-	sleep(100);
-	return 0;
 }
 
 

@@ -41,10 +41,16 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         envs[item.first] = env_value;
     }
     bool t_details = details;
+
     switch (nicheBreadthType) {
+        case 4:{
+            //LOG(DEBUG)<<"4. I DO "<<nicheBreadthType;
+
+            }
+            break;
         case 0:{
             t_details = false;
-            //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+            //LOG(DEBUG)<<"0. I DO "<<nicheBreadthType;
             for (auto it : p_species->getNicheBreadth()) {
                 NicheBreadth *p_NicheBreadth = it.second;
                 NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
@@ -55,7 +61,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         }
         case 1: {
             t_details = false;
-
+            //LOG(DEBUG)<<"1. I DO "<<nicheBreadthType;
             double r = 0;
             double rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
             if (rr < p_species->getNicheEnvolutionIndividualRatio()) {
@@ -82,7 +88,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             break;
         }
         case 2: {
-            //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+            //LOG(DEBUG)<<"2. I DO "<<nicheBreadthType;
             t_details = false;
             unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
             if (parent) {
@@ -157,7 +163,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             break;
         }
         case 3: {
-            //LOG(DEBUG)<<"I DO "<<nicheBreadthType;
+            //LOG(DEBUG)<<"3. I DO "<<nicheBreadthType;
             t_details = false;
             unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
             if (parent) {
@@ -229,6 +235,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             break;
         }
         default: {
+            //LOG(DEBUG)<<"Default. I DO "<<nicheBreadthType;
             break;
         }
     }
@@ -263,6 +270,14 @@ int Organism::getUid(){
     return uid;
 }
 int Organism::setNicheBreadthType(vector<double> typeRatio, int parentType){
+    if (parentType==4){
+        return parentType;
+    }
+    for (double v : typeRatio){
+        if ((!CommonFun::AlmostEqualRelative(v, 1.0))&&(!CommonFun::AlmostEqualRelative(v, 0.0))){
+            return 4;
+        }
+    }
     vector<double> newRatio = typeRatio;
     int type = parentType;
     //LOG(DEBUG)<<"Parent Type is "<< type;
@@ -379,7 +394,7 @@ int Organism::isSuitable(ISEA* mask) {
             //LOG(DEBUG)<<"NO DATA";
             return -1;
         }
-
+        //LOG(DEBUG)<<"env_value:"<<env_value <<" MAX:"<<item.second->getMax()<<" MIN:"<<item.second->getMin();
         if ((env_value > item.second->getMax())
                 || (env_value < item.second->getMin())) {
             //LOG(DEBUG)<<"UNSUITABLE";

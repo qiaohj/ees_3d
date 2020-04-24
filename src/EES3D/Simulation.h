@@ -36,8 +36,9 @@ using namespace std;
  */
 class Simulation {
 private:
-    double t1;
-    double t2;
+    clock_t sys_start;
+    clock_t sys_end;
+    int max_memory;
     vector<string> logs;
     vector<string> nb_logs;
     unordered_map<string, Species*> all_species;
@@ -88,13 +89,13 @@ public:
     ISEA* getMask();
     string getTargetFolder();
     void createLogDB();
-    void getDispersalMap_2(Organism *organism, set<int> &new_cells);
+    void getDispersalMap_2(Organism *organism, unordered_map<int, int> &new_cells);
     unordered_map<string, ISEA*> getEnvironmentMap(int p_year);
     int getUnmarkedID(unordered_map<int, vector<Organism*> > &organisms);
     void markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, unordered_map<int, vector<Organism*> > &organisms);
-    void getNeighbors(int id, int distance, set<int> &cells);
+    void getNeighbors(int id, int distance, unordered_map<int, int> &cells);
 
-    int distance(int id1, int id2, int limited);
+    //int distance(int id1, int id2, int limited);
     void markedSpeciesID(int group_id, int temp_species_id, unordered_map<int, vector<Organism*> > &organisms);
     int getTempSpeciesID(int group_id, unordered_map<int, vector<Organism*> > &organisms);
     void generateSpeciationInfo();

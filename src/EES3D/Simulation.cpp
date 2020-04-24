@@ -15,8 +15,9 @@
 #include <utility>
 Simulation::Simulation(Species *p_species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
         vector<int> &p_timeLine, Neighbor* neighborInfo, vector<string> &environment_labels, string mask_table, bool p_details) {
-    this->t1 = 0;
-    this->t2 = 0;
+    this->sys_start = clock();
+    this->sys_end = clock();
+    this->max_memory = 0;
     this->all_species[p_species->getIDWithParentID()] = p_species;
     this->ancestor = p_species;
     this->burnInYear = burnInYear;
@@ -54,7 +55,7 @@ bool Simulation::getOverwrite(){
  *-----------------------*/
 void Simulation::saveGroupmap(int year_i, unordered_map<Species*, vector<ISEA*>> &species_group_maps, int suitable) {
     if (species_group_maps.size() == 0) {
-        LOG(ERROR)<<"NO MAP, RETURN";
+        LOG(ERROR)<<"suitable:"<<suitable<<". NO MAP, RETURN";
         return;
     }
     //logs.push_back("insert into map (YEAR, ID, group_id, sp_id ) values ");
@@ -121,7 +122,9 @@ void Simulation::createLogDB() {
     CommonFun::executeSQL(sql, log_db, true);
     sql = "CREATE TABLE trees(TYPE CHAR(255) NOT NULL, CONTENT TEXT NOT NULL);";
     CommonFun::executeSQL(sql, log_db, true);
-    sql = "CREATE TABLE nichebreadth(YEAR INT NOT NULL, ID INT NOT NULL, uid INT NOT NULL, parent_uid INT NOT NULL, nb_type INT NOT NULL, nb CHAR(255), memo CHAR(2000));";
+    //sql = "CREATE TABLE nichebreadth(YEAR INT NOT NULL, ID INT NOT NULL, uid INT NOT NULL, parent_uid INT NOT NULL, nb_type INT NOT NULL, nb CHAR(255), memo CHAR(2000));";
+    //CommonFun::executeSQL(sql, log_db, true);
+    sql = "CREATE TABLE runtime(start INT NOT NULL, end INT NOT NULL, memory INT NOT NULL);";
     CommonFun::executeSQL(sql, log_db, true);
 
 }
@@ -135,9 +138,12 @@ void Simulation::commitLog(){
         string nb_logFile = this->targetFolder + "/" + label + ".nb.log";
         CommonFun::writeFile(nb_logs, nb_logFile.c_str());
     }
-
+    sys_end = clock();
+    char sql[100];
+    sprintf(sql, "INSERT INTO runtime (start, end, memory) VALUES (%u, %u, %u);", int(sys_start)/int(CLOCKS_PER_SEC), int(sys_end)/int(CLOCKS_PER_SEC), max_memory);
+    string sql_c = sql;
     //LOG(INFO)<<"Outputting log db";
-    //CommonFun::executeSQL(logs, log_db, true);
+    CommonFun::executeSQL(sql_c, log_db, true);
 }
 bool Simulation::init(unordered_map<string, EnvVar*> &environments_base, sqlite3* env_db, unordered_map<string, ISEA*> &masks){
     //logs.push_back("BEGIN TRANSACTION;");
@@ -289,10 +295,11 @@ int Simulation::run() {
     for (unsigned year_i = 1; year_i<timeLine.size(); year_i++) {
         end = clock();
         double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
-
+        int memory = (int)CommonFun::getCurrentRSS(pow(1024, 2));
+        this->max_memory = (max_memory>memory)?max_memory:memory;
         LOG(INFO) << "v3.7 Current year:" << timeLine[year_i] << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"<<totalSimulation<<") N_sp:"<<
                 //organisms_in_current_year->size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
-                organisms_in_current_year.size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
+                organisms_in_current_year.size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << memory << "MB.";
         LOG(DEBUG) << "Load environments of year " << timeLine[year_i] << " via index " << year_i;
 
         unordered_map<string, ISEA*> current_environments = getEnvironmentMap(timeLine[year_i]);
@@ -317,7 +324,7 @@ int Simulation::run() {
         }
         organisms_in_current_year.clear();
         //If it is the beginning of the simulation, generate a suitable layer for the species;
-        LOG(DEBUG) << "Current year is " << year_i << " and timeline[1] is " << timeLine[year_i];
+        LOG(DEBUG) << "Current year is " << year_i << " and timeline is " << timeLine[year_i];
         if (year_i == 1) {
             generateSuitable();
         }
@@ -335,7 +342,7 @@ int Simulation::run() {
                 //if current year no smaller than individual organism's next run year, then move this organism.
                 //LOG(DEBUG)<<"Organism index is "<< organism->getID()<<". Current year is "<<year_i<<". Next year is "<<organism->getNextRunYearI();
                 if ((int)year_i >= organism->getNextRunYearI()) {
-                    set<int> next_cells;
+                    unordered_map<int, int> next_cells;
                     switch (organism->getDispersalMethod()) {
                     //only the new individual organisms can move
                     case 1:
@@ -348,11 +355,12 @@ int Simulation::run() {
                         break;
                     default:
                         ;
+                        break;
                     }
-                    for (auto it : next_cells) {
-
+                    for (auto its : next_cells) {
+                        int id = its.first;
                         //create a new organism
-                        Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, it, ++organism_uid, nb_logs, details, current_environments, mask);
+                        Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, id, ++organism_uid, nb_logs, details, current_environments, mask);
                         new_organism->setRandomDispersalAbility();
                         int suitable = new_organism->isSuitable(mask);
                         switch (suitable) {
@@ -376,6 +384,8 @@ int Simulation::run() {
                 }
             }
             LOG(DEBUG)<<"new_organisms SIZE:"<<new_organisms.size();
+            LOG(DEBUG)<<"unsuitable_organisms_item SIZE:"<<unsuitable_organisms_item.size();
+
             if (new_organisms.size()==0){
                 LOG(DEBUG)<<"SET DisappearedYearI 0";
                 s_it.first->setDisappearedYearI(year_i);
@@ -441,23 +451,22 @@ int Simulation::run() {
             int  current_group_id = 1;
             //if ((int)year_i >= (species->getBurnInYear() + species->getSpeciationYears())) {
             if (true){
-                //LOG(DEBUG)<<"Begin to mark the organism.";
+                LOG(DEBUG)<<"Begin to mark the organism.";
                 int unmarked_id = getUnmarkedID(organisms);
 
                 while (unmarked_id != -1) {
-                    //LOG(DEBUG)<<"Unmarked organism is "<<unmarked_organism->getX() <<", "<<unmarked_organism->getY()
-                    //      <<" dispersal ability is "<<unmarked_organism->getDispersalAbility()<<". current_group_id is "<<current_group_id;
+
                     int dispersal_ability = -1;
                     for (auto it : organisms[unmarked_id]){
                         dispersal_ability = (dispersal_ability>it->getDispersalAbility())?dispersal_ability:it->getDispersalAbility();
                     }
                     markJointOrganism(current_group_id, unmarked_id, dispersal_ability, organisms);
                     current_group_id++;
-                    //LOG(DEBUG)<<"NEW GROUP ADDED";
+                    LOG(DEBUG)<<"NEW GROUP ADDED";
                     unmarked_id = getUnmarkedID(organisms);
 
                 }
-                //LOG(DEBUG)<<"End to mark the organism. " << current_group_id-1<<" groups were found.";
+                LOG(DEBUG)<<"End to mark the organism. " << current_group_id-1<<" groups were found.";
                 //detect the speciation
                 int  temp_species_id = 1;
 //              vector<string> group_output;
@@ -749,10 +758,12 @@ void Simulation::markedSpeciesID(int group_id, int temp_species_id, unordered_ma
         }
     }
 }
+/*
 int Simulation::distance(int id1, int id2, int limited) {
 
     return neighborInfo->distance(id1, id2, limited);
 }
+*/
 int Simulation::getMinDividedYear(int speciation_year, int  group_id_1, int group_id_2,
         unordered_map<int, vector<Organism*> > &organisms, int current_year_i){
     /*
@@ -894,9 +905,8 @@ int Simulation::getDividedYearI(Organism *o_1, Organism *o_2) {
         return getDividedYearI(parent_1, parent_2);
     }
 }
-void Simulation::getNeighbors(int id, int distance, set<int> &cells) {
-    set<int> handled_ids;
-    neighborInfo->getNeighborByID(id, distance, cells, handled_ids);
+void Simulation::getNeighbors(int id, int distance, unordered_map<int, int> &cells) {
+    neighborInfo->getNeighborByID(id, distance, cells);
 }
 void Simulation::markJointOrganism(int p_group_id, int unmarked_id, int dispersal_ability, unordered_map<int, vector<Organism*> > &organisms) {
 
@@ -904,12 +914,13 @@ void Simulation::markJointOrganism(int p_group_id, int unmarked_id, int dispersa
         dispersal_ability = 1;
     }
     //LOG(DEBUG)<<"id="<<id<<" p_dispersal_ability="<<p_dispersal_ability;
-    set<int> neighbors;
+    unordered_map<int, int> neighbors;
     getNeighbors(unmarked_id, dispersal_ability, neighbors);
     //string n_ids = "";
     //string n_ids_x = "";
     //string n_ids_y = "";
-    for (int n_id : neighbors) {
+    for (auto it : neighbors) {
+        int n_id = it.first;
         //n_ids += "," + to_string(n_id);
         if (organisms.find(n_id) == organisms.end()) {
             continue;
@@ -955,11 +966,11 @@ unordered_map<string, ISEA*> Simulation::getEnvironmentMap(int p_year) {
 }
 
 
-void Simulation::getDispersalMap_2(Organism *organism, set<int> &new_cells) {
-    int p_dispersal_ability = organism->getDispersalAbility();
+void Simulation::getDispersalMap_2(Organism *organism, unordered_map<int, int> &new_cells) {
+	int p_dispersal_ability = organism->getDispersalAbility();
     if (organism->getNumOfPath() == -1) {
         int id = organism->getID();
-        //LOG(DEBUG) << "Looking for neighbors for " << id << ", which dispersal ability is " << p_dispersal_ability << ".";
+        //LOG(DEBUG) << "Looking for neighbors for " << id << ", with dispersal ability is " << p_dispersal_ability << ".";
         getNeighbors(id, p_dispersal_ability, new_cells);
         //LOG(DEBUG)<<new_cells.size() <<" neighbors were found.";
     }

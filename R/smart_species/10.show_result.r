@@ -65,3 +65,17 @@ length(unique(map$sp_id))
 
 
 unique(map[which(map$sp_id=='20667-1-1-1'), "YEAR"])
+
+
+#Test neighbor
+if (F){
+  df_neighbor<-read.table("/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/neighbor_distancs (copy).db", head=F, sep=",")
+  shape <- readOGR(dsn = "/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/isea3hGen/outputfiles", layer = "isea3h8p")
+  shape_t<-shape
+  shape_t@coords<-subset(shape_t@coords, shape_t$global_id %in% df_neighbor$V2)
+  shape_t@data<-subset(shape_t@data, shape_t$global_id %in% df_neighbor$V2)
+  shape_t@data$global_id<-as.numeric(as.character(shape_t@data$global_id))
+  shape_t@data<-inner_join(shape_t@data, df_neighbor, by=c("global_id"="V2"))
+  writeOGR(shape_t, dsn = "/home/huijieqiao/git/ees_3d_data/SMART_SPECIES/test", 
+           layer = "neighbor_error", driver="ESRI Shapefile", overwrite_layer=T)
+}

@@ -63,6 +63,10 @@ void CommonFun::writeFile(string &s, const char *path) {
     outfile << s << endl;
     outfile.close();
 }
+void CommonFun::writeFile(set<string> &s, const char *path) {
+    string joined = boost::algorithm::join(s, "\n");
+    writeFile(joined, path);
+}
 void CommonFun::writeFile(vector<string> &s, const char *path) {
     string joined = boost::algorithm::join(s, "\n");
     writeFile(joined, path);
