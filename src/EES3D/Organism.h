@@ -28,6 +28,7 @@ using namespace alglib;
 #include "Species.h"
 #include "ISEA.h"
 #include "../Universal/easylogging.h"
+#include "Neighbor.h"
 /**
  * @brief A class to handle the behavior of an individual in the simulation
  */
@@ -45,6 +46,7 @@ private:
     int nicheBreadthType;
     unordered_map<string, double> envs;
     unordered_map<string, int> evoDirection;
+    vector<double> nicheBreadthEvolutionRatio;
 public:
     /**
      * @brief Constructor of Organism class
@@ -178,6 +180,9 @@ public:
     int long getMemoryUsage();
     unordered_map<string, NicheBreadth*> getNicheBreadth();
     int getUid();
+    vector<double> getNicheBreadthEvolutionRatio();
+    vector<double> getNicheBreadthEvolutionRatioProb();
+    void setNicheBreadthEvolutionRatio(vector<double> ratios);
 };
 
 #endif /* DEFINITIONS_INDIVIDUALORGANISM_H_ */

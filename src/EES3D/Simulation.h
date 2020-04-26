@@ -41,6 +41,7 @@ private:
     int max_memory;
     vector<string> logs;
     vector<string> nb_logs;
+    vector<string> nb_logs_4;
     unordered_map<string, Species*> all_species;
     vector<string> environment_labels;
     unordered_map<string, EnvVar*> environments;
@@ -60,6 +61,7 @@ private:
     unordered_map<int, vector<Organism*>> all_organisms;
     int organism_uid;
     bool details;
+    bool is4Type;
 public:
     /**
      * @brief Constructor of Simulation

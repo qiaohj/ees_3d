@@ -40,14 +40,90 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         double env_value = p_current_environments[item.first]->readByID(id);
         envs[item.first] = env_value;
     }
+
+    int nicheBreadthType_temp = nicheBreadthType;
+    //if ((!parent) && (nicheBreadthType == 4)) {
+    if ((year_i<=10) && (nicheBreadthType == 4)) {
+        nicheBreadthType_temp = 1;
+        this->nicheBreadthEvolutionRatio = species->getNicheBreadthEvolutionRatio();
+        details = false;
+    }
     bool t_details = details;
-
-    switch (nicheBreadthType) {
+    switch (nicheBreadthType_temp) {
         case 4:{
+            this->nicheBreadthEvolutionRatio = parent->getNicheBreadthEvolutionRatio();
             //LOG(DEBUG)<<"4. I DO "<<nicheBreadthType;
+            t_details = false;
+            unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
+            if (parent) {
+                niche_breadth = parent->getNicheBreadth();
+            }
 
+            double rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+            if (rr >= p_species->getNicheEnvolutionIndividualRatio()) {
+                for (auto it : niche_breadth) {
+                    NicheBreadth *p_NicheBreadth = it.second;
+                    NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                    nicheBreadth[it.first] = new_NicheBreadth;
+                }
+                break;
+            }
+            if ((rr!=0)&&(details)){
+                for (auto it : this->nicheBreadthEvolutionRatio){
+                    memo += to_string(it) + ",";
+                }
+
+                t_details = true;
+            }
+            rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+            int evo_type = 0;
+            for (auto it : nicheBreadthEvolutionRatio){
+                if (rr<=it){
+                    for (auto it : niche_breadth) {
+                        NicheBreadth *p_NicheBreadth = it.second;
+                        NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                        nicheBreadth[it.first] = new_NicheBreadth;
+                    }
+                    break;
+                }
+                evo_type++;
+            }
+            rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+            rr = p_species->getNicheBreadthEvolutionRandomRange() * rr;
+            double change_ratio = 0.5;
+            vector<double> ratioProb = this->getNicheBreadthEvolutionRatioProb();
+            if (evo_type==1){
+                rr = rr * -1;
+                change_ratio *=  ratioProb[1];
+                //change_ratio = (change_ratio>ratioProb[0])?(ratioProb[0] - 0.01):change_ratio;
+                change_ratio = (change_ratio>ratioProb[2])?(ratioProb[2] - 0.01):change_ratio;
+
+                //ratioProb[0] -= change_ratio;
+                ratioProb[1] += change_ratio;
+                ratioProb[2] -= change_ratio;
+            }else{
+                change_ratio *= ratioProb[2];
+                //change_ratio = (change_ratio>ratioProb[0])?(ratioProb[0] - 0.01):change_ratio;
+                change_ratio = (change_ratio>ratioProb[1])?(ratioProb[1] - 0.01):change_ratio;
+
+                //ratioProb[0] -= change_ratio;
+                ratioProb[1] -= change_ratio;
+                ratioProb[2] += change_ratio;
+            }
+            this->setNicheBreadthEvolutionRatio(ratioProb);
+            for (auto it : niche_breadth) {
+                NicheBreadth *p_NicheBreadth = it.second;
+                double change = (p_NicheBreadth->getMax() - p_NicheBreadth->getMin()) * rr;
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin() + change, p_NicheBreadth->getMax() + change);
+                nicheBreadth[it.first] = new_NicheBreadth;
+                if ((rr!=0)&&(details)){
+                    memo += it.first + "," + to_string(envs[it.first]) + ",";
+                    t_details = true;
+                }
             }
             break;
+        }
+
         case 0:{
             t_details = false;
             //LOG(DEBUG)<<"0. I DO "<<nicheBreadthType;
@@ -55,7 +131,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
                 NicheBreadth *p_NicheBreadth = it.second;
                 NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
                 nicheBreadth[it.first] = new_NicheBreadth;
-                memo += it.first + "," + to_string(envs[it.first]) + ",";
+                //memo += it.first + "," + to_string(envs[it.first]) + ",";
             }
             break;
         }
@@ -74,7 +150,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
                 niche_breadth = parent->getNicheBreadth();
             }
 
-            memo = to_string(r);
+            memo = to_string(r) + ",";
             for (auto it : niche_breadth) {
                 NicheBreadth *p_NicheBreadth = it.second;
                 double change = (p_NicheBreadth->getMax() - p_NicheBreadth->getMin()) * r;
@@ -259,6 +335,29 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
     }
 
 }
+void Organism::setNicheBreadthEvolutionRatio(vector<double> ratios){
+    for (unsigned i = 0; i < ratios.size(); i++) {
+        if (i == 0) {
+            nicheBreadthEvolutionRatio[i] = ratios[i];
+        } else {
+            nicheBreadthEvolutionRatio[i] = nicheBreadthEvolutionRatio[i - 1] + ratios[i];
+        }
+    }
+}
+vector<double> Organism::getNicheBreadthEvolutionRatio(){
+    return nicheBreadthEvolutionRatio;
+}
+vector<double> Organism::getNicheBreadthEvolutionRatioProb(){
+    vector<double> ratios;
+    for (unsigned i=0; i<nicheBreadthEvolutionRatio.size(); i++){
+        if (i==0){
+            ratios.push_back(nicheBreadthEvolutionRatio[i]);
+        }else{
+            ratios.push_back(nicheBreadthEvolutionRatio[i] - nicheBreadthEvolutionRatio[i-1]);
+        }
+    }
+    return ratios;
+}
 unordered_map<string, int> Organism::getEvoDirection(){
     return evoDirection;
 }
@@ -386,22 +485,22 @@ int Organism::isSuitable(ISEA* mask) {
     for (auto item : nicheBreadth) {
         float mask_value = mask->readByID(id);
         if ((int) mask_value == NODATA) {
-            //LOG(DEBUG)<<"NO MASK";
+            //LOG(INFO)<<"NO MASK";
             return -1;
         }
         float env_value = envs[item.first];
         if ((int) env_value == NODATA) {
-            //LOG(DEBUG)<<"NO DATA";
+            //LOG(INFO)<<"NO DATA";
             return -1;
         }
-        //LOG(DEBUG)<<"env_value:"<<env_value <<" MAX:"<<item.second->getMax()<<" MIN:"<<item.second->getMin();
+        //LOG(INFO)<<"env_value:"<<env_value <<" MAX:"<<item.second->getMax()<<" MIN:"<<item.second->getMin();
         if ((env_value > item.second->getMax())
                 || (env_value < item.second->getMin())) {
-            //LOG(DEBUG)<<"UNSUITABLE";
+            //LOG(INFO)<<"UNSUITABLE";
             return 0;
         }
     }
-    //LOG(DEBUG)<<"SUITABLE";
+    //LOG(INFO)<<"SUITABLE";
     return 1;
 }
 Species* Organism::getSpecies() {

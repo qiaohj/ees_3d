@@ -35,6 +35,13 @@ Simulation::Simulation(Species *p_species, string label, int burnInYear, string 
     this->targetFolder = target + "/" + label;
     this->organism_uid = 0;
     this->details = p_details;
+    this->is4Type = false;
+    for (double v : p_species->getNicheBreadthEvolutionRatio()) {
+        if ((!CommonFun::AlmostEqualRelative(v, 1.0)) && (!CommonFun::AlmostEqualRelative(v, 0.0))) {
+            is4Type = true;
+            break;
+        }
+    }
 }
 void Simulation::setIndexSimulation(int indexSimulation){
     this->indexSimulation = indexSimulation;
@@ -137,6 +144,11 @@ void Simulation::commitLog(){
     if (details){
         string nb_logFile = this->targetFolder + "/" + label + ".nb.log";
         CommonFun::writeFile(nb_logs, nb_logFile.c_str());
+
+        string nb_log_4File = this->targetFolder + "/" + label + ".nb_4.log";
+        CommonFun::writeFile(nb_logs_4, nb_log_4File.c_str());
+
+
     }
     sys_end = clock();
     char sql[100];
@@ -306,8 +318,40 @@ int Simulation::run() {
         //Create the active individual organisms via cloning the individual organisms from the previous time step.
         unordered_map<Species*, unordered_map<int, Organism*>> actived_organisms;
         LOG(DEBUG) << "Found " << all_organisms[year_i - 1].size() << " organisms at time " << timeLine[year_i - 1] << ".";
+
         for (auto sp_it : organisms_in_current_year) {
             Species *sp = sp_it.first;
+            if (is4Type){
+                string memo_head = to_string(year_i) + ",";
+                memo_head += sp->getIDWithParentID() + ",";
+                for (auto c_it : sp_it.second) {
+                    vector<double> ratios;
+                    string memo_head_sp = memo_head + to_string(c_it.first) + ",";
+                    for (unsigned i=0; i< c_it.second.front()->getNicheBreadthEvolutionRatioProb().size(); i++){
+                        ratios.push_back(0);
+                    }
+                    for (auto r_it : c_it.second){
+                        vector<double> ratiosProb = r_it->getNicheBreadthEvolutionRatioProb();
+                        string memo = memo_head_sp;
+                        for (unsigned i=0; i< r_it->getNicheBreadthEvolutionRatio().size(); i++){
+                            memo += to_string(ratiosProb[i]) + ",";
+                            ratios[i]+=ratiosProb[i];
+                        }
+                        this->nb_logs_4.push_back(memo + "0");
+                    }
+                    //double sum_v = 0;
+                    string memo = memo_head_sp;
+                    for (unsigned i=0; i< c_it.second.front()->getNicheBreadthEvolutionRatioProb().size(); i++){
+                        ratios[i] /= c_it.second.size();
+                        //sum_v += ratios[i];
+                        memo += to_string(ratios[i]) + ",";
+                    }
+
+                    this->nb_logs_4.push_back(memo + "1");
+                    c_it.second.front()->setNicheBreadthEvolutionRatio(ratios);
+                }
+
+            }
             for (auto c_it : sp_it.second) {
                 //LOG(DEBUG)<<"Found "<<c_it.second.size()<< " individual from species "<<sp->getIDWithParentID()<<" at pixel "<<c_it.first;
                 if (c_it.second.size() > 0) {
