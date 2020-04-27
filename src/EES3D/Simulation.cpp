@@ -325,30 +325,32 @@ int Simulation::run() {
                 string memo_head = to_string(year_i) + ",";
                 memo_head += sp->getIDWithParentID() + ",";
                 for (auto c_it : sp_it.second) {
-                    vector<double> ratios;
-                    string memo_head_sp = memo_head + to_string(c_it.first) + ",";
-                    for (unsigned i=0; i< c_it.second.front()->getNicheBreadthEvolutionRatioProb().size(); i++){
-                        ratios.push_back(0);
-                    }
-                    for (auto r_it : c_it.second){
-                        vector<double> ratiosProb = r_it->getNicheBreadthEvolutionRatioProb();
-                        string memo = memo_head_sp;
-                        for (unsigned i=0; i< r_it->getNicheBreadthEvolutionRatio().size(); i++){
-                            memo += to_string(ratiosProb[i]) + ",";
-                            ratios[i]+=ratiosProb[i];
+                    for (auto env_label : sp->getEnvironmentLabels()){
+                        vector<double> ratios;
+                        string memo_head_sp = memo_head + to_string(c_it.first) + ",";
+                        for (unsigned i=0; i< c_it.second.front()->getNicheBreadthEvolutionRatioProb(env_label).size(); i++){
+                            ratios.push_back(0);
                         }
-                        this->nb_logs_4.push_back(memo + "0");
-                    }
-                    //double sum_v = 0;
-                    string memo = memo_head_sp;
-                    for (unsigned i=0; i< c_it.second.front()->getNicheBreadthEvolutionRatioProb().size(); i++){
-                        ratios[i] /= c_it.second.size();
-                        //sum_v += ratios[i];
-                        memo += to_string(ratios[i]) + ",";
-                    }
+                        for (auto r_it : c_it.second){
+                            vector<double> ratiosProb = r_it->getNicheBreadthEvolutionRatioProb(env_label);
+                            string memo = memo_head_sp + env_label + ",";
+                            for (unsigned i=0; i< r_it->getNicheBreadthEvolutionRatio().size(); i++){
+                                memo += to_string(ratiosProb[i]) + ",";
+                                ratios[i]+=ratiosProb[i];
+                            }
+                            this->nb_logs_4.push_back(memo + "0");
+                        }
+                        //double sum_v = 0;
+                        string memo = memo_head_sp + env_label + ",";
+                        for (unsigned i=0; i< c_it.second.front()->getNicheBreadthEvolutionRatioProb(env_label).size(); i++){
+                            ratios[i] /= c_it.second.size();
+                            //sum_v += ratios[i];
+                            memo += to_string(ratios[i]) + ",";
+                        }
 
-                    this->nb_logs_4.push_back(memo + "1");
-                    c_it.second.front()->setNicheBreadthEvolutionRatio(ratios);
+                        this->nb_logs_4.push_back(memo + "1");
+                        c_it.second.front()->setNicheBreadthEvolutionRatio(ratios, env_label);
+                    }
                 }
 
             }

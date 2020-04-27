@@ -168,11 +168,34 @@ hist(nb$V17)
 hist(nb$V18)
 hist(nb$V19)
 
-nb_4<-read.csv(sprintf("%s/RESULTS_TEST/%s/%s.nb_4.log", base, "12337_POOR_NARROW_5_0.1", "12337_POOR_NARROW_5_0.1"), 
+label<-"12337_POOR_NARROW_5_0.01"
+label<-"14823_GOOD_MODERATE_5_0.01"
+nb_4<-read.csv(sprintf("%s/RESULTS_TEST/%s/%s.nb_4.log", base, label, label), 
                head=F, sep=",", stringsAsFactors = F)
 
-head(nb_4[which(nb_4$V5!=0.25),], 100)
-tail(nb_4[which(nb_4$V5!=0.25),], 100)
+nb<-read.csv(sprintf("%s/RESULTS_TEST/%s/%s.nb.log", base, label, label), 
+               head=F, sep=",", stringsAsFactors = F)
+head(nb)
+tail(nb)
+
+head(nb_4[which(nb_4$V6!=0.25),], 100)
+
+tail(nb_4[which(nb_4$V6!=0.25),], 100)
+
+head(nb_4[which((nb_4$V3==10960)),], 20)
+head(nb_4[which((nb_4$V1==55)&(nb_4$V3==10960)),], 100)
+
+head(nb_4[which((nb_4$V6>0.25)),], 20)
+
+N_Cell<-data.frame(table(nb_4$V3))
+N_Cell[which(N_Cell$Freq==max(N_Cell$Freq)),]
+nb_4_sub<-nb_4[which(nb_4$V3==10960),]
+nb_sub<-nb[which(nb$V2==10960),]
+
+nb_4_sub<-nb_4[which(nb_4$V3==12172),]
+
+ggplot(nb_4_sub[which(nb_4_sub$V8==1),]) + geom_point(aes(x=V1, y=V6, color=factor(V4)))
+
 
 mean_df<-result %>%
   dplyr::group_by(Y, SUITABLE, NB, DA, EVO_RATIO, EVO_TYPE) %>%

@@ -46,7 +46,7 @@ private:
     int nicheBreadthType;
     unordered_map<string, double> envs;
     unordered_map<string, int> evoDirection;
-    vector<double> nicheBreadthEvolutionRatio;
+    unordered_map<string, vector<double>> nicheBreadthEvolutionRatio;
 public:
     /**
      * @brief Constructor of Organism class
@@ -180,9 +180,9 @@ public:
     int long getMemoryUsage();
     unordered_map<string, NicheBreadth*> getNicheBreadth();
     int getUid();
-    vector<double> getNicheBreadthEvolutionRatio();
-    vector<double> getNicheBreadthEvolutionRatioProb();
-    void setNicheBreadthEvolutionRatio(vector<double> ratios);
+    unordered_map<string, vector<double>> getNicheBreadthEvolutionRatio();
+    vector<double> getNicheBreadthEvolutionRatioProb(string env_key);
+    void setNicheBreadthEvolutionRatio(vector<double> ratios, string env_key);
 };
 
 #endif /* DEFINITIONS_INDIVIDUALORGANISM_H_ */

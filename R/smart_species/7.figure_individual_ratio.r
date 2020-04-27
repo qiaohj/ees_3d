@@ -3,6 +3,7 @@ library(ggplot2)
 library(Rmisc)
 base<-"~/Downloads"
 #base<-"C:/Users/Huijie Qiao/Downloads"
+base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
 
 result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
 result$Y<-result$Y*-1
@@ -59,10 +60,11 @@ mean_df_ratio_df<-mean_df_ratio_merge %>%
 mean_df_ratio_df[is.na(mean_df_ratio_df)]<-0
 mean_df_ratio_df$label<-paste(mean_df_ratio_df$NB, mean_df_ratio_df$DA, mean_df_ratio_df$EVO_RATIO, mean_df_ratio_df$EVO_TYPE)
 
-comb<-expand.grid(unique(mean_df$NB), unique(mean_df$NB), stringsAsFactors=F)
+comb<-expand.grid(unique(mean_df$NB), unique(mean_df$DA), stringsAsFactors=F)
 cols<-rep(c("deepskyblue", "deepskyblue3", "black", 
             "khaki1", "khaki3", "black", 
             "hotpink", "hotpink3", "black", 
+            "darkolivegreen3", "darkolivegreen", "black",
             "black", "black", "black"), nrow(comb))
 comb<-expand.grid(unique(mean_df$EVO_RATIO), unique(mean_df$EVO_TYPE), unique(mean_df$NB), unique(mean_df$DA), stringsAsFactors=F)
 comb$label<-paste(comb$Var3, comb$Var4, comb$Var1, comb$Var2)
@@ -75,9 +77,11 @@ for (i in c(1:nrow(comb))){
   mean_df_item<-mean_df %>% filter(NB==com$Var1 & DA==com$Var2)
   mean_df_ratio_df_item<-mean_df_ratio_df %>% filter(NB==com$Var1 & DA==com$Var2)
   N_Sim_item<-N_Sim %>% filter(NB==com$Var1 & DA==com$Var2)
-  
+  max_N<-N_Sim_item[which(N_Sim_item$Y==-1199), ]
+  N_Sim_item<-left_join(N_Sim_item, max_N[, c("NB", "DA", "EVO_RATIO", "EVO_TYPE", "label", "N")], by=c("NB", "DA", "EVO_RATIO", "EVO_TYPE", "label"))
+  N_Sim_item$N_AVE<-N_Sim_item$N.x/N_Sim_item$N.y
   p<-ggplot(N_Sim_item, 
-            aes(x=Y, y= N, color=factor(label), fill=factor(label)))+
+            aes(x=Y, y= N_AVE, color=factor(label), fill=factor(label)))+
     geom_line()+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
@@ -85,7 +89,7 @@ for (i in c(1:nrow(comb))){
   ggsave(p, file=sprintf("%s/Figures/N_Sim/%s_%s_ALL.png", base, com$Var1, com$Var2))
   
   p<-ggplot(N_Sim_item %>% filter((Y!=-1199)&(EVO_TYPE!=3)), 
-            aes(x=Y, y= N, color=factor(label), fill=factor(label)))+
+            aes(x=Y, y= N_AVE, color=factor(label), fill=factor(label)))+
     geom_line()+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
@@ -104,7 +108,7 @@ for (i in c(1:nrow(comb))){
   p<-ggplot(mean_df_item %>% filter(SUITABLE==1), 
             aes(x=Y, y=Mean_N_CELL))+
     geom_line(aes(color=factor(label)))+
-    geom_ribbon(aes(ymin=Mean_N_CELL-CI_N_CELL, ymax=Mean_N_CELL+CI_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
+    #geom_ribbon(aes(ymin=Mean_N_CELL-CI_N_CELL, ymax=Mean_N_CELL+CI_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
     scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
@@ -113,16 +117,24 @@ for (i in c(1:nrow(comb))){
   p<-ggplot(mean_df_item %>% filter((SUITABLE==1)&(Y<=-1100)), 
             aes(x=Y, y=Mean_N_CELL))+
     geom_line(aes(color=factor(label)))+
-    geom_ribbon(aes(ymin=Mean_N_CELL-CI_N_CELL, ymax=Mean_N_CELL+CI_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
+    #geom_ribbon(aes(ymin=Mean_N_CELL-CI_N_CELL, ymax=Mean_N_CELL+CI_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
     scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
   ggsave(p, file=sprintf("%s/Figures/N_Cells/%s_%s_1100.png", base, com$Var1, com$Var2))
   
+  ggplot(mean_df_item %>% filter((SUITABLE==1)&(EVO_TYPE!=3)), 
+            aes(x=Y, y=Mean_AVERAGE_N_CELL))+
+    geom_line(aes(color=factor(label)))+
+    #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
+    theme_bw()+
+    ggtitle(paste(com$Var1, com$Var2))+
+    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
+  
   p<-ggplot(mean_df_item %>% filter(SUITABLE==1), 
             aes(x=Y, y=Mean_AVERAGE_N_CELL))+
     geom_line(aes(color=factor(label)))+
-    geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
+    #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
     scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
@@ -140,6 +152,12 @@ for (i in c(1:nrow(comb))){
   }
   ggsave(p, file=sprintf("%s/Figures/N_CELLs/%s_%s_AVERAGE_.png", base, com$Var1, com$Var2))
   
+  ggplot(mean_df_ratio_df_item %>% filter(EVO_TYPE!=3), aes(x=Y, y=Mean_ratio))+
+    geom_line(aes(color=factor(label)))+
+    #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, fill=factor(label)), color=NA, alpha=0.3)+
+    theme_bw()+
+    ggtitle(paste(com$Var1, com$Var2))+
+    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
   
   p<-ggplot(mean_df_ratio_df_item, aes(x=Y, y=Mean_ratio))+
     geom_line(aes(color=factor(label)))+
@@ -153,7 +171,7 @@ for (i in c(1:nrow(comb))){
   
   p<-ggplot(mean_df_ratio_df_item %>% filter((Y<=-1100)&(Y>=-1198)), aes(x=Y, y=Mean_ratio))+
     geom_line(aes(color=factor(label)))+
-    geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, fill=factor(label)), color=NA, alpha=0.3)+
+    #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, fill=factor(label)), color=NA, alpha=0.3)+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
     scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
