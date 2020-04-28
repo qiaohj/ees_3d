@@ -14,7 +14,7 @@
 #include "Organism.h"
 
 Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_id, int p_uid, vector<string> &nb_logs, bool details,
-        unordered_map<string, ISEA*> &p_current_environments, ISEA* mask) {
+        unordered_map<string, ISEA*> &p_current_environments, ISEA* mask, int p_envType) {
     species = p_species;
     uid = p_uid;
     year_i = p_year_i;
@@ -24,15 +24,16 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
     tempSpeciesID = 0;
     dispersalAbility = 0;
     int parent_uid = 0;
+    evoType = p_envType;
     if (parent){
         evoDirection = p_parent->getEvoDirection();
-        nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), p_parent->getNicheBreadthType());
+        //nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), p_parent->getNicheBreadthType());
         parent_uid = parent->getUid();
     }else{
         for (auto item : p_species->getNicheBreadth()) {
             evoDirection[item.first] = 0;
         }
-        nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), -1);
+        //nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), -1);
     }
     string memo = "";
 
@@ -40,108 +41,20 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         double env_value = p_current_environments[item.first]->readByID(id);
         envs[item.first] = env_value;
     }
-
-    int nicheBreadthType_temp = nicheBreadthType;
-    //if ((!parent) && (nicheBreadthType == 4)) {
-    if ((year_i<=10) && (nicheBreadthType == 4)) {
-        nicheBreadthType_temp = 1;
+    int evoType_temp = evoType;
+    if ((year_i<=10) && (evoType == 5)) {
+        evoType_temp = 2;
         for (string env_label : species->getEnvironmentLabels()){
             this->nicheBreadthEvolutionRatio[env_label] = species->getNicheBreadthEvolutionRatio();
         }
         details = false;
     }
+    if (evoType==6){
+        evoType_temp = 2;
+    }
     bool t_details = details;
-    switch (nicheBreadthType_temp) {
-        case 4:{
-            this->nicheBreadthEvolutionRatio = parent->getNicheBreadthEvolutionRatio();
-            //LOG(DEBUG)<<"4. I DO "<<nicheBreadthType;
-            t_details = false;
-            unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
-            if (parent) {
-                niche_breadth = parent->getNicheBreadth();
-            }
-            for (auto it : niche_breadth) {
-                NicheBreadth *p_NicheBreadth = it.second;
-                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
-                nicheBreadth[it.first] = new_NicheBreadth;
-            }
-            double rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
-            if (rr >= p_species->getNicheEnvolutionIndividualRatio()) {
-                break;
-            }
-            //Debiased_Minimum_Monthly_Temperature, Debiased_Maximum_Monthly_Temperature, Debiased_Maximum_Monthly_Precipitation
-
-            if ((rr!=0)&&(details)){
-                for (auto it : this->nicheBreadthEvolutionRatio){
-                    memo += it.first + ",";
-                    for (auto c_it : it.second){
-                        memo += to_string(c_it) + ",";
-                    }
-                }
-
-                t_details = true;
-            }
-            vector<string> env_keys;
-            env_keys.push_back("Debiased_Maximum_Monthly_Temperature");
-            env_keys.push_back("Debiased_Maximum_Monthly_Precipitation");
-            for (auto c_it : env_keys){
-
-                rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
-                int evo_type = 0;
-                for (auto p_it : nicheBreadthEvolutionRatio[c_it]){
-                    if (rr<=p_it){
-                        break;
-                    }
-                    evo_type++;
-                }
-                rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
-                rr = p_species->getNicheBreadthEvolutionRandomRange() * rr;
-                double change_ratio = 0.5;
-                vector<double> ratioProb = this->getNicheBreadthEvolutionRatioProb(c_it);
-                if (evo_type == 1) {
-                    rr = rr * -1;
-                    change_ratio *= ratioProb[1];
-                    //change_ratio = (change_ratio>ratioProb[0])?(ratioProb[0] - 0.01):change_ratio;
-                    change_ratio = (change_ratio > ratioProb[2]) ? (ratioProb[2] - 0.01) : change_ratio;
-
-                    //ratioProb[0] -= change_ratio;
-                    ratioProb[1] += change_ratio;
-                    ratioProb[2] -= change_ratio;
-                } else {
-                    change_ratio *= ratioProb[2];
-                    //change_ratio = (change_ratio>ratioProb[0])?(ratioProb[0] - 0.01):change_ratio;
-                    change_ratio = (change_ratio > ratioProb[1]) ? (ratioProb[1] - 0.01) : change_ratio;
-
-                    //ratioProb[0] -= change_ratio;
-                    ratioProb[1] -= change_ratio;
-                    ratioProb[2] += change_ratio;
-                }
-                this->setNicheBreadthEvolutionRatio(ratioProb, c_it);
-
-                NicheBreadth *p_NicheBreadth = niche_breadth[c_it];
-                double change = (p_NicheBreadth->getMax() - p_NicheBreadth->getMin()) * rr;
-                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin() + change, p_NicheBreadth->getMax() + change);
-                delete nicheBreadth[c_it];
-                nicheBreadth[c_it] = new_NicheBreadth;
-                if (c_it=="Debiased_Maximum_Monthly_Temperature"){
-                    this->setNicheBreadthEvolutionRatio(ratioProb, "Debiased_Minimum_Monthly_Temperature");
-                    NicheBreadth *p_NicheBreadth = niche_breadth["Debiased_Minimum_Monthly_Temperature"];
-                    NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin() + change, p_NicheBreadth->getMax() + change);
-                    delete nicheBreadth["Debiased_Minimum_Monthly_Temperature"];
-                    nicheBreadth["Debiased_Minimum_Monthly_Temperature"] = new_NicheBreadth;
-                }
-
-            }
-            for (auto it : niche_breadth) {
-                if (details) {
-                    memo += it.first + "," + to_string(envs[it.first]) + ",";
-                    t_details = true;
-                }
-            }
-            break;
-        }
-
-        case 0:{
+    switch (evoType_temp) {
+        case 1:{
             t_details = false;
             //LOG(DEBUG)<<"0. I DO "<<nicheBreadthType;
             for (auto it : p_species->getNicheBreadth()) {
@@ -152,7 +65,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             }
             break;
         }
-        case 1: {
+        case 2: {
             t_details = false;
             //LOG(DEBUG)<<"1. I DO "<<nicheBreadthType;
             double r = 0;
@@ -180,7 +93,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             }
             break;
         }
-        case 2: {
+        case 3: {
             //LOG(DEBUG)<<"2. I DO "<<nicheBreadthType;
             t_details = false;
             unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
@@ -255,7 +168,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             }
             break;
         }
-        case 3: {
+        case 4: {
             //LOG(DEBUG)<<"3. I DO "<<nicheBreadthType;
             t_details = false;
             unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
@@ -327,6 +240,94 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             }
             break;
         }
+        case 5: {
+            this->nicheBreadthEvolutionRatio = parent->getNicheBreadthEvolutionRatio();
+            //LOG(DEBUG)<<"4. I DO "<<nicheBreadthType;
+            t_details = false;
+            unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
+            if (parent) {
+                niche_breadth = parent->getNicheBreadth();
+            }
+            for (auto it : niche_breadth) {
+                NicheBreadth *p_NicheBreadth = it.second;
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                nicheBreadth[it.first] = new_NicheBreadth;
+            }
+            double rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+            if (rr >= p_species->getNicheEnvolutionIndividualRatio()) {
+                break;
+            }
+            //Debiased_Minimum_Monthly_Temperature, Debiased_Maximum_Monthly_Temperature, Debiased_Maximum_Monthly_Precipitation
+
+            if ((rr != 0) && (details)) {
+                for (auto it : this->nicheBreadthEvolutionRatio) {
+                    memo += it.first + ",";
+                    for (auto c_it : it.second) {
+                        memo += to_string(c_it) + ",";
+                    }
+                }
+
+                t_details = true;
+            }
+            vector<string> env_keys;
+            env_keys.push_back("Debiased_Maximum_Monthly_Temperature");
+            env_keys.push_back("Debiased_Maximum_Monthly_Precipitation");
+            for (auto c_it : env_keys) {
+
+                rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+                int evo_type = 0;
+                for (auto p_it : nicheBreadthEvolutionRatio[c_it]) {
+                    if (rr <= p_it) {
+                        break;
+                    }
+                    evo_type++;
+                }
+                rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+                rr = p_species->getNicheBreadthEvolutionRandomRange() * rr;
+                double change_ratio = 0.5;
+                vector<double> ratioProb = this->getNicheBreadthEvolutionRatioProb(c_it);
+                if (evo_type == 1) {
+                    rr = rr * -1;
+                    change_ratio *= ratioProb[1];
+                    //change_ratio = (change_ratio>ratioProb[0])?(ratioProb[0] - 0.01):change_ratio;
+                    change_ratio = (change_ratio > ratioProb[2]) ? (ratioProb[2] - 0.01) : change_ratio;
+
+                    //ratioProb[0] -= change_ratio;
+                    ratioProb[1] += change_ratio;
+                    ratioProb[2] -= change_ratio;
+                } else {
+                    change_ratio *= ratioProb[2];
+                    //change_ratio = (change_ratio>ratioProb[0])?(ratioProb[0] - 0.01):change_ratio;
+                    change_ratio = (change_ratio > ratioProb[1]) ? (ratioProb[1] - 0.01) : change_ratio;
+
+                    //ratioProb[0] -= change_ratio;
+                    ratioProb[1] -= change_ratio;
+                    ratioProb[2] += change_ratio;
+                }
+                this->setNicheBreadthEvolutionRatio(ratioProb, c_it);
+
+                NicheBreadth *p_NicheBreadth = niche_breadth[c_it];
+                double change = (p_NicheBreadth->getMax() - p_NicheBreadth->getMin()) * rr;
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin() + change, p_NicheBreadth->getMax() + change);
+                delete nicheBreadth[c_it];
+                nicheBreadth[c_it] = new_NicheBreadth;
+                if (c_it == "Debiased_Maximum_Monthly_Temperature") {
+                    this->setNicheBreadthEvolutionRatio(ratioProb, "Debiased_Minimum_Monthly_Temperature");
+                    NicheBreadth *p_NicheBreadth = niche_breadth["Debiased_Minimum_Monthly_Temperature"];
+                    NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin() + change, p_NicheBreadth->getMax() + change);
+                    delete nicheBreadth["Debiased_Minimum_Monthly_Temperature"];
+                    nicheBreadth["Debiased_Minimum_Monthly_Temperature"] = new_NicheBreadth;
+                }
+
+            }
+            for (auto it : niche_breadth) {
+                if (details) {
+                    memo += it.first + "," + to_string(envs[it.first]) + ",";
+                    t_details = true;
+                }
+            }
+            break;
+        }
         default: {
             //LOG(DEBUG)<<"Default. I DO "<<nicheBreadthType;
             break;
@@ -345,7 +346,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         //sprintf(sql, "INSERT INTO nichebreadth (YEAR, ID, uid, parent_uid, nb_type, nb, memo) VALUES (%d,%d,%d,%d,%d,'%s','%s')",
         //        year_i, id, uid, parent_uid, nicheBreadthType, nb_str.c_str(), memo.c_str());
         sprintf(sql, "%d,%d,%d,%d,%d,%s,%s,%s",
-                        year_i, id, uid, parent_uid, nicheBreadthType, species->getIDWithParentID().c_str(), nb_str.c_str(), memo.c_str());
+                        year_i, id, uid, parent_uid, evoType, species->getIDWithParentID().c_str(), nb_str.c_str(), memo.c_str());
         string sql_c = sql;
         nb_logs.push_back(sql_c);
         //CommonFun::executeSQL(sql_c, log_db, true);
@@ -385,7 +386,7 @@ double Organism::getEnv(string key){
 int Organism::getUid(){
     return uid;
 }
-int Organism::setNicheBreadthType(vector<double> typeRatio, int parentType){
+int Organism::setNicheBreadthType_removed(vector<double> typeRatio, int parentType){
     if (parentType==4){
         return parentType;
     }
@@ -424,9 +425,7 @@ int Organism::setNicheBreadthType(vector<double> typeRatio, int parentType){
     //LOG(DEBUG)<<"Type is "<< type;
     return type;
 }
-int Organism::getNicheBreadthType(){
-    return nicheBreadthType;
-}
+
 void Organism::setGroupId(int p_group_id){
     groupId = p_group_id;
 }

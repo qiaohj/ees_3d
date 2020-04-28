@@ -43,7 +43,7 @@ private:
     int year_i;
     Organism* parent;
     unordered_map<string, NicheBreadth*> nicheBreadth;
-    int nicheBreadthType;
+    int evoType;
     unordered_map<string, double> envs;
     unordered_map<string, int> evoDirection;
     unordered_map<string, vector<double>> nicheBreadthEvolutionRatio;
@@ -56,11 +56,10 @@ public:
      * @param p_id the id of the face of the individual's locality.
      */
     Organism(int p_year, Species *p_species, Organism *p_parent, int p_id, int p_uid, vector<string> &nb_logs, bool details,
-            unordered_map<string, ISEA*> &p_current_environments, ISEA* mask);
-    int getNicheBreadthType();
+            unordered_map<string, ISEA*> &p_current_environments, ISEA* mask, int p_envType);
     double getEnv(string key);
     unordered_map<string, int> getEvoDirection();
-    int setNicheBreadthType(vector<double> typeRatio, int parentType);
+    int setNicheBreadthType_removed(vector<double> typeRatio, int parentType);
     /**
 	 * @brief Destructor of Organism class
 	 *

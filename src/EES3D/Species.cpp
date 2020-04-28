@@ -150,6 +150,7 @@ Species::Species(int p_id, Species* p_parent, int p_year_i) {
 vector<string> Species::getEnvironmentLabels(){
     return environment_labels;
 }
+
 void Species::setCladeExtinctionStatus(int status) {
     clade_extinction_status = status;
 }
@@ -368,6 +369,19 @@ Species::~Species() {
 }
 int Species::getDispersalAbilityLength(){
 	return dispersalAbilityLength;
+}
+vector<double> Species::getDispersalAbilityProb(){
+    vector<double> prob;
+    for (int i=0; i< dispersalAbilityLength; i++){
+        if (i==0){
+            prob.push_back(this->dispersalAbility[i]);
+        }else{
+            prob.push_back(this->dispersalAbility[i] - this->dispersalAbility[i-1]);
+        }
+
+    }
+
+    return prob;
 }
 double* Species::getDispersalAbility() {
     return dispersalAbility;

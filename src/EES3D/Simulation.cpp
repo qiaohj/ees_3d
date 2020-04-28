@@ -14,7 +14,8 @@
 
 #include <utility>
 Simulation::Simulation(Species *p_species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
-        vector<int> &p_timeLine, Neighbor* neighborInfo, vector<string> &environment_labels, string mask_table, bool p_details) {
+        vector<int> &p_timeLine, Neighbor* neighborInfo, vector<string> &environment_labels, string mask_table, bool p_details,
+        int p_evoType) {
     this->sys_start = clock();
     this->sys_end = clock();
     this->max_memory = 0;
@@ -35,13 +36,8 @@ Simulation::Simulation(Species *p_species, string label, int burnInYear, string 
     this->targetFolder = target + "/" + label;
     this->organism_uid = 0;
     this->details = p_details;
-    this->is4Type = false;
-    for (double v : p_species->getNicheBreadthEvolutionRatio()) {
-        if ((!CommonFun::AlmostEqualRelative(v, 1.0)) && (!CommonFun::AlmostEqualRelative(v, 0.0))) {
-            is4Type = true;
-            break;
-        }
-    }
+    this->evoType = p_evoType;
+
 }
 void Simulation::setIndexSimulation(int indexSimulation){
     this->indexSimulation = indexSimulation;
@@ -215,7 +211,7 @@ bool Simulation::init(unordered_map<string, EnvVar*> &environments_base, sqlite3
     organism_uid = 0;
     unordered_map<string, ISEA*> current_environments = getEnvironmentMap(timeLine.front());
     for (int seed : seeds) {
-        Organism *organism = new Organism(0, ancestor, NULL, seed, ++organism_uid, nb_logs, details, current_environments, mask);
+        Organism *organism = new Organism(0, ancestor, NULL, seed, ++organism_uid, nb_logs, details, current_environments, mask, evoType);
         orgamisms.push_back(organism);
     }
 
@@ -321,7 +317,7 @@ int Simulation::run() {
 
         for (auto sp_it : organisms_in_current_year) {
             Species *sp = sp_it.first;
-            if (is4Type){
+            if (evoType==5){
                 string memo_head = to_string(year_i) + ",";
                 memo_head += sp->getIDWithParentID() + ",";
                 for (auto c_it : sp_it.second) {
@@ -338,7 +334,7 @@ int Simulation::run() {
                                 memo += to_string(ratiosProb[i]) + ",";
                                 ratios[i]+=ratiosProb[i];
                             }
-                            this->nb_logs_4.push_back(memo + "0");
+                            //this->nb_logs_4.push_back(memo + "0");
                         }
                         //double sum_v = 0;
                         string memo = memo_head_sp + env_label + ",";
@@ -348,11 +344,69 @@ int Simulation::run() {
                             memo += to_string(ratios[i]) + ",";
                         }
 
-                        this->nb_logs_4.push_back(memo + "1");
+                        //this->nb_logs_4.push_back(memo + "1");
                         c_it.second.front()->setNicheBreadthEvolutionRatio(ratios, env_label);
                     }
                 }
 
+            }
+            if (evoType==6){
+                string memo_head = to_string(year_i) + ",";
+                memo_head += sp->getIDWithParentID() + ",";
+                for (auto c_it : sp_it.second) {
+                    string memo_head_sp = memo_head + to_string(c_it.first) + ",";
+                    int id = c_it.first;
+                    unordered_map<int, int> neighbors;
+                    this->neighborInfo->getNeighborByID(id, sp_it.first->getDispersalAbilityLength(), neighbors);
+                    vector<double> disperPro = sp_it.first->getDispersalAbilityProb();
+                    double weight = 0;
+                    unordered_map<string, NicheBreadth*> nicheBreadth;
+                    for (auto nb_it : c_it.second.front()->getNicheBreadth()){
+                        nicheBreadth[nb_it.first] = NULL;
+                    }
+                    for (auto nei_it : neighbors){
+                        if (sp_it.second.find(nei_it.first)!=sp_it.second.end()){
+                            vector<Organism*> organisms = sp_it.second.at(nei_it.first);
+                            for (auto org_it : organisms){
+                                for (auto nb_it : org_it->getNicheBreadth()){
+                                    if (nicheBreadth[nb_it.first]){
+                                        nicheBreadth[nb_it.first]->setMin(nicheBreadth[nb_it.first]->getMin() + nb_it.second->getMin() * disperPro[nei_it.second]);
+                                        nicheBreadth[nb_it.first]->setMax(nicheBreadth[nb_it.first]->getMax() + nb_it.second->getMax() * disperPro[nei_it.second]);
+                                    }else{
+                                        nicheBreadth[nb_it.first] = new NicheBreadth(nb_it.second->getMin() * disperPro[nei_it.second],
+                                                nb_it.second->getMax() * disperPro[nei_it.second]);
+                                    }
+                                    string memo = memo_head_sp +
+                                            to_string(nei_it.first) + "," +
+                                            nb_it.first + "," +
+                                            to_string(nicheBreadth[nb_it.first]->getMin()) + "," +
+                                            to_string(nicheBreadth[nb_it.first]->getMax()) + "," +
+                                            to_string(nb_it.second->getMin()) + "," +
+                                            to_string(nb_it.second->getMax()) + "," +
+                                            to_string(nei_it.second) + "," +
+                                            to_string(disperPro[nei_it.second]);
+                                    nb_logs_4.push_back(memo);
+                                }
+                                weight += disperPro[nei_it.second];
+                            }
+
+                        }
+
+                    }
+                    for (auto nb_it : c_it.second.front()->getNicheBreadth()){
+                        nb_it.second->setMin(nicheBreadth[nb_it.first]->getMin()/weight);
+                        nb_it.second->setMax(nicheBreadth[nb_it.first]->getMax()/weight);
+                        //LOG(INFO)<<nb_it.first<<": MIN:"<<nicheBreadth[nb_it.first]->getMin()<<" MAX:"<<nicheBreadth[nb_it.first]->getMax()<<" WEIGHT:"<<weight;
+                        string memo = memo_head_sp +
+                                nb_it.first + "," +
+                                to_string(nicheBreadth[nb_it.first]->getMin()) + "," +
+                                to_string(nicheBreadth[nb_it.first]->getMax()) + "," +
+                                to_string(weight);
+                        nb_logs_4.push_back(memo);
+                        delete nicheBreadth[nb_it.first];
+                    }
+
+                }
             }
             for (auto c_it : sp_it.second) {
                 //LOG(DEBUG)<<"Found "<<c_it.second.size()<< " individual from species "<<sp->getIDWithParentID()<<" at pixel "<<c_it.first;
@@ -406,7 +460,7 @@ int Simulation::run() {
                     for (auto its : next_cells) {
                         int id = its.first;
                         //create a new organism
-                        Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, id, ++organism_uid, nb_logs, details, current_environments, mask);
+                        Organism *new_organism = new Organism(year_i, organism->getSpecies(), organism, id, ++organism_uid, nb_logs, details, current_environments, mask, evoType);
                         new_organism->setRandomDispersalAbility();
                         int suitable = new_organism->isSuitable(mask);
                         switch (suitable) {

@@ -194,7 +194,8 @@ nb_sub<-nb[which(nb$V2==10960),]
 
 nb_4_sub<-nb_4[which(nb_4$V3==12172),]
 
-ggplot(nb_4_sub[which(nb_4_sub$V8==1),]) + geom_point(aes(x=V1, y=V6, color=factor(V4)))
+ggplot(nb_4_sub[which(nb_4_sub$V8==1),]) + geom_point(aes(x=V1, y=V6, color=factor(V4)))+
+  geom_line(aes(x=V1, y=V6, color=factor(V4)))
 
 
 mean_df<-result %>%

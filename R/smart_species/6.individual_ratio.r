@@ -24,7 +24,7 @@ for (i in c(1:nrow(simulations))){
   }
   finished<-c(finished, s$label)
   log1<-sprintf("%s/RESULTS/%s/%s.log", base2, s$label, s$label)
-  log2<-sprintf("%s/RESULTS_TEST/%s/%s.log", base2, s$label, s$label)
+  log2<-sprintf("%s/RESULTS/%s/%s.log", base2, s$label, s$label)
   log<-NULL
   if (file.exists(log1)){
     log<-log1

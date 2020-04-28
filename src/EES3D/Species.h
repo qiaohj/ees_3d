@@ -99,6 +99,7 @@ public:
 	 * @return
 	 */
     int getDispersalAbilityLength();
+    vector<double> getDispersalAbilityProb();
     /**
 	 * @brief return the species extinction threshold. If the area of the distribution (number of the pixels occupied by the species) is smaller than the threshold for some time steps (defined with SpeciesExtinctionTimeSteps), the species will go extinct.
 	 * @return
@@ -272,6 +273,7 @@ public:
      */
     string getIDWithParentID();
     vector<string> getEnvironmentLabels();
+    int getEvoType();
 };
 
 #endif /* DEFINITIONS_SPECIESOBJECT_H_ */

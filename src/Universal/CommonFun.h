@@ -87,7 +87,7 @@ public:
      * @param s the string to save
      * @param path the path to the text file
      */
-    static void writeFile(string &s, const char *path);
+    static void writeFile(string s, const char *path);
 
     /**
      * @brief create a folder
@@ -104,20 +104,20 @@ public:
      * @param s the string array to save
      * @param path the path to the text file
      */
-    static void writeFile(vector<string> &s, const char *path);
-    static void writeFile(set<string> &s, const char *path);
+    static void writeFile(vector<string> s, const char *path);
+    static void writeFile(set<string> s, const char *path);
     /**
      * @brief execute a sql command
      * @param s the string array contains the SQL commend
      * @param db the database to execute the command
      */
-    static void executeSQL(vector<string> &s, sqlite3 *db, bool output);
+    static void executeSQL(vector<string> s, sqlite3 *db, bool output);
     /**
      * @brief execute a sql command
      * @param s the string contains the SQL commend
      * @param db the database to execute the command
      */
-    static void executeSQL(string &s, sqlite3 *db, bool output);
+    static void executeSQL(string s, sqlite3 *db, bool output);
     /**
      * @brief add leading ZERO to a number and convert the number to a string with fixed length
      * @param value the number to convert

@@ -171,10 +171,11 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
 
             string environments_str = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments)));
             string mask_table = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_mask)));
+            int env_type = sqlite3_column_int(stmt, SIMULATION_env_type);
             vector<string> environment_labels = CommonFun::splitStr(environments_str, ",");
 
             Simulation *simulation = new Simulation(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, timeLine, neighborInfo,
-                    environment_labels, mask_table, details);
+                    environment_labels, mask_table, details, env_type);
 
             /*-------------------
              * If the target folder exists and the is_overwrite parameter is false, skip the simulation,
