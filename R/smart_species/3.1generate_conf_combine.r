@@ -15,6 +15,9 @@ if (F){
                                                               simulations[which(simulations$nb=="Narrow"), "label"])
   simulations[which(simulations$nb=="Narrow"), "nb"]<-"NARROW"
   head( simulations[which(simulations$nb=="NARROW"),])
+  
+  labels<-str_split_fixed(simulations$label, "_", 5)
+  simulations$evo_type<-as.numeric(labels[, 4])
   dbWriteTable(mydb, "simulations", simulations, overwrite=T)
 }
 dbDisconnect(mydb) 

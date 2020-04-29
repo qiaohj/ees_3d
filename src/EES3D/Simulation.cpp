@@ -141,14 +141,15 @@ void Simulation::commitLog(){
         string nb_logFile = this->targetFolder + "/" + label + ".nb.log";
         CommonFun::writeFile(nb_logs, nb_logFile.c_str());
 
-        string nb_log_4File = this->targetFolder + "/" + label + ".nb_4.log";
-        CommonFun::writeFile(nb_logs_4, nb_log_4File.c_str());
+        //string nb_log_4File = this->targetFolder + "/" + label + ".nb_4.log";
+        //CommonFun::writeFile(nb_logs_4, nb_log_4File.c_str());
 
 
     }
     sys_end = clock();
     char sql[100];
-    sprintf(sql, "INSERT INTO runtime (start, end, memory) VALUES (%u, %u, %u);", int(sys_start)/int(CLOCKS_PER_SEC), int(sys_end)/int(CLOCKS_PER_SEC), max_memory);
+    sprintf(sql, "INSERT INTO runtime (start, end, memory) VALUES (%u, %u, %u);", (int)(double(sys_start)/double(CLOCKS_PER_SEC)),
+            (int)(double(sys_end)/double(CLOCKS_PER_SEC)), max_memory);
     string sql_c = sql;
     //LOG(INFO)<<"Outputting log db";
     CommonFun::executeSQL(sql_c, log_db, true);
@@ -385,7 +386,7 @@ int Simulation::run() {
                                             to_string(nb_it.second->getMax()) + "," +
                                             to_string(nei_it.second) + "," +
                                             to_string(disperPro[nei_it.second]);
-                                    nb_logs_4.push_back(memo);
+                                    //nb_logs_4.push_back(memo);
                                 }
                                 weight += disperPro[nei_it.second];
                             }
@@ -402,7 +403,7 @@ int Simulation::run() {
                                 to_string(nicheBreadth[nb_it.first]->getMin()) + "," +
                                 to_string(nicheBreadth[nb_it.first]->getMax()) + "," +
                                 to_string(weight);
-                        nb_logs_4.push_back(memo);
+                        //nb_logs_4.push_back(memo);
                         delete nicheBreadth[nb_it.first];
                     }
 

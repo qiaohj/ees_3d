@@ -56,7 +56,7 @@ public:
      * @param p_id the id of the face of the individual's locality.
      */
     Organism(int p_year, Species *p_species, Organism *p_parent, int p_id, int p_uid, vector<string> &nb_logs, bool details,
-            unordered_map<string, ISEA*> &p_current_environments, ISEA* mask, int p_envType);
+            unordered_map<string, ISEA*> &p_current_environments, ISEA* mask, int p_p_evoType);
     double getEnv(string key);
     unordered_map<string, int> getEvoDirection();
     int setNicheBreadthType_removed(vector<double> typeRatio, int parentType);

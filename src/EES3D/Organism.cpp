@@ -14,7 +14,7 @@
 #include "Organism.h"
 
 Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_id, int p_uid, vector<string> &nb_logs, bool details,
-        unordered_map<string, ISEA*> &p_current_environments, ISEA* mask, int p_envType) {
+        unordered_map<string, ISEA*> &p_current_environments, ISEA* mask, int p_evoType) {
     species = p_species;
     uid = p_uid;
     year_i = p_year_i;
@@ -24,7 +24,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
     tempSpeciesID = 0;
     dispersalAbility = 0;
     int parent_uid = 0;
-    evoType = p_envType;
+    evoType = p_evoType;
     if (parent){
         evoDirection = p_parent->getEvoDirection();
         //nicheBreadthType = setNicheBreadthType(p_species->getNicheBreadthEvolutionRatio(), p_parent->getNicheBreadthType());
@@ -53,10 +53,11 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         evoType_temp = 2;
     }
     bool t_details = details;
+    //LOG(INFO)<<"evoType_temp is "<<evoType_temp;
     switch (evoType_temp) {
         case 1:{
             t_details = false;
-            //LOG(DEBUG)<<"0. I DO "<<nicheBreadthType;
+            //LOG(DEBUG)<<"1. I DO "<<nicheBreadthType;
             for (auto it : p_species->getNicheBreadth()) {
                 NicheBreadth *p_NicheBreadth = it.second;
                 NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
@@ -67,7 +68,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         }
         case 2: {
             t_details = false;
-            //LOG(DEBUG)<<"1. I DO "<<nicheBreadthType;
+            //LOG(DEBUG)<<"2. I DO "<<nicheBreadthType;
             double r = 0;
             double rr = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
             if (rr < p_species->getNicheEnvolutionIndividualRatio()) {
@@ -94,7 +95,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             break;
         }
         case 3: {
-            //LOG(DEBUG)<<"2. I DO "<<nicheBreadthType;
+            //LOG(INFO)<<"3. I DO ";
             t_details = false;
             unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
             if (parent) {
@@ -112,17 +113,17 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             //if it is not a smart species, try to be a smart species
             if (evoDirection[niche_breadth.begin()->first]==0){
                 double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+                //LOG(INFO)<<"2 "<<p_species->getNicheEnvolutionIndividualRatio() << " : "<< r;
                 if (r>=p_species->getNicheEnvolutionIndividualRatio()){
                     break;
                 }
             }
-
             for (auto it : niche_breadth) {
                 if (evoDirection[it.first]==0){
                     ssamodel s;
                     std::vector<double> X;
                     Organism *temp_org = this->getParent();
-                    for (unsigned i = this->species->getNicheBreadthEvolutionParentLevel(); i > 0; i--) {
+                    for (int i = this->species->getNicheBreadthEvolutionParentLevel(); i >= 0; i--) {
                         if (!temp_org) {
                             break;
                         }
@@ -133,16 +134,16 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
                         X.push_back(v);
                         temp_org = temp_org->getParent();
                     }
-                    if (X.size()!=(unsigned)this->species->getNicheBreadthEvolutionParentLevel()){
+                    if (X.size()<(unsigned)this->species->getNicheBreadthEvolutionParentLevel()){
                         break;
                     }
                     //A group of code of SSA
                     reverse(X.begin(), X.end()); alglib::real_1d_array AX; AX.setcontent(X.size(), &(X[0])); ssacreate(s);
-                    int windows = X.size()/2; windows = (windows>5)?5:windows; windows = (windows<3)?3:windows;
+                    int windows = X.size(); windows = (windows>5)?5:windows; windows = (windows<3)?3:windows;
                     ssasetwindow(s, windows); ssaaddsequence(s, AX); ssasetalgotopkdirect(s, 2);
                     real_1d_array trend; ssaforecastlast(s, 1, trend);
                     if (details) {
-                        memo += "'" + AX.tostring(3) + "'";
+                        memo += it.first + ",'" + AX.tostring(3) + "',";
                         memo += ",'" + trend.tostring(3) + "'," + to_string(this->envs[it.first]) + "," + to_string(windows) + ",";
                         t_details = true;
                     }
@@ -160,7 +161,8 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
 
                 double change = (it.second->getMax() - it.second->getMin()) * r;
                 if (details) {
-                    memo += to_string(r) + "," + to_string(evoDirection[it.first]) + "," + to_string(change);
+                    memo += to_string(r) + "," + to_string(evoDirection[it.first]) + "," + to_string(change) + ",";
+                    t_details = true;
                 }
                 NicheBreadth *new_NicheBreadth = new NicheBreadth(it.second->getMin() + change, it.second->getMax() + change);
                 delete nicheBreadth[it.first];
@@ -169,7 +171,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             break;
         }
         case 4: {
-            //LOG(DEBUG)<<"3. I DO "<<nicheBreadthType;
+            //LOG(DEBUG)<<"4. I DO "<<nicheBreadthType;
             t_details = false;
             unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
             if (parent) {
@@ -242,7 +244,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         }
         case 5: {
             this->nicheBreadthEvolutionRatio = parent->getNicheBreadthEvolutionRatio();
-            //LOG(DEBUG)<<"4. I DO "<<nicheBreadthType;
+            //LOG(DEBUG)<<"5. I DO "<<nicheBreadthType;
             t_details = false;
             unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
             if (parent) {

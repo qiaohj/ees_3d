@@ -14,6 +14,8 @@ simulations<-simulations %>% filter(is_run==1)
 i=6
 simulations<-simulations[sample(nrow(simulations)),]
 result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
+result<-result %>% filter(EVO_TYPE!=3)
+
 print(result)
 finished<-unique(result$LABLE)
 base2<-"/media/huijieqiao/Butterfly/SMART_SPECIES"

@@ -33,7 +33,7 @@
 #define SIMULATION_mask    21
 #define SIMULATION_burn_in_year      22
 #define SIMULATION_is_run       27
-#define SIMULATION_env_type       28
+#define SIMULATION_evo_type       28
 #define SIMULATION_niche_breadth_evolution_ratio   23
 #define SIMULATION_niche_breadth_evolution_random_range   24
 #define SIMULATION_niche_breadth_evolution_parent_level   25
