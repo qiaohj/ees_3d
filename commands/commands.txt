@@ -1,5 +1,18 @@
 ./ees_3d_1 /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/conf.sqlite /media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS -1 64 0 0 1
 
+./ees_3d_2 /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/conf.sqlite /media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS -1 64 0 0 1
+
+./ees_3d_3 /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/conf.sqlite /media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS -1 64 0 0 1
+
+./ees_3d /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/conf_combine.sqlite /media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS -1 64 0 0 1
+
 ./ees_3d_5 /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/conf_combine.sqlite /media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS -1 64 0 0 1
 
 ./ees_3d /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/conf_6.sqlite /media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS_TEST 14305 64 1 0 1
+
+
+
+/media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS/13906_POOR_MODERATE_3_0.01
+/media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS/20521_GOOD_MODERATE_3_0.01
+/media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS/15214_GOOD_MODERATE_3_0.01
+/media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS/17956_GOOD_NARROW_2_0.01
