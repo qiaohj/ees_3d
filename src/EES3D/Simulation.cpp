@@ -319,30 +319,30 @@ int Simulation::run() {
         for (auto sp_it : organisms_in_current_year) {
             Species *sp = sp_it.first;
             if (evoType==5){
-                string memo_head = to_string(year_i) + ",";
-                memo_head += sp->getIDWithParentID() + ",";
+                //string memo_head = to_string(year_i) + ",";
+                //memo_head += sp->getIDWithParentID() + ",";
                 for (auto c_it : sp_it.second) {
                     for (auto env_label : sp->getEnvironmentLabels()){
                         vector<double> ratios;
-                        string memo_head_sp = memo_head + to_string(c_it.first) + ",";
+                        //string memo_head_sp = memo_head + to_string(c_it.first) + ",";
                         for (unsigned i=0; i< c_it.second.front()->getNicheBreadthEvolutionRatioProb(env_label).size(); i++){
                             ratios.push_back(0);
                         }
                         for (auto r_it : c_it.second){
                             vector<double> ratiosProb = r_it->getNicheBreadthEvolutionRatioProb(env_label);
-                            string memo = memo_head_sp + env_label + ",";
+                            //string memo = memo_head_sp + env_label + ",";
                             for (unsigned i=0; i< r_it->getNicheBreadthEvolutionRatio().size(); i++){
-                                memo += to_string(ratiosProb[i]) + ",";
+                                //memo += to_string(ratiosProb[i]) + ",";
                                 ratios[i]+=ratiosProb[i];
                             }
                             //this->nb_logs_4.push_back(memo + "0");
                         }
                         //double sum_v = 0;
-                        string memo = memo_head_sp + env_label + ",";
+                        //string memo = memo_head_sp + env_label + ",";
                         for (unsigned i=0; i< c_it.second.front()->getNicheBreadthEvolutionRatioProb(env_label).size(); i++){
                             ratios[i] /= c_it.second.size();
                             //sum_v += ratios[i];
-                            memo += to_string(ratios[i]) + ",";
+                            //memo += to_string(ratios[i]) + ",";
                         }
 
                         //this->nb_logs_4.push_back(memo + "1");
@@ -352,10 +352,10 @@ int Simulation::run() {
 
             }
             if (evoType==6){
-                string memo_head = to_string(year_i) + ",";
-                memo_head += sp->getIDWithParentID() + ",";
+                //string memo_head = to_string(year_i) + ",";
+                //memo_head += sp->getIDWithParentID() + ",";
                 for (auto c_it : sp_it.second) {
-                    string memo_head_sp = memo_head + to_string(c_it.first) + ",";
+                    //string memo_head_sp = memo_head + to_string(c_it.first) + ",";
                     int id = c_it.first;
                     unordered_map<int, int> neighbors;
                     this->neighborInfo->getNeighborByID(id, sp_it.first->getDispersalAbilityLength(), neighbors);
@@ -377,6 +377,7 @@ int Simulation::run() {
                                         nicheBreadth[nb_it.first] = new NicheBreadth(nb_it.second->getMin() * disperPro[nei_it.second],
                                                 nb_it.second->getMax() * disperPro[nei_it.second]);
                                     }
+                                    /*
                                     string memo = memo_head_sp +
                                             to_string(nei_it.first) + "," +
                                             nb_it.first + "," +
@@ -387,6 +388,8 @@ int Simulation::run() {
                                             to_string(nei_it.second) + "," +
                                             to_string(disperPro[nei_it.second]);
                                     //nb_logs_4.push_back(memo);
+                                    */
+
                                 }
                                 weight += disperPro[nei_it.second];
                             }
@@ -398,12 +401,15 @@ int Simulation::run() {
                         nb_it.second->setMin(nicheBreadth[nb_it.first]->getMin()/weight);
                         nb_it.second->setMax(nicheBreadth[nb_it.first]->getMax()/weight);
                         //LOG(INFO)<<nb_it.first<<": MIN:"<<nicheBreadth[nb_it.first]->getMin()<<" MAX:"<<nicheBreadth[nb_it.first]->getMax()<<" WEIGHT:"<<weight;
+                        /*
                         string memo = memo_head_sp +
                                 nb_it.first + "," +
                                 to_string(nicheBreadth[nb_it.first]->getMin()) + "," +
                                 to_string(nicheBreadth[nb_it.first]->getMax()) + "," +
                                 to_string(weight);
                         //nb_logs_4.push_back(memo);
+
+                         */
                         delete nicheBreadth[nb_it.first];
                     }
 
