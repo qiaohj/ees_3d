@@ -8,17 +8,22 @@ mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_combine.sqlite", base))
 simulations2<-dbReadTable(mydb, "simulations")
 simulations<-bind_rows(simulations2, simulations)
 dbDisconnect(mydb) 
+mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_6.sqlite", base))  
+simulations2<-dbReadTable(mydb, "simulations")
+simulations<-bind_rows(simulations2, simulations)
+dbDisconnect(mydb) 
 
 simulations<-simulations %>% filter(nb!="BROAD")
 simulations<-simulations %>% filter(is_run==1)
 i=6
 simulations<-simulations[sample(nrow(simulations)),]
 result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
-result<-result %>% filter(EVO_TYPE!=3)
+#result<-result %>% filter(EVO_TYPE!=6)
 
 print(result)
 finished<-unique(result$LABLE)
 base2<-"/media/huijieqiao/Butterfly/SMART_SPECIES"
+base3<-"/mnt/sshftps"
 for (i in c(1:nrow(simulations))){
   s<-simulations[i,]
   if (s$label %in% finished){
@@ -27,12 +32,17 @@ for (i in c(1:nrow(simulations))){
   finished<-c(finished, s$label)
   log1<-sprintf("%s/RESULTS/%s/%s.log", base2, s$label, s$label)
   log2<-sprintf("%s/RESULTS/%s/%s.log", base2, s$label, s$label)
+  log3<-sprintf("%s/RESULTS/%s/%s.log", base2, s$label, s$label)
+  #log3<-sprintf("%s/%s/%s.log", base3, s$label, s$label)
   log<-NULL
   if (file.exists(log1)){
     log<-log1
   }
   if (file.exists(log2)){
     log<-log2
+  }
+  if (file.exists(log3)){
+    log<-log3
   }
   if (is.null(log)){
     next()
@@ -70,3 +80,8 @@ for (i in c(1:nrow(simulations))){
   }
 }
 saveRDS(result, sprintf("%s/Tables/individual_ratio.rda", base))
+
+item<-unique(result[, c("DA", "NB", "EVO_TYPE", "GLOBAL_ID", "EVO_RATIO")])
+head(item)
+item$label<-paste( item$EVO_TYPE, item$EVO_RATIO)
+print(table(item$EVO_TYPE))

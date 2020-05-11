@@ -65,6 +65,7 @@ cols<-rep(c("deepskyblue", "deepskyblue3", "black",
             "khaki1", "khaki3", "black", 
             "hotpink", "hotpink3", "black", 
             "darkolivegreen3", "darkolivegreen", "black",
+            "purple", "purple4", "black",
             "black", "black", "black"), nrow(comb))
 comb<-expand.grid(unique(mean_df$EVO_RATIO), unique(mean_df$EVO_TYPE), unique(mean_df$NB), unique(mean_df$DA), stringsAsFactors=F)
 comb$label<-paste(comb$Var3, comb$Var4, comb$Var1, comb$Var2)
