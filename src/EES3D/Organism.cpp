@@ -49,7 +49,7 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         }
         details = false;
     }
-    if (evoType==6){
+    if ((evoType==6)||(evoType==7)){
         evoType_temp = 2;
     }
     bool t_details = details;

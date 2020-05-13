@@ -8,6 +8,7 @@
 
 ./ees_3d /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/conf_6.sqlite /mnt/sshftps -1 64 0 0 1
 
+./ees_3d /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/conf_7.sqlite /media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS -1 64 0 0 1
 
 ./ees_3d /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/ISEA3H8/SQLITE/env_Hadley3D.sqlite /home/huijieqiao/git/ees_3d_data/SMART_SPECIES/conf_combine.sqlite /media/huijieqiao/Butterfly/SMART_SPECIES/RESULTS -1 64 0 0 1
 

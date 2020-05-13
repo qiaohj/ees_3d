@@ -351,14 +351,18 @@ int Simulation::run() {
                 }
 
             }
-            if (evoType==6){
+            int distance = sp_it.first->getDispersalAbilityLength();
+            if (evoType==7){
+                distance = 0;
+            }
+            if ((evoType==6) || (evoType==7)){
                 //string memo_head = to_string(year_i) + ",";
                 //memo_head += sp->getIDWithParentID() + ",";
                 for (auto c_it : sp_it.second) {
                     //string memo_head_sp = memo_head + to_string(c_it.first) + ",";
                     int id = c_it.first;
                     unordered_map<int, int> neighbors;
-                    this->neighborInfo->getNeighborByID(id, sp_it.first->getDispersalAbilityLength(), neighbors);
+                    this->neighborInfo->getNeighborByID(id, distance, neighbors);
                     vector<double> disperPro = sp_it.first->getDispersalAbilityProb();
                     double weight = 0;
                     unordered_map<string, NicheBreadth*> nicheBreadth;

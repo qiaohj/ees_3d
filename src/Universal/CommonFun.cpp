@@ -63,13 +63,19 @@ void CommonFun::writeFile(string s, const char *path) {
     outfile << s << endl;
     outfile.close();
 }
+/*
 void CommonFun::writeFile(set<string> s, const char *path) {
     string joined = boost::algorithm::join(s, "\n");
     writeFile(joined, path);
 }
+*/
 void CommonFun::writeFile(vector<string> s, const char *path) {
-    string joined = boost::algorithm::join(s, "\n");
-    writeFile(joined, path);
+    //string joined = boost::algorithm::join(s, "\n");
+    //writeFile(joined, path);
+    ofstream output_file(path);
+    // the important part
+    for (const auto &e : s)
+        output_file << e << "\n";
 }
 void CommonFun::executeSQL(vector<string> s, sqlite3 *db, bool output) {
     string joined = boost::algorithm::join(s, " ");

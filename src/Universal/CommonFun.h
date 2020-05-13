@@ -105,7 +105,7 @@ public:
      * @param path the path to the text file
      */
     static void writeFile(vector<string> s, const char *path);
-    static void writeFile(set<string> s, const char *path);
+    //static void writeFile(set<string> s, const char *path);
     /**
      * @brief execute a sql command
      * @param s the string array contains the SQL commend

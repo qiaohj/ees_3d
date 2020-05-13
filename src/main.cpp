@@ -353,8 +353,12 @@ int testNeighbor() {
     Neighbor *neighborInfo = new Neighbor(env_db);
 
     vector<string> logs;
-
-
+    unordered_map<int, int> neighbors4;
+    neighborInfo->getNeighborByID(20032, 1, neighbors4);
+    for (auto it : neighbors4) {
+        LOG(INFO) << "4. " << it.first << " dist:" << it.second;
+    }
+    exit(1);
     for (int dist=0; dist<=4; dist++){
         clock_t start1, end1, start2, end2, start3, end3, start4, end4;
         double time_taken1 = 0;

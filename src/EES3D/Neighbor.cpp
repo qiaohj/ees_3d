@@ -77,12 +77,14 @@ Neighbor::Neighbor(sqlite3 *env_db) {
     sqlite3_finalize(stmt2);
 }
 void Neighbor::getNeighborByID(int p_id, int distance, unordered_map<int, int> &p_neighbors) {
+    getNeighborByID_dict(p_id, distance, p_neighbors);
+    /*
     if (distance>1){
         getNeighborByID_dict(p_id, distance, p_neighbors);
     }else{
         set<int> handled_ids;
         getNeighborByID_recursive(p_id, distance, p_neighbors, handled_ids);
-    }
+    }*/
 }
 void Neighbor::getNeighborByID_dict(int p_id, int distance, unordered_map<int, int> &p_neighbors) {
     for (int i = 0; i <= distance; i++) {
@@ -131,7 +133,7 @@ void Neighbor::getNeighborByID_recursive(int p_id, int distance, unordered_map<i
         }
     }
     //LOG(DEBUG)<<"add "<<p_id<<" to list ";
-    p_neighbors[p_id] = 1 - distance;
+    p_neighbors[p_id] = distance;
 
 }
 unordered_map<int, set<int>> Neighbor::getNeighbors(){
