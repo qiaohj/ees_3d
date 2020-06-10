@@ -61,11 +61,12 @@ mean_df_ratio_df[is.na(mean_df_ratio_df)]<-0
 mean_df_ratio_df$label<-paste(mean_df_ratio_df$NB, mean_df_ratio_df$DA, mean_df_ratio_df$EVO_RATIO, mean_df_ratio_df$EVO_TYPE)
 
 comb<-expand.grid(unique(mean_df$NB), unique(mean_df$DA), stringsAsFactors=F)
-cols<-rep(c("deepskyblue", "deepskyblue3", "black", 
-            "khaki1", "khaki3", "black", 
-            "hotpink", "hotpink3", "black", 
-            "darkolivegreen3", "darkolivegreen", "black",
-            "purple", "purple4", "black",
+cols<-rep(c("red", "red4", "black", 
+            "orange", "orange4", "black", 
+            "yellow", "yellow4", "black", 
+            "green", "green4", "black",
+            "turquoise", "turquoise4", "black",
+            "blue", "blue4", "black",
             "black", "black", "black"), nrow(comb))
 comb<-expand.grid(unique(mean_df$EVO_RATIO), unique(mean_df$EVO_TYPE), unique(mean_df$NB), unique(mean_df$DA), stringsAsFactors=F)
 comb$label<-paste(comb$Var3, comb$Var4, comb$Var1, comb$Var2)
@@ -86,7 +87,10 @@ for (i in c(1:nrow(comb))){
     geom_line()+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
+    scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
+    geom_text(data = subset(N_Sim_item, Y == 0), aes(label = label, colour = label, x = 0, y = N_AVE), hjust = -.1)+
+    xlim(c(-1200, 350))
+  
   ggsave(p, file=sprintf("%s/Figures/N_Sim/%s_%s_ALL.png", base, com$Var1, com$Var2))
   
   p<-ggplot(N_Sim_item %>% filter((Y!=-1199)&(EVO_TYPE!=3)), 
@@ -94,7 +98,10 @@ for (i in c(1:nrow(comb))){
     geom_line()+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
+    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+    geom_text(data = N_Sim_item %>% filter((Y==0)&(EVO_TYPE!=3)), aes(label = label, colour = label, x = 0, y = N_AVE), hjust = -.1)+
+    ylim(c(0.52, 0.6))+
+    xlim(c(-1200, 400))
   ggsave(p, file=sprintf("%s/Figures/N_Sim/%s_%s_PART.png", base, com$Var1, com$Var2))
   
   p<-ggplot(mean_df_item %>% filter(SUITABLE==1), 
@@ -103,7 +110,9 @@ for (i in c(1:nrow(comb))){
     geom_ribbon(aes(ymin=Mean_N_SP-CI_N_SP, ymax=Mean_N_SP+CI_N_SP, fill=factor(label)), color=NA, alpha=0.3)+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
+    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+    geom_text(data = mean_df_item %>% filter((Y==0)&(SUITABLE==1)), aes(label = label, colour = label, x = 0, y = Mean_N_SP), hjust = -.1)+
+    xlim(c(-1200, 350))
   ggsave(p, file=sprintf("%s/Figures/N_Species/%s_%s_ALL.png", base, com$Var1, com$Var2))
   
   p<-ggplot(mean_df_item %>% filter(SUITABLE==1), 
@@ -112,7 +121,9 @@ for (i in c(1:nrow(comb))){
     #geom_ribbon(aes(ymin=Mean_N_CELL-CI_N_CELL, ymax=Mean_N_CELL+CI_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
+    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+    geom_text(data = mean_df_item %>% filter((Y==0)&(SUITABLE==1)), aes(label = label, colour = label, x = 0, y = Mean_N_CELL), hjust = -.1)+
+    xlim(c(-1200, 350))
   ggsave(p, file=sprintf("%s/Figures/N_Cells/%s_%s_ALL.png", base, com$Var1, com$Var2))
   
   p<-ggplot(mean_df_item %>% filter((SUITABLE==1)&(Y<=-1100)), 
@@ -121,16 +132,10 @@ for (i in c(1:nrow(comb))){
     #geom_ribbon(aes(ymin=Mean_N_CELL-CI_N_CELL, ymax=Mean_N_CELL+CI_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
+    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+    geom_text(data = mean_df_item %>% filter((Y==-1100)&(SUITABLE==1)), aes(label = label, colour = label, x = -1100, y = Mean_N_CELL), hjust = -.1)+
+    xlim(c(-1200, -1050))
   ggsave(p, file=sprintf("%s/Figures/N_Cells/%s_%s_1100.png", base, com$Var1, com$Var2))
-  
-  ggplot(mean_df_item %>% filter((SUITABLE==1)&(EVO_TYPE!=3)), 
-            aes(x=Y, y=Mean_AVERAGE_N_CELL))+
-    geom_line(aes(color=factor(label)))+
-    #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
-    theme_bw()+
-    ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
   
   p<-ggplot(mean_df_item %>% filter(SUITABLE==1), 
             aes(x=Y, y=Mean_AVERAGE_N_CELL))+
@@ -138,19 +143,11 @@ for (i in c(1:nrow(comb))){
     #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=0.3)+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
-  if (i==1){
-    p <- p + ylim(0, 2500)
-  }
-  if (i==2){
-    p <- p + ylim(0, 700)
-  }
-  if (i==3){
-    p <- p + ylim(0, 1000)
-  }
-  if (i==4){
-    p <- p + ylim(0, 500)
-  }
+    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+    geom_text(data = mean_df_item %>% filter((Y==0)&(SUITABLE==1)), aes(label = label, colour = label, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
+    xlim(c(-1200, 350))
+  
+ 
   ggsave(p, file=sprintf("%s/Figures/N_CELLs/%s_%s_AVERAGE_.png", base, com$Var1, com$Var2))
   
   ggplot(mean_df_ratio_df_item %>% filter(EVO_TYPE!=3), aes(x=Y, y=Mean_ratio))+
@@ -165,17 +162,32 @@ for (i in c(1:nrow(comb))){
     geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, fill=factor(label)), color=NA, alpha=0.3)+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
+    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+    geom_text(data = mean_df_ratio_df_item %>% filter((Y==0)), aes(label = label, colour = label, x = 0, y = Mean_ratio), hjust = -.1)+
+    xlim(c(-1200, 350))
+  
   p <- p + ylim(0, 1)
   
   ggsave(p, file=sprintf("%s/Figures/Trial_Error/%s_%s_ALL.png", base, com$Var1, com$Var2))
   
-  p<-ggplot(mean_df_ratio_df_item %>% filter((Y<=-1100)&(Y>=-1198)), aes(x=Y, y=Mean_ratio))+
+  p<-ggplot(mean_df_ratio_df_item %>% filter((Y<=-1100)&(Y>=-1198)&(EVO_TYPE!=3)), aes(x=Y, y=Mean_ratio))+
     geom_line(aes(color=factor(label)))+
     #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, fill=factor(label)), color=NA, alpha=0.3)+
     theme_bw()+
     ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))
+    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+    geom_text(data = mean_df_ratio_df_item %>% filter((Y==-1100)&(EVO_TYPE!=3)), aes(label = label, colour = label, x = -1100, y = Mean_ratio), hjust = -.1)+
+    xlim(c(-1198, -1050))+ylim(0.15, 0.23)
+  
+  ggplot(mean_df_ratio_df_item %>% filter((EVO_TYPE!=3)&(EVO_RATIO!=0.8)), aes(x=Y, y=Mean_ratio))+
+    geom_line(aes(color=factor(label)))+
+    #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, fill=factor(label)), color=NA, alpha=0.3)+
+    theme_bw()+
+    ggtitle(paste(com$Var1, com$Var2))+
+    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+    geom_text(data = mean_df_ratio_df_item %>% filter((Y==0)&(EVO_TYPE!=3)&(EVO_RATIO!=0.8)), aes(label = label, colour = label, x = 0, y = Mean_ratio), hjust = -.1)+
+    xlim(c(-1198, 350))+ylim(0.1, 0.23)
+  
   ggsave(p, file=sprintf("%s/Figures/Trial_Error/%s_%s_1100.png", base, com$Var1, com$Var2))
   
 }
