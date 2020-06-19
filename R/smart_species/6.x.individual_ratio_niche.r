@@ -10,6 +10,10 @@ setwd("~/git/ees_3d/R/smart_species")
 args = commandArgs(trailingOnly=TRUE)
 iii=8
 iii = args[1]
+start = as.numeric(args[2])
+if (is.na(start)){
+  start<-1
+}
 base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
 
 if (F){
@@ -73,7 +77,7 @@ print(result)
 finished<-unique(result$LABLE)
 base2<-"/media/huijieqiao/Butterfly/SMART_SPECIES"
 base3<-"/mnt/sshftps"
-for (i in c(1:nrow(simulations))){
+for (i in c(start:nrow(simulations))){
   s<-simulations[i,]
   if (s$label %in% finished){
     next()
