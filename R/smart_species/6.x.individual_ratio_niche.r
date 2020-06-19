@@ -5,6 +5,7 @@ print(mem.maxNSize())
 print("----------------")
 print(Sys.getenv('R_MAX_VSIZE'))
 print(Sys.getenv('R_MAX_NSIZE'))
+
 setwd("~/git/ees_3d/R/smart_species")
 args = commandArgs(trailingOnly=TRUE)
 iii=8
@@ -31,14 +32,23 @@ if (F){
 mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_%s.sqlite", base, iii))  
 simulations<-dbReadTable(mydb, "simulations")
 dbDisconnect(mydb) 
-env <- dbConnect(RSQLite::SQLite(), sprintf("%s/ISEA3H8/SQLITE/env_Hadley3D.sqlite", base))  
-min_temp<-dbReadTable(env, "Debiased_Minimum_Monthly_Temperature")
-colnames(min_temp)<-c("ID", "MIN_TEMP", "Y")
-max_temp<-dbReadTable(env, "Debiased_Maximum_Monthly_Temperature")
-colnames(max_temp)<-c("ID", "MAX_TEMP", "Y")
-max_prec<-dbReadTable(env, "Debiased_Maximum_Monthly_Precipitation")
-colnames(max_prec)<-c("ID", "MAX_PREC", "Y")
-dbDisconnect(env) 
+if (F){
+  env <- dbConnect(RSQLite::SQLite(), sprintf("%s/ISEA3H8/SQLITE/env_Hadley3D.sqlite", base))  
+  min_temp<-dbReadTable(env, "Debiased_Minimum_Monthly_Temperature")
+  colnames(min_temp)<-c("ID", "MIN_TEMP", "Y")
+  max_temp<-dbReadTable(env, "Debiased_Maximum_Monthly_Temperature")
+  colnames(max_temp)<-c("ID", "MAX_TEMP", "Y")
+  max_prec<-dbReadTable(env, "Debiased_Maximum_Monthly_Precipitation")
+  colnames(max_prec)<-c("ID", "MAX_PREC", "Y")
+  dbDisconnect(env) 
+  saveRDS(min_temp, sprintf("%s/Tables/ENV/min_temp.rda", base))
+  saveRDS(max_temp, sprintf("%s/Tables/ENV/max_temp.rda", base))
+  saveRDS(max_prec, sprintf("%s/Tables/ENV/max_prec.rda", base))
+}
+min_temp<-readRDS(sprintf("%s/Tables/ENV/min_temp.rda", base))
+max_temp<-readRDS(sprintf("%s/Tables/ENV/max_temp.rda", base))
+max_prec<-readRDS(sprintf("%s/Tables/ENV/max_prec.rda", base))
+
 #mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_combine.sqlite", base))  
 #simulations2<-dbReadTable(mydb, "simulations")
 #simulations<-bind_rows(simulations2, simulations)
@@ -47,7 +57,7 @@ dbDisconnect(env)
 simulations<-simulations %>% filter(nb!="BROAD")
 simulations<-simulations %>% filter(is_run==1)
 
-simulations<-simulations[sample(nrow(simulations)),]
+#simulations<-simulations[sample(nrow(simulations)),]
 
 target<-sprintf("%s/Tables/individual_ratio_nb_%s.rda", base, iii)
 if (file.exists(target)){
@@ -90,7 +100,10 @@ for (i in c(1:nrow(simulations))){
   nb_rda<-sprintf("%s/RESULTS/%s/%s_nb.rda", base2, s$label, s$label)
   nb_log_rda<-sprintf("%s/RESULTS/%s/%s_log_nb.rda", base2, s$label, s$label)
   if (file.exists(nb_rda)){
+    next()
+    print(nb_rda)
     sp_niche<-readRDS(nb_rda)
+    
   }else{
     sp_niche<-NULL
   }
