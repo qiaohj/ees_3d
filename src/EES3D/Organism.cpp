@@ -42,7 +42,10 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
         envs[item.first] = env_value;
     }
     int evoType_temp = evoType;
-    if ((year_i<=10) && (evoType == 5)) {
+    if (evoType==8){
+        evoType_temp = 5;
+    }
+    if ((year_i<=10) && ((evoType == 5)||(evoType == 8))) {
         evoType_temp = 2;
         for (string env_label : species->getEnvironmentLabels()){
             this->nicheBreadthEvolutionRatio[env_label] = species->getNicheBreadthEvolutionRatio();

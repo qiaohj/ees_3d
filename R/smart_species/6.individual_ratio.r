@@ -1,29 +1,52 @@
 library("dplyr")
 library("DBI")
+setwd("~/git/ees_3d/R/smart_species")
+args = commandArgs(trailingOnly=TRUE)
+iii=8
+iii = args[1]
 base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
-mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf.sqlite", base))  
+
+if (F){
+  target<-sprintf("%s/Tables/individual_ratio.rda", base)
+  result<-readRDS(target)
+  #item2<-result%>%distinct(DA, NB, EVO_TYPE, GLOBAL_ID, EVO_RATIO)%>%dplyr::group_by(EVO_TYPE)%>%dplyr::count()
+  item<-unique(result[, c("DA", "NB", "EVO_TYPE", "GLOBAL_ID", "EVO_RATIO")])
+  head(item)
+  item$label<-paste( item$EVO_TYPE, item$EVO_RATIO)
+  print(table(item$EVO_TYPE))
+  j=1
+  for (j in unique(item$EVO_TYPE)){
+    print(j)
+    sub<-result %>% filter(EVO_TYPE==j)
+    target<-sprintf("%s/Tables/individual_ratio_%s.rda", base, j)
+    saveRDS(sub, target)
+  }
+  
+}
+mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_%s.sqlite", base, iii))  
 simulations<-dbReadTable(mydb, "simulations")
 dbDisconnect(mydb) 
-mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_combine.sqlite", base))  
-simulations2<-dbReadTable(mydb, "simulations")
-simulations<-bind_rows(simulations2, simulations)
-dbDisconnect(mydb) 
-mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_6.sqlite", base))  
-simulations2<-dbReadTable(mydb, "simulations")
-simulations<-bind_rows(simulations2, simulations)
-dbDisconnect(mydb) 
-mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_7.sqlite", base))  
-simulations2<-dbReadTable(mydb, "simulations")
-simulations<-bind_rows(simulations2, simulations)
-dbDisconnect(mydb) 
+
+#mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_combine.sqlite", base))  
+#simulations2<-dbReadTable(mydb, "simulations")
+#simulations<-bind_rows(simulations2, simulations)
+#dbDisconnect(mydb) 
 
 simulations<-simulations %>% filter(nb!="BROAD")
 simulations<-simulations %>% filter(is_run==1)
-i=6
-simulations<-simulations[sample(nrow(simulations)),]
-result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
-#result<-result %>% filter(EVO_TYPE!=6)
 
+simulations<-simulations[sample(nrow(simulations)),]
+
+target<-sprintf("%s/Tables/individual_ratio_%s.rda", base, iii)
+if (file.exists(target)){
+  result<-readRDS(target)
+}else{
+  result<-data.frame()
+}
+
+#test<-result %>% filter(EVO_TYPE==3)
+#dim(test)
+#result<-result %>% filter(EVO_TYPE!=3)
 print(result)
 finished<-unique(result$LABLE)
 base2<-"/media/huijieqiao/Butterfly/SMART_SPECIES"
@@ -54,18 +77,21 @@ for (i in c(1:nrow(simulations))){
   print(paste(i, nrow(simulations), s$label))
   log_db<-read.table(log, head=F, sep=",", stringsAsFactors = F)
   colnames(log_db)<-c("Y", "ID", "GROUP", "N", "SP_ID", "SUITABLE")
-  if ((nrow(log_db)>10000)&(length(unique(log_db$SP_ID))>10)){
-    #asdf
-  }
+  
   log_db$SP_ID<-as.character(log_db$SP_ID)
   log_db<-as_tibble(log_db)
   
-  individual_ratio<-log_db %>% group_by(Y, SUITABLE) %>% summarise(N_IND=sum(N))
-  sp_N<-log_db %>% group_by(Y) %>% summarise(N_SP=length(unique(SP_ID)))
-  cell_N<-log_db %>% group_by(Y, SUITABLE) %>% count()
+  individual_ratio<-log_db %>% dplyr::group_by(Y, SUITABLE) %>% dplyr::summarise(N_IND=sum(N))
+  #sp_N<-log_db %>% dplyr::summarise(N_SP=length(unique(SP_ID)), .groups=Y)
+  sp_N<-log_db %>% dplyr::group_by(Y)%>%dplyr::summarise(N_SP=length(unique(SP_ID)))
+  cell_N<-log_db %>% dplyr::group_by(Y, SUITABLE) %>% dplyr::count()
+  
+  unique_cell_N<-log_db%>%dplyr::group_by(Y, SUITABLE)%>%distinct(ID)%>%dplyr::count()
   colnames(cell_N)[3]<-"N_CELL"
+  colnames(unique_cell_N)[3]<-"N_UNIQUE_CELL"
   item<-inner_join(individual_ratio, sp_N, by="Y")
   item<-inner_join(item, cell_N, by=c("Y", "SUITABLE"))
+  item<-inner_join(item, unique_cell_N, by=c("Y", "SUITABLE"))
   item$LABLE<-s$label
   item$NB<-s$nb
   item$DA<-s$da
@@ -78,12 +104,14 @@ for (i in c(1:nrow(simulations))){
   }else{
     result<-bind_rows(result, item)
   }
-  if ((i %% 1000)==1){
-    print("write data frame")
-    saveRDS(result, sprintf("%s/Tables/individual_ratio.rda", base))
+  if (F){
+    if ((i %% 1000)==1){
+      print("write data frame")
+      saveRDS(result, target)
+    }
   }
 }
-saveRDS(result, sprintf("%s/Tables/individual_ratio.rda", base))
+saveRDS(result, target)
 
 item<-unique(result[, c("DA", "NB", "EVO_TYPE", "GLOBAL_ID", "EVO_RATIO")])
 head(item)

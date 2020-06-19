@@ -5,6 +5,8 @@ base<-"~/Downloads"
 #base<-"C:/Users/Huijie Qiao/Downloads"
 base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
 
+#USELESS NOW
+
 result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
 result$Y<-result$Y*-1
 head(result)
@@ -14,8 +16,9 @@ N_Sim<-result %>%
   dplyr::summarize(N=length(unique(GLOBAL_ID))
   )
 N_Sim$label<-paste(N_Sim$NB, N_Sim$DA, N_Sim$EVO_RATIO, N_Sim$EVO_TYPE)
+saveRDS(N_Sim, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/N_Sim.rda")
 
-result$AVERAGE_N_CELL<-result$N_CELL/result$N_SP
+
 
 mean_df<-result %>%
   dplyr::group_by(Y, SUITABLE, NB, DA, EVO_RATIO, EVO_TYPE) %>%
@@ -39,6 +42,8 @@ mean_df<-result %>%
 mean_df[is.na(mean_df)]<-0
 mean_df$label<-paste(mean_df$NB, mean_df$DA, mean_df$EVO_RATIO, mean_df$EVO_TYPE)
 
+saveRDS(mean_df, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df.rda")
+
 mean_df_ratio<-result %>%
   dplyr::group_by(Y, SUITABLE, NB, DA, EVO_RATIO, EVO_TYPE, LABLE, GLOBAL_ID) %>%
   dplyr::summarize(N_IND = sum(N_IND, na.rm=TRUE),
@@ -50,6 +55,8 @@ item_1<-mean_df_ratio %>% filter(SUITABLE==1)
 mean_df_ratio_merge<-full_join(item_0, item_1, by=c("Y", "NB", "DA", "EVO_RATIO", "EVO_TYPE", "LABLE", "GLOBAL_ID"))
 mean_df_ratio_merge[is.na(mean_df_ratio_merge)]<-0
 mean_df_ratio_merge$ratio<-mean_df_ratio_merge$N_IND.x/(mean_df_ratio_merge$N_IND.x+mean_df_ratio_merge$N_IND.y)
+saveRDS(mean_df_ratio_merge, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_ratio_merge.rda")
+
 mean_df_ratio_df<-mean_df_ratio_merge %>%
   dplyr::group_by(Y, NB, DA, EVO_RATIO, EVO_TYPE) %>%
   dplyr::summarize(Mean_ratio = mean(ratio, na.rm=TRUE),
@@ -59,6 +66,7 @@ mean_df_ratio_df<-mean_df_ratio_merge %>%
   )
 mean_df_ratio_df[is.na(mean_df_ratio_df)]<-0
 mean_df_ratio_df$label<-paste(mean_df_ratio_df$NB, mean_df_ratio_df$DA, mean_df_ratio_df$EVO_RATIO, mean_df_ratio_df$EVO_TYPE)
+saveRDS(mean_df_ratio_df, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_ratio_df.rda")
 
 comb<-expand.grid(unique(mean_df$NB), unique(mean_df$DA), stringsAsFactors=F)
 cols<-rep(c("red", "red4", "black", 

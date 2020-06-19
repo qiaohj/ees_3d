@@ -318,7 +318,7 @@ int Simulation::run() {
 
         for (auto sp_it : organisms_in_current_year) {
             Species *sp = sp_it.first;
-            if (evoType==5){
+            if ((evoType==5)||(evoType==8)){
                 //string memo_head = to_string(year_i) + ",";
                 //memo_head += sp->getIDWithParentID() + ",";
                 for (auto c_it : sp_it.second) {
@@ -352,10 +352,10 @@ int Simulation::run() {
 
             }
             int distance = sp_it.first->getDispersalAbilityLength();
-            if (evoType==7){
+            if ((evoType==7)||(evoType==8)){
                 distance = 0;
             }
-            if ((evoType==6) || (evoType==7)){
+            if ((evoType==6) || (evoType==7)|| (evoType==8)){
                 //string memo_head = to_string(year_i) + ",";
                 //memo_head += sp->getIDWithParentID() + ",";
                 for (auto c_it : sp_it.second) {
