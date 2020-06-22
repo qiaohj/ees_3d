@@ -4,7 +4,7 @@ library("DBI")
 setwd("~/git/ees_3d/R/smart_species")
 args = commandArgs(trailingOnly=TRUE)
 iii=1
-#iii = args[1]
+iii = args[1]
 base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
 
 mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_%s.sqlite", base, iii))  

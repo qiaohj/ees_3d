@@ -7,7 +7,7 @@ library(dplyr)
 
 setwd("~/git/ees_3d/R/smart_species")
 base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
-function(x){
+fix_type<-function(x){
   x[which(x==1)]<-"Lazy"
   x[which(x==2)]<-"Darwin"
   x[which(x==3)]<-"Lamarck"
@@ -33,21 +33,10 @@ fix_df<-function(p_df){
   p_df
 }
 
-mean_sort_AVERAGE_N_CELL<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_sort_AVERAGE_N_CELL_Fixed.rda")
-mean_sort_N_CELL<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_sort_N_CELL_Fixed.rda")
-mean_sort_N_SP<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_sort_N_SP_Fixed.rda")
-
-
-
-mean_df_ratio_df<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_ratio_df.rda")
-mean_df_ratio_df<-fix_df(mean_df_ratio_df)
-
-
-
-
 count_N_IND_DIFF<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/count_N_IND_DIFF_Fixed.rda")
 count_N_SP_DIFF<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/count_N_SP_DIFF_Fixed.rda")
 count_N_CELL_DIFF<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/count_N_CELL_DIFF_Fixed.rda")
+count_N_UNIQUE_CELL_DIFF<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/count_N_UNIQUE_CELL_DIFF_Fixed.rda")
 
 
 cols<-c("red",
@@ -58,7 +47,7 @@ cols<-c("red",
         "green",
         "black")
 
-names(cols)<-unique(N_Sim$EVO_TYPE)
+
 x_year_label<-"Year (*100)"
 ribbon_alpha<-0.1
 
@@ -68,6 +57,7 @@ ribbon_alpha<-0.1
 
 N_Sim<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/N_Sim.rda")
 N_Sim<-fix_df(N_Sim)
+names(cols)<-unique(N_Sim$EVO_TYPE)
 
 p<-ggplot(N_Sim, 
           aes(x=Y, y= N, color=EVO_TYPE, fill=EVO_TYPE))+
@@ -84,7 +74,7 @@ p<-ggplot(N_Sim,
 
 ggsave(p, file=sprintf("%s/Figures/N_Sim_ALL.png", base), width = 10, height=12)
 
-p<-ggplot(N_Sim %>% filter((Y>=-1000)&(EVO_TYPE!='Lamarck')), 
+p<-ggplot(N_Sim %>% dplyr::filter((Y>=-1000)&(EVO_TYPE!='Lamarck')), 
           aes(x=Y, y= N, color=EVO_TYPE, fill=EVO_TYPE))+
   geom_line()+
   theme_bw()+
@@ -105,10 +95,10 @@ mean_df<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_compari
 #function fix_df() is in9.null_model_comparision_analysis.r
 mean_df<-fix_df(mean_df)
 
-p<-ggplot(mean_df %>% filter(SUITABLE==1), 
+p<-ggplot(mean_df %>% dplyr::filter(SUITABLE==1), 
           aes(x=Y, y=Mean_N_SP))+
   geom_line(aes(color=EVO_TYPE))+
-  geom_ribbon(aes(ymin=Mean_N_SP-CI_N_SP, ymax=Mean_N_SP+CI_N_SP, fill=EVO_TYPE), 
+  geom_ribbon(aes(ymin=Mean_N_SP-(CI_N_SP_HIGH=CI_N_SP_MEAN), ymax=Mean_N_SP+(CI_N_SP_HIGH=CI_N_SP_MEAN), fill=EVO_TYPE), 
               color=NA, alpha=ribbon_alpha)+
   theme_bw()+
   xlab(x_year_label)+
@@ -121,10 +111,16 @@ p<-ggplot(mean_df %>% filter(SUITABLE==1),
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, file=sprintf("%s/Figures/N_Species_ALL.png", base), width = 10, height=12)
 
+
+#-------------------------------------------------------------#
+#Figure: Mean number of cells/ per species of all simulations #
+#-------------------------------------------------------------#
 p<-ggplot(mean_df %>% filter(SUITABLE==1), 
-          aes(x=Y, y=Mean_N_CELL))+
+          aes(x=Y, y=Mean_AVERAGE_N_CELL))+
   geom_line(aes(color=EVO_TYPE))+
-  geom_ribbon(aes(ymin=Mean_N_CELL-CI_N_CELL, ymax=Mean_N_CELL+CI_N_CELL, fill=EVO_TYPE), 
+  geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-(CI_AVERAGE_N_CELL_HIGH=CI_AVERAGE_N_CELL_MEAN), 
+                  ymax=Mean_AVERAGE_N_CELL+(CI_AVERAGE_N_CELL_HIGH=CI_AVERAGE_N_CELL_MEAN), 
+                  fill=EVO_TYPE), 
               color=NA, alpha=0.1)+
   theme_bw()+
   xlab(x_year_label)+
@@ -132,18 +128,629 @@ p<-ggplot(mean_df %>% filter(SUITABLE==1),
   ggtitle("Mean number of suitable pixels of all simulations")+
   scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
   geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_CELL), hjust = -.1)+
+            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
   xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
-ggsave(p, file=sprintf("%s/Figures/N_Cells_ALL_SUITABLE.png", base), width = 10, height=12)
+ggsave(p, file=sprintf("%s/Figures/AVERAGE_N_CELLs_ALL_SUITABLE.png", base), width = 10, height=12)
+
+#-------------------------------------------------------------#
+#Figure: Mean number of unique cells of all simulations #
+#-------------------------------------------------------------#
+p<-ggplot(mean_df %>% filter(SUITABLE==1), 
+          aes(x=Y, y=Mean_N_UNIQUE_CELL))+
+  geom_line(aes(color=EVO_TYPE))+
+  geom_ribbon(aes(ymin=Mean_N_UNIQUE_CELL-(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
+                  ymax=Mean_N_UNIQUE_CELL+(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
+                  fill=EVO_TYPE), 
+              color=NA, alpha=0.1)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of suitable pixels")+
+  ggtitle("Mean number of suitable pixels of all simulations")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
+  geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
+            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL), hjust = -.1)+
+  xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/N_UNIQUE_CELLs_ALL_SIMULATIONS.png", base), width = 10, height=12)
+
+#-------------------------------------------------------------#
+#Figure: Mean number of unique cells per simulations          #
+#-------------------------------------------------------------#
+df_unique_cell_per_simulation<-inner_join(mean_df, N_Sim, 
+                                          by=c("Y", "NB", "DA", "EVO_RATIO", "EVO_TYPE", "label", "WARP_LABEL"))
+df_unique_cell_per_simulation$Mean_N_UNIQUE_CELL_PER_SIMULATION<-
+  df_unique_cell_per_simulation$Mean_N_UNIQUE_CELL/df_unique_cell_per_simulation$N
+p<-ggplot(df_unique_cell_per_simulation %>% filter(SUITABLE==1), 
+          aes(x=Y, y=Mean_N_UNIQUE_CELL_PER_SIMULATION))+
+  geom_line(aes(color=EVO_TYPE))+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of suitable pixels")+
+  ggtitle("Mean number of suitable pixels per simulation")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
+  geom_text(data = df_unique_cell_per_simulation %>% filter((Y==0)&(SUITABLE==1)), 
+            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL_PER_SIMULATION), hjust = -.1)+
+  xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/N_UNIQUE_CELLs_PER_SIMULATIONS.png", base), width = 10, height=12)
+
+#-------------------------------------------------------------#
+#Figure: Mean number of unique cells per simulations          #
+#Focused simulations only.                                    #
+#The focused simualtions are the Larmark simulations to       #
+#the end of the simulations.                                  #
+#-------------------------------------------------------------#
+mean_df_sub<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_sub_3.rda")
+mean_df_sub<-fix_df(mean_df_sub)
+NULL_DF<-mean_df_sub[1,]
+NULL_DF$SUITABLE<-1
+NULL_DF$WARP_LABEL<-"NARROW GOOD 0.05"
+mean_df_sub<-bind_rows(mean_df_sub, NULL_DF)
+p<-ggplot(mean_df_sub %>% filter(SUITABLE==1), 
+           aes(x=Y, y=Mean_N_UNIQUE_CELL))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_N_UNIQUE_CELL-(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
+  #                ymax=Mean_N_UNIQUE_CELL+(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
+  #                fill=EVO_TYPE), 
+  #            color=NA, alpha=0.1)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of suitable pixels")+
+  ggtitle("Mean number of suitable pixels of all simulations")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
+  geom_text(data = mean_df_sub %>% filter((Y==0)&(SUITABLE==1)), 
+            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL), hjust = -.1)+
+  xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/N_UNIQUE_CELLs_Sub_3.png", base), width = 10, height=12)
+
+
+p<-ggplot(mean_df_sub %>% dplyr::filter(SUITABLE==1), 
+          aes(x=Y, y=Mean_N_SP))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_N_SP-(CI_N_SP_HIGH=CI_N_SP_MEAN), ymax=Mean_N_SP+(CI_N_SP_HIGH=CI_N_SP_MEAN), fill=EVO_TYPE), 
+  #            color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean N of species")+
+  ggtitle("Mean number of species of all simulations")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
+  geom_text(data = mean_df_sub %>% filter((Y==0)&(SUITABLE==1)), 
+            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_SP), hjust = -.1)+
+  xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/N_Species_SUB_3.png", base), width = 10, height=12)
+
+#------------------------------------------------------------------------#
+#Figure: Mean number of unsuitable cells/ per species of all simulations #
+#------------------------------------------------------------------------#
+p<-ggplot(mean_df %>% filter(SUITABLE==0), 
+          aes(x=Y, y=Mean_AVERAGE_N_CELL))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unsuitable pixels")+
+  ggtitle("Mean number of unsuitable pixels per species")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+  geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==0)), 
+            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
+  xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+
+
+ggsave(p, file=sprintf("%s/Figures/AVERAGE_UNSUITABLE.png", base))
+
+p<-ggplot(mean_df %>% filter((SUITABLE==0)&(EVO_TYPE!="Lamarck")), 
+          aes(x=Y, y=Mean_AVERAGE_N_CELL))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unsuitable pixels")+
+  ggtitle("Mean number of unsuitable pixels per species")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+  geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==0)&(EVO_TYPE!="Lamarck")), 
+            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
+  xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+
+
+ggsave(p, file=sprintf("%s/Figures/AVERAGE_UNSUITABLE_NO_Lamarck.png", base))
+
+mean_df_ratio_df<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_ratio_df.rda")
+mean_df_ratio_df<-fix_df(mean_df_ratio_df)
+p<-ggplot(mean_df_ratio_df %>% filter(Y>=-1198), aes(x=Y, y=Mean_ratio))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unsuitable individuals/all individuals")+
+  ggtitle("Mean number of unsuitable individuals/all individuals")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+  geom_text(data = mean_df_ratio_df %>% filter((Y==0)), 
+            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_ratio), hjust = -.1)+
+  xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+
+ggsave(p, file=sprintf("%s/Figures/Trial_Error_ALL.png", base))
+
+p<-ggplot(mean_df_ratio_df %>% filter((Y>=-1100)&(EVO_TYPE!="Lamarck")), aes(x=Y, y=Mean_ratio))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unsuitable individuals/all individuals")+
+  ggtitle("Mean number of unsuitable individuals/all individuals")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+  geom_text(data = mean_df_ratio_df %>% filter((Y==0)&(EVO_TYPE!="Lamarck")), 
+            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_ratio), hjust = -.1)+
+  xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+
+ggsave(p, file=sprintf("%s/Figures/Trial_Error_NO_Lamarck.png", base))
+
+p<-ggplot(mean_df_ratio_df %>% filter((Y<=-1100)&(Y>=-1198)), 
+          aes(x=Y, y=Mean_ratio))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unsuitable individuals/all individuals")+
+  ggtitle("Mean number of unsuitable individuals/all individuals")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
+  geom_text(data = mean_df_ratio_df %>% filter((Y==-1100)&(EVO_TYPE!=3)),
+            aes(label = EVO_TYPE, colour = EVO_TYPE, x = -1100, y = Mean_ratio), hjust = -.1)+
+  xlim(c(-1198, -1050))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/Trial_Error_1100.png", base))
+
+
+mean_df_nb<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_nb.rda")
+mean_df_nb<-fix_df(mean_df_nb)
+p<-ggplot(mean_df_nb, aes(x=Y))+
+  geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_LOW-(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN),
+  #                ymax=Mean_TEMP_LOW+(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_TEMP_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_HIGH-(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN),
+  #                ymax=Mean_TEMP_HIGH+(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("High and low limit of temperature (full set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_LOW_HIGH.png", base))
+
+p<-ggplot(mean_df_nb, aes(x=Y))+
+  geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_LOW-(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN),
+  #                ymax=Mean_TEMP_LOW+(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  #geom_line(aes(y=Mean_TEMP_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_HIGH-(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN),
+  #                ymax=Mean_TEMP_HIGH+(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("Low limit of temperature (full set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_LOW.png", base))
+
+p<-ggplot(mean_df_nb, aes(x=Y))+
+  #geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_LOW-(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN),
+  #                ymax=Mean_TEMP_LOW+(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_TEMP_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_HIGH-(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN),
+  #                ymax=Mean_TEMP_HIGH+(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("High limit of temperature (full set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_HIGH.png", base))
+
+p<-ggplot(mean_df_nb, aes(x=Y))+
+  geom_line(aes(y=Mean_TEMP_RANGE, color=EVO_TYPE))+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("Range of temperature (full set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_RANGE.png", base))
+
+
+p<-ggplot(mean_df_nb, aes(x=Y))+
+  geom_line(aes(y=Mean_PREC_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_LOW-(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN),
+  #                ymax=Mean_PREC_LOW+(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_PREC_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_HIGH-(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN),
+  #                ymax=Mean_PREC_HIGH+(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("High and low limit of Precipitation (full set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_LOW_HIGH.png", base))
+
+p<-ggplot(mean_df_nb, aes(x=Y))+
+  geom_line(aes(y=Mean_PREC_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_LOW-(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN),
+  #                ymax=Mean_PREC_LOW+(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  #geom_line(aes(y=Mean_PREC_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_HIGH-(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN),
+  #                ymax=Mean_PREC_HIGH+(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("Low limit of Precipitation (full set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_LOW.png", base))
+
+p<-ggplot(mean_df_nb, aes(x=Y))+
+  #geom_line(aes(y=Mean_PREC_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_LOW-(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN),
+  #                ymax=Mean_PREC_LOW+(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_PREC_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_HIGH-(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN),
+  #                ymax=Mean_PREC_HIGH+(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("High limit of Precipitation (full set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_HIGH.png", base))
+
+p<-ggplot(mean_df_nb, aes(x=Y))+
+  geom_line(aes(y=Mean_PREC_RANGE, color=EVO_TYPE))+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("Range of Precipitation (full set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_RANGE.png", base))
+
+mean_df_nb_sub<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_nb_sub.rda")
+mean_df_nb_sub<-fix_df(mean_df_nb_sub)
+NULL_DF<-mean_df_nb_sub[1,]
+NULL_DF$SUITABLE<-1
+NULL_DF$WARP_LABEL<-"NARROW GOOD 0.05"
+mean_df_nb_sub<-bind_rows(mean_df_nb_sub, NULL_DF)
+
+
+p<-ggplot(mean_df_nb_sub, aes(x=Y))+
+  geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_LOW-(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN),
+  #                ymax=Mean_TEMP_LOW+(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_TEMP_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_HIGH-(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN),
+  #                ymax=Mean_TEMP_HIGH+(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("High and low limit of temperature (Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_LOW_HIGH_SUB_3.png", base))
+
+p<-ggplot(mean_df_nb_sub, aes(x=Y))+
+  geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_LOW-(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN),
+  #                ymax=Mean_TEMP_LOW+(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  #geom_line(aes(y=Mean_TEMP_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_HIGH-(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN),
+  #                ymax=Mean_TEMP_HIGH+(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("Low limit of temperature (Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_LOW_SUB_3.png", base))
+
+p<-ggplot(mean_df_nb_sub, aes(x=Y))+
+  #geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_LOW-(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN),
+  #                ymax=Mean_TEMP_LOW+(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_TEMP_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_HIGH-(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN),
+  #                ymax=Mean_TEMP_HIGH+(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("High limit of temperature (Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_HIGH_SUB_3.png", base))
+
+p<-ggplot(mean_df_nb_sub, aes(x=Y))+
+  geom_line(aes(y=Mean_TEMP_RANGE, color=EVO_TYPE))+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("Range of temperature (Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_RANGE_SUB_3.png", base))
+
+
+p<-ggplot(mean_df_nb_sub, aes(x=Y))+
+  geom_line(aes(y=Mean_PREC_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_LOW-(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN),
+  #                ymax=Mean_PREC_LOW+(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_PREC_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_HIGH-(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN),
+  #                ymax=Mean_PREC_HIGH+(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("High and low limit of Precipitation (Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_LOW_HIGH_SUB_3.png", base))
+
+p<-ggplot(mean_df_nb_sub, aes(x=Y))+
+  geom_line(aes(y=Mean_PREC_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_LOW-(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN),
+  #                ymax=Mean_PREC_LOW+(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  #geom_line(aes(y=Mean_PREC_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_HIGH-(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN),
+  #                ymax=Mean_PREC_HIGH+(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("Low limit of Precipitation (Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_LOW_SUB_3.png", base))
+
+p<-ggplot(mean_df_nb_sub, aes(x=Y))+
+  #geom_line(aes(y=Mean_PREC_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_LOW-(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN),
+  #                ymax=Mean_PREC_LOW+(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_PREC_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_HIGH-(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN),
+  #                ymax=Mean_PREC_HIGH+(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("High limit of Precipitation (Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_HIGH_SUB_3.png", base))
+
+p<-ggplot(mean_df_nb_sub, aes(x=Y))+
+  geom_line(aes(y=Mean_PREC_RANGE, color=EVO_TYPE))+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("Range of Precipitation (Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_RANGE_SUB_3.png", base))
 
 
 
 
+mean_df_nb_sub_2<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_nb_sub_no_3.rda")
+mean_df_nb_sub_2<-fix_df(mean_df_nb_sub_2)
+NULL_DF<-mean_df_nb_sub_2[1,]
+NULL_DF$SUITABLE<-1
+NULL_DF$WARP_LABEL<-"NARROW GOOD 0.05"
+mean_df_nb_sub_2<-bind_rows(mean_df_nb_sub_2, NULL_DF)
 
 
+p<-ggplot(mean_df_nb_sub_2, aes(x=Y))+
+  geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_LOW-(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN),
+  #                ymax=Mean_TEMP_LOW+(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_TEMP_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_HIGH-(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN),
+  #                ymax=Mean_TEMP_HIGH+(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("High and low limit of temperature (No Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_LOW_HIGH_SUB_NO_3.png", base))
+
+p<-ggplot(mean_df_nb_sub_2, aes(x=Y))+
+  geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_LOW-(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN),
+  #                ymax=Mean_TEMP_LOW+(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  #geom_line(aes(y=Mean_TEMP_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_HIGH-(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN),
+  #                ymax=Mean_TEMP_HIGH+(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("Low limit of temperature (No Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_LOW_SUB_NO_3.png", base))
+
+p<-ggplot(mean_df_nb_sub_2, aes(x=Y))+
+  #geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_LOW-(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN),
+  #                ymax=Mean_TEMP_LOW+(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_TEMP_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_HIGH-(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN),
+  #                ymax=Mean_TEMP_HIGH+(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("High limit of temperature (No Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_HIGH_SUB_NO_3.png", base))
+
+p<-ggplot(mean_df_nb_sub_2, aes(x=Y))+
+  geom_line(aes(y=Mean_TEMP_RANGE, color=EVO_TYPE))+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("Range of temperature (No Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_RANGE_SUB_NO_3.png", base))
 
 
+p<-ggplot(mean_df_nb_sub_2, aes(x=Y))+
+  geom_line(aes(y=Mean_PREC_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_LOW-(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN),
+  #                ymax=Mean_PREC_LOW+(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_PREC_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_HIGH-(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN),
+  #                ymax=Mean_PREC_HIGH+(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("High and low limit of Precipitation (No Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_LOW_HIGH_SUB_NO_3.png", base))
+
+p<-ggplot(mean_df_nb_sub_2, aes(x=Y))+
+  geom_line(aes(y=Mean_PREC_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_LOW-(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN),
+  #                ymax=Mean_PREC_LOW+(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  #geom_line(aes(y=Mean_PREC_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_HIGH-(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN),
+  #                ymax=Mean_PREC_HIGH+(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("Low limit of Precipitation (No Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_LOW_SUB_NO_3.png", base))
+
+p<-ggplot(mean_df_nb_sub_2, aes(x=Y))+
+  #geom_line(aes(y=Mean_PREC_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_LOW-(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN),
+  #                ymax=Mean_PREC_LOW+(CI_PREC_LOW_HIGH-CI_PREC_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_PREC_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_PREC_HIGH-(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN),
+  #                ymax=Mean_PREC_HIGH+(CI_PREC_HIGH_HIGH-CI_PREC_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("High limit of Precipitation (No Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_HIGH_SUB_NO_3.png", base))
+
+p<-ggplot(mean_df_nb_sub_2, aes(x=Y))+
+  geom_line(aes(y=Mean_PREC_RANGE, color=EVO_TYPE))+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Precipitation")+
+  ggtitle("Range of Precipitation (No Lamarck set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_PREC_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/PREC_RANGE_SUB_NO_3.png", base))
+
+##############################
+####BACK UP###################
+###USELESS NOW ###############
+##############################
 
 comb<-expand.grid(unique(N_Sim$NB), unique(N_Sim$DA), 
                   stringsAsFactors=F)
@@ -161,91 +768,6 @@ for (i in c(1:nrow(comb))){
   
   N_Sim_item %>% filter(Y==0)
   
-  
-  
-  p<-ggplot(mean_df_item %>% filter(SUITABLE==0), 
-            aes(x=Y, y=Mean_N_CELL))+
-    geom_line(aes(color=factor(label)))+
-    #geom_ribbon(aes(ymin=Mean_N_CELL-CI_N_CELL, ymax=Mean_N_CELL+CI_N_CELL, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
-    theme_bw()+
-    xlab(x_year_label)+
-    ylab("Mean number of unsuitable pixels of all simulations")+
-    ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-    geom_text(data = mean_df_item %>% filter((Y==0)&(SUITABLE==0)), aes(label = label, colour = label, x = 0, y = Mean_N_CELL), hjust = -.1)+
-    xlim(c(-1200, 350))
-  ggsave(p, file=sprintf("%s/Figures/N_Cells/%s_%s_ALL_UNSUITABLE.png", base, com$Var1, com$Var2))
-  
-  
-  p<-ggplot(mean_df_item %>% filter((SUITABLE==1)&(Y<=-550)), 
-            aes(x=Y, y=Mean_N_CELL))+
-    geom_line(aes(color=factor(label)))+
-    #geom_ribbon(aes(ymin=Mean_N_CELL-CI_N_CELL, ymax=Mean_N_CELL+CI_N_CELL, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
-    theme_bw()+
-    xlab(x_year_label)+
-    ylab("Mean number of pixels of all simulations")+
-    ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-    geom_text(data = mean_df_item %>% filter((Y==-550)&(SUITABLE==1)), aes(label = label, colour = label, x = -550, y = Mean_N_CELL), hjust = -.1)+
-    xlim(c(-1200, -400))
-  ggsave(p, file=sprintf("%s/Figures/N_Cells/%s_%s_1100.png", base, com$Var1, com$Var2))
-  
-  p<-ggplot(mean_df_item %>% filter(SUITABLE==1), 
-            aes(x=Y, y=Mean_AVERAGE_N_CELL))+
-    geom_line(aes(color=factor(label)))+
-    #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
-    theme_bw()+
-    xlab(x_year_label)+
-    ylab("Mean number of suitable pixels per species")+
-    ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-    geom_text(data = mean_df_item %>% filter((Y==0)&(SUITABLE==1)), aes(label = label, colour = label, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
-    xlim(c(-1200, 350))
-  
-  
-  ggsave(p, file=sprintf("%s/Figures/N_CELLs/%s_%s_AVERAGE_SUITABLE.png", base, com$Var1, com$Var2))
-  
-  p<-ggplot(mean_df_item %>% filter(SUITABLE==0), 
-            aes(x=Y, y=Mean_AVERAGE_N_CELL))+
-    geom_line(aes(color=factor(label)))+
-    #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
-    theme_bw()+
-    xlab(x_year_label)+
-    ylab("Mean number of unsuitable pixels per species")+
-    ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-    geom_text(data = mean_df_item %>% filter((Y==0)&(SUITABLE==0)), aes(label = label, colour = label, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
-    xlim(c(-1200, 350))
-  
-  
-  ggsave(p, file=sprintf("%s/Figures/N_CELLs/%s_%s_AVERAGE_UNSUITABLE.png", base, com$Var1, com$Var2))
-  
-  p<-ggplot(mean_df_ratio_df_item %>% filter(Y>=-1198), aes(x=Y, y=Mean_ratio))+
-    geom_line(aes(color=factor(label)))+
-    geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
-    theme_bw()+
-    xlab(x_year_label)+
-    ylab("Mean number of unsuitable individuals/all individuals")+
-    ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-    geom_text(data = mean_df_ratio_df_item %>% filter((Y==0)), aes(label = label, colour = label, x = 0, y = Mean_ratio), hjust = -.1)+
-    xlim(c(-1200, 350))
-  
-  p <- p + ylim(0, 1)
-  
-  ggsave(p, file=sprintf("%s/Figures/Trial_Error/%s_%s_ALL.png", base, com$Var1, com$Var2))
-  
-  p<-ggplot(mean_df_ratio_df_item %>% filter((Y<=-1100)&(Y>=-1198)&(EVO_TYPE!=3)), aes(x=Y, y=Mean_ratio))+
-    geom_line(aes(color=factor(label)))+
-    #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
-    theme_bw()+
-    xlab(x_year_label)+
-    ylab("Mean number of unsuitable individuals/all individuals")+
-    ggtitle(paste(com$Var1, com$Var2))+
-    scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-    geom_text(data = mean_df_ratio_df_item %>% filter((Y==-1100)&(EVO_TYPE!=3)), aes(label = label, colour = label, x = -1100, y = Mean_ratio), hjust = -.1)+
-    xlim(c(-1198, -1050))
-  ggsave(p, file=sprintf("%s/Figures/Trial_Error/%s_%s_1100.png", base, com$Var1, com$Var2))
   
   
   count_N_IND_DIFF_item<-count_N_IND_DIFF %>% filter(NB==com$Var1 & DA==com$Var2)
