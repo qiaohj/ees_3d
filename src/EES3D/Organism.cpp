@@ -173,6 +173,56 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
             }
             break;
         }
+        case 9: {
+            //LOG(INFO)<<"9. I DO ";
+            t_details = false;
+            unordered_map<string, NicheBreadth*> niche_breadth = p_species->getNicheBreadth();
+            if (parent) {
+                niche_breadth = parent->getNicheBreadth();
+            }
+            for (auto it : niche_breadth) {
+                NicheBreadth *p_NicheBreadth = it.second;
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                nicheBreadth[it.first] = new_NicheBreadth;
+            }
+            //if it is unsuitable, skip directly
+            if (isSuitable(mask)!=1){
+                break;
+            }
+            //if it is not a smart species, try to be a smart species
+            if (evoDirection[niche_breadth.begin()->first]==0){
+                double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+                //LOG(INFO)<<"2 "<<p_species->getNicheEnvolutionIndividualRatio() << " : "<< r;
+                if (r>=p_species->getNicheEnvolutionIndividualRatio()){
+                    break;
+                }
+            }
+            for (auto it : niche_breadth) {
+                if (evoDirection[it.first]==0){
+
+                    double change = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+                    evoDirection[it.first] = (change>0.5)?1:-1;
+                    if (it.first=="Debiased_Minimum_Monthly_Temperature"){
+                        evoDirection["Debiased_Maximum_Monthly_Temperature"] = evoDirection[it.first];
+                    }
+                    if (it.first=="Debiased_Maximum_Monthly_Temperature"){
+                        evoDirection["Debiased_Minimum_Monthly_Temperature"] = evoDirection[it.first];
+                    }
+                }
+                double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+                r = p_species->getNicheBreadthEvolutionRandomRange() * r * evoDirection[it.first];
+
+                double change = (it.second->getMax() - it.second->getMin()) * r;
+                if (details) {
+                    memo += to_string(r) + "," + to_string(evoDirection[it.first]) + "," + to_string(change) + ",";
+                    t_details = true;
+                }
+                NicheBreadth *new_NicheBreadth = new NicheBreadth(it.second->getMin() + change, it.second->getMax() + change);
+                delete nicheBreadth[it.first];
+                nicheBreadth[it.first] = new_NicheBreadth;
+            }
+            break;
+        }
         case 4: {
             //LOG(DEBUG)<<"4. I DO "<<nicheBreadthType;
             t_details = false;
