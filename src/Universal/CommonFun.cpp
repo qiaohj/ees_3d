@@ -29,6 +29,15 @@ int CommonFun::callback(void *NotUsed, int argc, char **argv,
 }
 
 
+bool CommonFun::between(int v, int x, int y) {
+	if ((v >= x) && (v <= y)) {
+		return true;
+	}
+	if ((v >= y) && (v <= x)) {
+		return true;
+	}
+	return false;
+}
 
 string CommonFun::readFile(const char *path) {
     FILE *file = fopen(path, "rb");

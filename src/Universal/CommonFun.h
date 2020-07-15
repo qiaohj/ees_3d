@@ -88,7 +88,7 @@ public:
      * @param path the path to the text file
      */
     static void writeFile(string s, const char *path);
-
+    static bool between(int v, int x, int y);
     /**
      * @brief create a folder
      * @param path the folder's path

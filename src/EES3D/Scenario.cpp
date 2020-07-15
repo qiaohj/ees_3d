@@ -150,7 +150,7 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
 
     if (p_id == -1) {
         //sql = "SELECT * FROM simulations WHERE is_run=1 order by random()";
-        sql = "SELECT * FROM simulations WHERE is_run=1 and nb<>'BROAD' order by random()";
+        sql = "SELECT * FROM simulations WHERE is_run=1 order by random()";
     } else {
         sql = "SELECT * FROM simulations WHERE is_run=1 and id=" + to_string(p_id);
     }
@@ -172,10 +172,14 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
             string environments_str = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments)));
             string mask_table = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_mask)));
             int evo_type = sqlite3_column_int(stmt, SIMULATION_evo_type);
+            int from = sqlite3_column_int(stmt, SIMULATION_from);
+            int to = sqlite3_column_int(stmt, SIMULATION_to);
+            int step = sqlite3_column_int(stmt, SIMULATION_step);
+
             vector<string> environment_labels = CommonFun::splitStr(environments_str, ",");
             //LOG(INFO)<<"evo_type is "<<evo_type;
             Simulation *simulation = new Simulation(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, timeLine, neighborInfo,
-                    environment_labels, mask_table, details, evo_type);
+                    environment_labels, mask_table, details, evo_type, from, to, step);
 
             /*-------------------
              * If the target folder exists and the is_overwrite parameter is false, skip the simulation,

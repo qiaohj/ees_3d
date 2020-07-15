@@ -15,7 +15,7 @@
 #include <utility>
 Simulation::Simulation(Species *p_species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
         vector<int> &p_timeLine, Neighbor* neighborInfo, vector<string> &environment_labels, string mask_table, bool p_details,
-        int p_evoType) {
+        int p_evoType, int p_from, int p_to, int p_step) {
     this->sys_start = clock();
     this->sys_end = clock();
     this->max_memory = 0;
@@ -37,6 +37,9 @@ Simulation::Simulation(Species *p_species, string label, int burnInYear, string 
     this->organism_uid = 0;
     this->details = p_details;
     this->evoType = p_evoType;
+    this->from = p_from;
+    this->to = p_to;
+    this->step = p_step;
 
 }
 void Simulation::setIndexSimulation(int indexSimulation){
@@ -302,6 +305,10 @@ int Simulation::run() {
     }
     organisms_in_current_year[this->ancestor] = seeds;
     for (unsigned year_i = 1; year_i<timeLine.size(); year_i++) {
+    	if (!CommonFun::between(timeLine[year_i], from, to)){
+    		LOG(INFO) << "Not in Simulation Range, Break!";
+    		continue;
+    	}
         end = clock();
         double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
         int memory = (int)CommonFun::getCurrentRSS(pow(1024, 2));
