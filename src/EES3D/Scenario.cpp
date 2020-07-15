@@ -164,17 +164,19 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
         switch (status) {
         case SQLITE_ROW: {
             int burn_in_year = sqlite3_column_int(stmt, SIMULATION_burn_in_year);
+            int from = sqlite3_column_int(stmt, SIMULATION_from);
+			int to = sqlite3_column_int(stmt, SIMULATION_to);
+			int step = sqlite3_column_int(stmt, SIMULATION_step);
+
             string label = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_label)));
             //LOG(DEBUG) << "init Species";
-            Species *new_species = new Species(stmt, burn_in_year);
+            Species *new_species = new Species(stmt, burn_in_year, timeLine, from, to, step);
             //LOG(DEBUG) << "Finished to init Species";
 
             string environments_str = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments)));
             string mask_table = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_mask)));
             int evo_type = sqlite3_column_int(stmt, SIMULATION_evo_type);
-            int from = sqlite3_column_int(stmt, SIMULATION_from);
-            int to = sqlite3_column_int(stmt, SIMULATION_to);
-            int step = sqlite3_column_int(stmt, SIMULATION_step);
+
 
             vector<string> environment_labels = CommonFun::splitStr(environments_str, ",");
             //LOG(INFO)<<"evo_type is "<<evo_type;

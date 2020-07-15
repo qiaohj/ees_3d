@@ -215,11 +215,11 @@ bool Simulation::init(unordered_map<string, EnvVar*> &environments_base, sqlite3
     organism_uid = 0;
     unordered_map<string, ISEA*> current_environments = getEnvironmentMap(timeLine.front());
     for (int seed : seeds) {
-        Organism *organism = new Organism(0, ancestor, NULL, seed, ++organism_uid, nb_logs, details, current_environments, mask, evoType);
+        Organism *organism = new Organism(timeLine.size() - from, ancestor, NULL, seed, ++organism_uid, nb_logs, details, current_environments, mask, evoType);
         orgamisms.push_back(organism);
     }
 
-    all_organisms[0] = orgamisms;
+    all_organisms[timeLine.size() - from] = orgamisms;
 
     return true;
 }
@@ -242,7 +242,7 @@ ISEA* Simulation::getMask(){
 }
 void Simulation::generateSuitable() {
     unordered_map<string, NicheBreadth*> nicheBreadth = ancestor->getNicheBreadth();
-    unordered_map<string, ISEA*> current_environments = getEnvironmentMap(timeLine.front());
+    unordered_map<string, ISEA*> current_environments = getEnvironmentMap(timeLine[from]);
     set<int> values;
     LOG(DEBUG) << "Begin to generate the suitable area";
     auto it = current_environments.begin();
@@ -300,11 +300,11 @@ int Simulation::run() {
     unordered_map<Species*, unordered_map<int, vector<Organism*> > > organisms_in_current_year;
     LOG(DEBUG)<<"Add ancestor as the first dataset";
     unordered_map<int, vector<Organism*>> seeds;
-    for (auto it : all_organisms[0]){
+    for (auto it : all_organisms[timeLine.size() - from]){
         seeds[it->getID()].push_back(it);
     }
     organisms_in_current_year[this->ancestor] = seeds;
-    for (unsigned year_i = 1; year_i<timeLine.size(); year_i++) {
+    for (unsigned year_i = timeLine.size() - from + 1; year_i<timeLine.size(); year_i++) {
     	if (!CommonFun::between(timeLine[year_i], from, to)){
     		LOG(INFO) << "Not in Simulation Range, Break!";
     		continue;
@@ -443,7 +443,7 @@ int Simulation::run() {
         organisms_in_current_year.clear();
         //If it is the beginning of the simulation, generate a suitable layer for the species;
         LOG(DEBUG) << "Current year is " << year_i << " and timeline is " << timeLine[year_i];
-        if (year_i == 1) {
+        if (year_i == from) {
             generateSuitable();
         }
 
@@ -837,7 +837,7 @@ void Simulation::generateSpeciationInfo() {
     for (auto it : all_species) {
         Species *sp_it = it.second;
         //if the species is the root species, make the node from it.
-        if (sp_it->getAppearedYearI() == 0) {
+        if (sp_it->getAppearedYearI() == timeLine.size() - from) {
             sp_it->markNode();
             roots.push_back(sp_it);
         }

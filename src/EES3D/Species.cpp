@@ -13,19 +13,13 @@
 
 #include "Species.h"
 
-Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
-    int from = sqlite3_column_int(stmt, SIMULATION_from);
-    int to = sqlite3_column_int(stmt, SIMULATION_to);
-    int step = sqlite3_column_int(stmt, SIMULATION_step);
-    if (from < to) {
-        for (int i = from; i <= to; i += step) {
-            this->timeLine.push_back(i);
-        }
-    } else {
-        for (int i = from; i >= to; i += step) {
-            this->timeLine.push_back(i);
-        }
-    }
+Species::Species(sqlite3_stmt *stmt, int burn_in_year, vector<int> p_timeLine,
+		int p_from, int p_to, int p_step) {
+	this->from = p_from;
+	this->to = p_to;
+	this->step = p_step;
+
+    this->timeLine = p_timeLine;
 	currentSpeciesExtinctionTimeSteps = 0;
 	newSpecies = true;
     //id = sqlite3_column_int(stmt, SIMULATION_id);
@@ -60,8 +54,8 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year) {
 
     //LOG(INFO)<<"speciesExtinctionThreaholdPercentage"<<speciesExtinctionThreaholdPercentage;
     maxSpeciesDistribution = 0;
-    appearedYearI = 0;
-    disappearedYearI = timeLine.size() - 1;
+    appearedYearI = timeLine.size() - from;
+    disappearedYearI = timeLine.size() - to + 1;
     parent = NULL;
     clade_extinction_status = 0;
     number_of_clade_extinction = 0;
@@ -104,8 +98,12 @@ double Species::getNicheBreadthEvolutionRandomRange(){
     return nicheBreadthEvolutionRandomRange;
 }
 Species::Species(int p_id, Species* p_parent, int p_year_i) {
+
     newSpecies = true;
     parent = p_parent;
+    from = parent->getFrom();
+    to = parent->getTo();
+    step = parent->getStep();
     timeLine = parent->getTimeLine();
     currentSpeciesExtinctionTimeSteps = 0;
 	nicheBreadthEvolutionRatio = parent->getNicheBreadthEvolutionRatio();
@@ -308,7 +306,7 @@ string Species::getNewickTree(bool isroot, bool iscolor) {
     if ((clade_extinction_status == 1) || (clade_extinction_status == 3)) {
         linecolor = "red";
     }
-    int parent_year_i = (parent == NULL) ? 0 : parent->getDisappearedYearI();
+    int parent_year_i = (parent == NULL) ? timeLine.size() - from : parent->getDisappearedYearI();
     if (appearedYearI == disappearedYearI) {
         if (iscolor) {
             char t_char[100];
@@ -455,3 +453,13 @@ bool Species::isNewSpecies(){
 void Species::setNewSpecies(bool p){
     newSpecies = p;
 }
+int Species::getFrom(){
+    return from;
+}
+int Species::getTo(){
+    return to;
+}
+int Species::getStep(){
+    return step;
+}
+

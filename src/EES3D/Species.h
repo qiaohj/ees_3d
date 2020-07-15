@@ -62,12 +62,16 @@ private:
     int clade_extinction_status;
     vector<string> environment_labels;
     vector<int> timeLine;
+    int from;
+    int to;
+    int step;
 public:
     /**
      * @brief Constructor of Species class No.1 (Create a species object based on the configuration in JSON format)
      * @param json_path the path to configuration file in JSON format
      */
-    Species(sqlite3_stmt *stmt, int burn_in_year);
+    Species(sqlite3_stmt *stmt, int burn_in_year, vector<int> p_timeLine,
+    		int p_from, int p_to, int p_step);
     /**
      * @brief Constructor of Species class No.2 (Create a species object based on the parent species)
      * @param p_id species ID
@@ -274,6 +278,10 @@ public:
     string getIDWithParentID();
     vector<string> getEnvironmentLabels();
     int getEvoType();
+    int getFrom();
+    int getTo();
+    int getStep();
+
 };
 
 #endif /* DEFINITIONS_SPECIESOBJECT_H_ */
