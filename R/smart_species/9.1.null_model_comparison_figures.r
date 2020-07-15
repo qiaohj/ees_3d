@@ -9,25 +9,27 @@ setwd("~/git/ees_3d/R/smart_species")
 base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
 fix_type<-function(x){
   x[which(x==1)]<-"Lazy"
-  x[which(x==2)]<-"Darwin"
-  x[which(x==3)]<-"Lamarck"
+  x[which(x==2)]<-"Darwin I"
+  x[which(x==3)]<-"AI Lamarck"
   x[which(x==4)]<-"AI"
   x[which(x==5)]<-"Lamarck II"
   x[which(x==6)]<-"Darwin xII"
   x[which(x==7)]<-"Darwin II"
   x[which(x==8)]<-"Combined"
+  x[which(x==9)]<-"Lamarck I"
   x
 }
 
 fix_df<-function(p_df){
   #p_df<-p_df %>% filter((EVO_TYPE!=6))
-  p_df[which(p_df$EVO_RATIO==0.01), "EVO_RATIO"]<-0.005
-  p_df[which(p_df$EVO_RATIO==0.1), "EVO_RATIO"]<-0.05
-  p_df_1<-p_df %>%filter(EVO_RATIO==1)
-  p_df_1$EVO_RATIO<-0.05
-  p_df[which(p_df$EVO_RATIO==1), "EVO_RATIO"]<-0.005
-  p_df<-bind_rows(p_df, p_df_1)
+  #p_df[which(p_df$EVO_RATIO==0.01), "EVO_RATIO"]<-0.005
+  #p_df[which(p_df$EVO_RATIO==0.1), "EVO_RATIO"]<-0.05
+  #p_df_1<-p_df %>%filter(EVO_RATIO==1)
+  #p_df_1$EVO_RATIO<-0.05
+  #p_df[which(p_df$EVO_RATIO==1), "EVO_RATIO"]<-0.005
+  #p_df<-bind_rows(p_df, p_df_1)
   #p_df$EVO_RATIO<-1
+  p_df<-p_df%>%dplyr::filter(EVO_TYPE %in% c(1,2,4,5,7,8,9))
   p_df$EVO_TYPE<-fix_type(p_df$EVO_TYPE)
   p_df$WARP_LABEL<-paste(p_df$NB, p_df$DA, p_df$EVO_RATIO)
   p_df
@@ -39,13 +41,14 @@ count_N_CELL_DIFF<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_mod
 count_N_UNIQUE_CELL_DIFF<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/count_N_UNIQUE_CELL_DIFF_Fixed.rda")
 
 
-cols<-c("red",
-        "orange",
+cols<-c("black", 
+        "red",
+        "darkslategrey",
         "purple",
         "turquoise",
         "blue",
-        "green",
-        "black")
+        #"green",
+        "chocolate")
 
 
 x_year_label<-"Year (*100)"
@@ -66,25 +69,26 @@ p<-ggplot(N_Sim,
   xlab(x_year_label)+
   ylab("N running simulations")+
   ggtitle("N running simulations per time step")+
-  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = subset(N_Sim, Y == 0), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = N), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  #scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = subset(N_Sim, Y == 0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = N), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
 ggsave(p, file=sprintf("%s/Figures/N_Sim_ALL.png", base), width = 10, height=12)
 
-p<-ggplot(N_Sim %>% dplyr::filter((Y>=-1000)&(EVO_TYPE!='Lamarck')), 
+p<-ggplot(N_Sim %>% dplyr::filter((Y>=-1000)&(EVO_TYPE!='Lamarck I')&(EVO_TYPE!='AI Lamarck')), 
           aes(x=Y, y= N, color=EVO_TYPE, fill=EVO_TYPE))+
   geom_line()+
   theme_bw()+
   xlab(x_year_label)+
   ylab("N running simulations")+
   ggtitle("N running simulations per time step")+
-  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = N_Sim %>% filter((Y==0)&(EVO_TYPE!='Lamarck')), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = N), hjust = -.1)+
-  xlim(c(-1000, 400))+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = N_Sim %>% filter((Y==0)&(EVO_TYPE!='Lamarck')&(EVO_TYPE!='AI Lamarck')), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = N), hjust = -.1)+
+  #xlim(c(-1000, 400))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, file=sprintf("%s/Figures/N_Sim_PART.png", base), width = 10, height=12)
 
@@ -98,16 +102,16 @@ mean_df<-fix_df(mean_df)
 p<-ggplot(mean_df %>% dplyr::filter(SUITABLE==1), 
           aes(x=Y, y=Mean_N_SP))+
   geom_line(aes(color=EVO_TYPE))+
-  geom_ribbon(aes(ymin=Mean_N_SP-(CI_N_SP_HIGH=CI_N_SP_MEAN), ymax=Mean_N_SP+(CI_N_SP_HIGH=CI_N_SP_MEAN), fill=EVO_TYPE), 
-              color=NA, alpha=ribbon_alpha)+
+  #geom_ribbon(aes(ymin=Mean_N_SP-(CI_N_SP_HIGH=CI_N_SP_MEAN), ymax=Mean_N_SP+(CI_N_SP_HIGH=CI_N_SP_MEAN), fill=EVO_TYPE), 
+  #            color=NA, alpha=ribbon_alpha)+
   theme_bw()+
   xlab(x_year_label)+
   ylab("Mean N of species")+
   ggtitle("Mean number of species of all simulations")+
-  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_SP), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_SP), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, file=sprintf("%s/Figures/N_Species_ALL.png", base), width = 10, height=12)
 
@@ -118,18 +122,18 @@ ggsave(p, file=sprintf("%s/Figures/N_Species_ALL.png", base), width = 10, height
 p<-ggplot(mean_df %>% filter(SUITABLE==1), 
           aes(x=Y, y=Mean_AVERAGE_N_CELL))+
   geom_line(aes(color=EVO_TYPE))+
-  geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-(CI_AVERAGE_N_CELL_HIGH=CI_AVERAGE_N_CELL_MEAN), 
-                  ymax=Mean_AVERAGE_N_CELL+(CI_AVERAGE_N_CELL_HIGH=CI_AVERAGE_N_CELL_MEAN), 
-                  fill=EVO_TYPE), 
-              color=NA, alpha=0.1)+
+  #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-(CI_AVERAGE_N_CELL_HIGH=CI_AVERAGE_N_CELL_MEAN), 
+  #                ymax=Mean_AVERAGE_N_CELL+(CI_AVERAGE_N_CELL_HIGH=CI_AVERAGE_N_CELL_MEAN), 
+  #                fill=EVO_TYPE), 
+  #            color=NA, alpha=0.1)+
   theme_bw()+
   xlab(x_year_label)+
   ylab("Mean number of suitable pixels")+
-  ggtitle("Mean number of suitable pixels of all simulations")+
-  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  ggtitle("Mean number of suitable pixels per species")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, file=sprintf("%s/Figures/AVERAGE_N_CELLs_ALL_SUITABLE.png", base), width = 10, height=12)
 
@@ -139,18 +143,18 @@ ggsave(p, file=sprintf("%s/Figures/AVERAGE_N_CELLs_ALL_SUITABLE.png", base), wid
 p<-ggplot(mean_df %>% filter(SUITABLE==1), 
           aes(x=Y, y=Mean_N_UNIQUE_CELL))+
   geom_line(aes(color=EVO_TYPE))+
-  geom_ribbon(aes(ymin=Mean_N_UNIQUE_CELL-(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
-                  ymax=Mean_N_UNIQUE_CELL+(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
-                  fill=EVO_TYPE), 
-              color=NA, alpha=0.1)+
+  #geom_ribbon(aes(ymin=Mean_N_UNIQUE_CELL-(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
+  #                ymax=Mean_N_UNIQUE_CELL+(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
+  #                fill=EVO_TYPE), 
+  #            color=NA, alpha=0.1)+
   theme_bw()+
   xlab(x_year_label)+
-  ylab("Mean number of suitable pixels")+
-  ggtitle("Mean number of suitable pixels of all simulations")+
-  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  ylab("Mean number of unique pixels")+
+  ggtitle("Mean number of unique pixels of all simulations")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, file=sprintf("%s/Figures/N_UNIQUE_CELLs_ALL_SIMULATIONS.png", base), width = 10, height=12)
 
@@ -166,12 +170,12 @@ p<-ggplot(df_unique_cell_per_simulation %>% filter(SUITABLE==1),
   geom_line(aes(color=EVO_TYPE))+
   theme_bw()+
   xlab(x_year_label)+
-  ylab("Mean number of suitable pixels")+
-  ggtitle("Mean number of suitable pixels per simulation")+
-  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = df_unique_cell_per_simulation %>% filter((Y==0)&(SUITABLE==1)), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL_PER_SIMULATION), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  ylab("Mean number of unique pixels")+
+  ggtitle("Mean number of unique pixels per simulation")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = df_unique_cell_per_simulation %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL_PER_SIMULATION), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, file=sprintf("%s/Figures/N_UNIQUE_CELLs_PER_SIMULATIONS.png", base), width = 10, height=12)
 
@@ -198,10 +202,10 @@ p<-ggplot(mean_df_sub %>% filter(SUITABLE==1),
   xlab(x_year_label)+
   ylab("Mean number of suitable pixels")+
   ggtitle("Mean number of suitable pixels of all simulations")+
-  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = mean_df_sub %>% filter((Y==0)&(SUITABLE==1)), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_sub %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, file=sprintf("%s/Figures/N_UNIQUE_CELLs_Sub_3.png", base), width = 10, height=12)
 
@@ -215,10 +219,10 @@ p<-ggplot(mean_df_sub %>% dplyr::filter(SUITABLE==1),
   xlab(x_year_label)+
   ylab("Mean N of species")+
   ggtitle("Mean number of species of all simulations")+
-  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = mean_df_sub %>% filter((Y==0)&(SUITABLE==1)), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_SP), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_sub %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_SP), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, file=sprintf("%s/Figures/N_Species_SUB_3.png", base), width = 10, height=12)
 
@@ -233,16 +237,16 @@ p<-ggplot(mean_df %>% filter(SUITABLE==0),
   xlab(x_year_label)+
   ylab("Mean number of unsuitable pixels")+
   ggtitle("Mean number of unsuitable pixels per species")+
-  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==0)), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==0)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
 
 ggsave(p, file=sprintf("%s/Figures/AVERAGE_UNSUITABLE.png", base))
 
-p<-ggplot(mean_df %>% filter((SUITABLE==0)&(EVO_TYPE!="Lamarck")), 
+p<-ggplot(mean_df %>% filter((SUITABLE==0)&(EVO_TYPE!="Lamarck")&(EVO_TYPE!="AI Lamarck")), 
           aes(x=Y, y=Mean_AVERAGE_N_CELL))+
   geom_line(aes(color=EVO_TYPE))+
   #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
@@ -250,10 +254,274 @@ p<-ggplot(mean_df %>% filter((SUITABLE==0)&(EVO_TYPE!="Lamarck")),
   xlab(x_year_label)+
   ylab("Mean number of unsuitable pixels")+
   ggtitle("Mean number of unsuitable pixels per species")+
-  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==0)&(EVO_TYPE!="Lamarck")), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==0)&(EVO_TYPE!="Lamarck")), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+
+
+ggsave(p, file=sprintf("%s/Figures/AVERAGE_UNSUITABLE_NO_Lamarck.png", base))
+
+library(stringr)
+library(ggplot2)
+library(Rmisc)
+library(ggpubr)
+library(dplyr)
+
+setwd("~/git/ees_3d/R/smart_species")
+base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
+fix_type<-function(x){
+  x[which(x==1)]<-"Lazy"
+  x[which(x==2)]<-"Darwin I"
+  x[which(x==3)]<-"AI Lamarck"
+  x[which(x==4)]<-"AI"
+  x[which(x==5)]<-"Lamarck II"
+  x[which(x==6)]<-"Darwin xII"
+  x[which(x==7)]<-"Darwin II"
+  x[which(x==8)]<-"Combined"
+  x[which(x==9)]<-"Lamarck I"
+  x
+}
+
+fix_df<-function(p_df){
+  #p_df<-p_df %>% filter((EVO_TYPE!=6))
+  #p_df[which(p_df$EVO_RATIO==0.01), "EVO_RATIO"]<-0.005
+  #p_df[which(p_df$EVO_RATIO==0.1), "EVO_RATIO"]<-0.05
+  #p_df_1<-p_df %>%filter(EVO_RATIO==1)
+  #p_df_1$EVO_RATIO<-0.05
+  #p_df[which(p_df$EVO_RATIO==1), "EVO_RATIO"]<-0.005
+  #p_df<-bind_rows(p_df, p_df_1)
+  #p_df$EVO_RATIO<-1
+  p_df<-p_df%>%dplyr::filter(EVO_TYPE %in% c(1,2,4,5,7,8,9))
+  p_df$EVO_TYPE<-fix_type(p_df$EVO_TYPE)
+  p_df$WARP_LABEL<-paste(p_df$NB, p_df$DA, p_df$EVO_RATIO)
+  p_df
+}
+
+count_N_IND_DIFF<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/count_N_IND_DIFF_Fixed.rda")
+count_N_SP_DIFF<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/count_N_SP_DIFF_Fixed.rda")
+count_N_CELL_DIFF<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/count_N_CELL_DIFF_Fixed.rda")
+count_N_UNIQUE_CELL_DIFF<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/count_N_UNIQUE_CELL_DIFF_Fixed.rda")
+
+
+cols<-c("black", 
+        "red",
+        "darkslategrey",
+        "purple",
+        "turquoise",
+        "blue",
+        #"green",
+        "chocolate")
+
+
+x_year_label<-"Year (*100)"
+ribbon_alpha<-0.1
+
+#--------------------------------------------#
+#Figure: N running simulations per time step #
+#--------------------------------------------#
+
+N_Sim<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/N_Sim.rda")
+N_Sim<-fix_df(N_Sim)
+names(cols)<-unique(N_Sim$EVO_TYPE)
+
+p<-ggplot(N_Sim, 
+          aes(x=Y, y= N, color=EVO_TYPE, fill=EVO_TYPE))+
+  geom_line()+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("N running simulations")+
+  ggtitle("N running simulations per time step")+
+  #scale_colour_manual(values = cols, aesthetics = c("colour", "fill"), guide = 'none')+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = subset(N_Sim, Y == 0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = N), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+
+ggsave(p, file=sprintf("%s/Figures/N_Sim_ALL.png", base), width = 10, height=12)
+
+p<-ggplot(N_Sim %>% dplyr::filter((Y>=-1000)&(EVO_TYPE!='Lamarck I')&(EVO_TYPE!='AI Lamarck')), 
+          aes(x=Y, y= N, color=EVO_TYPE, fill=EVO_TYPE))+
+  geom_line()+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("N running simulations")+
+  ggtitle("N running simulations per time step")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = N_Sim %>% filter((Y==0)&(EVO_TYPE!='Lamarck')&(EVO_TYPE!='AI Lamarck')), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = N), hjust = -.1)+
+  #xlim(c(-1000, 400))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/N_Sim_PART.png", base), width = 10, height=12)
+
+#--------------------------------------------------#
+#Figure: Mean number of species of all simulations #
+#--------------------------------------------------#
+mean_df<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df.rda")
+#function fix_df() is in9.null_model_comparision_analysis.r
+mean_df<-fix_df(mean_df)
+
+p<-ggplot(mean_df %>% dplyr::filter(SUITABLE==1), 
+          aes(x=Y, y=Mean_N_SP))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_N_SP-(CI_N_SP_HIGH=CI_N_SP_MEAN), ymax=Mean_N_SP+(CI_N_SP_HIGH=CI_N_SP_MEAN), fill=EVO_TYPE), 
+  #            color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean N of species")+
+  ggtitle("Mean number of species of all simulations")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_SP), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/N_Species_ALL.png", base), width = 10, height=12)
+
+
+#-------------------------------------------------------------#
+#Figure: Mean number of cells/ per species of all simulations #
+#-------------------------------------------------------------#
+p<-ggplot(mean_df %>% filter(SUITABLE==1), 
+          aes(x=Y, y=Mean_AVERAGE_N_CELL))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-(CI_AVERAGE_N_CELL_HIGH=CI_AVERAGE_N_CELL_MEAN), 
+  #                ymax=Mean_AVERAGE_N_CELL+(CI_AVERAGE_N_CELL_HIGH=CI_AVERAGE_N_CELL_MEAN), 
+  #                fill=EVO_TYPE), 
+  #            color=NA, alpha=0.1)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of suitable pixels")+
+  ggtitle("Mean number of suitable pixels per species")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/AVERAGE_N_CELLs_ALL_SUITABLE.png", base), width = 10, height=12)
+
+#-------------------------------------------------------------#
+#Figure: Mean number of unique cells of all simulations #
+#-------------------------------------------------------------#
+p<-ggplot(mean_df %>% filter(SUITABLE==1), 
+          aes(x=Y, y=Mean_N_UNIQUE_CELL))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_N_UNIQUE_CELL-(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
+  #                ymax=Mean_N_UNIQUE_CELL+(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
+  #                fill=EVO_TYPE), 
+  #            color=NA, alpha=0.1)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unique pixels")+
+  ggtitle("Mean number of unique pixels of all simulations")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/N_UNIQUE_CELLs_ALL_SIMULATIONS.png", base), width = 10, height=12)
+
+#-------------------------------------------------------------#
+#Figure: Mean number of unique cells per simulations          #
+#-------------------------------------------------------------#
+df_unique_cell_per_simulation<-inner_join(mean_df, N_Sim, 
+                                          by=c("Y", "NB", "DA", "EVO_RATIO", "EVO_TYPE", "label", "WARP_LABEL"))
+df_unique_cell_per_simulation$Mean_N_UNIQUE_CELL_PER_SIMULATION<-
+  df_unique_cell_per_simulation$Mean_N_UNIQUE_CELL/df_unique_cell_per_simulation$N
+p<-ggplot(df_unique_cell_per_simulation %>% filter(SUITABLE==1), 
+          aes(x=Y, y=Mean_N_UNIQUE_CELL_PER_SIMULATION))+
+  geom_line(aes(color=EVO_TYPE))+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unique pixels")+
+  ggtitle("Mean number of unique pixels per simulation")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = df_unique_cell_per_simulation %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL_PER_SIMULATION), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/N_UNIQUE_CELLs_PER_SIMULATIONS.png", base), width = 10, height=12)
+
+#-------------------------------------------------------------#
+#Figure: Mean number of unique cells per simulations          #
+#Focused simulations only.                                    #
+#The focused simualtions are the Larmark simulations to       #
+#the end of the simulations.                                  #
+#-------------------------------------------------------------#
+mean_df_sub<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_sub_3.rda")
+mean_df_sub<-fix_df(mean_df_sub)
+NULL_DF<-mean_df_sub[1,]
+NULL_DF$SUITABLE<-1
+NULL_DF$WARP_LABEL<-"NARROW GOOD 0.05"
+mean_df_sub<-bind_rows(mean_df_sub, NULL_DF)
+p<-ggplot(mean_df_sub %>% filter(SUITABLE==1), 
+          aes(x=Y, y=Mean_N_UNIQUE_CELL))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_N_UNIQUE_CELL-(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
+  #                ymax=Mean_N_UNIQUE_CELL+(CI_N_UNIQUE_CELL_HIGH=CI_N_UNIQUE_CELL_MEAN), 
+  #                fill=EVO_TYPE), 
+  #            color=NA, alpha=0.1)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of suitable pixels")+
+  ggtitle("Mean number of suitable pixels of all simulations")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_sub %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_UNIQUE_CELL), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/N_UNIQUE_CELLs_Sub_3.png", base), width = 10, height=12)
+
+
+p<-ggplot(mean_df_sub %>% dplyr::filter(SUITABLE==1), 
+          aes(x=Y, y=Mean_N_SP))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_N_SP-(CI_N_SP_HIGH=CI_N_SP_MEAN), ymax=Mean_N_SP+(CI_N_SP_HIGH=CI_N_SP_MEAN), fill=EVO_TYPE), 
+  #            color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean N of species")+
+  ggtitle("Mean number of species of all simulations")+
+  scale_colour_manual(values = cols, aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_sub %>% filter((Y==0)&(SUITABLE==1)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_N_SP), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/N_Species_SUB_3.png", base), width = 10, height=12)
+
+#------------------------------------------------------------------------#
+#Figure: Mean number of unsuitable cells/ per species of all simulations #
+#------------------------------------------------------------------------#
+p<-ggplot(mean_df %>% filter(SUITABLE==0), 
+          aes(x=Y, y=Mean_AVERAGE_N_CELL))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unsuitable pixels")+
+  ggtitle("Mean number of unsuitable pixels per species")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==0)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+
+
+ggsave(p, file=sprintf("%s/Figures/AVERAGE_UNSUITABLE.png", base))
+
+p<-ggplot(mean_df %>% filter((SUITABLE==0)&(EVO_TYPE!="Lamarck")&(EVO_TYPE!="AI Lamarck")), 
+          aes(x=Y, y=Mean_AVERAGE_N_CELL))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_AVERAGE_N_CELL-CI_AVERAGE_N_CELL, ymax=Mean_AVERAGE_N_CELL+CI_AVERAGE_N_CELL, fill=factor(label)), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unsuitable pixels")+
+  ggtitle("Mean number of unsuitable pixels per species")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df %>% filter((Y==0)&(SUITABLE==0)&(EVO_TYPE!="Lamarck")), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_AVERAGE_N_CELL), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
 
@@ -269,15 +537,15 @@ p<-ggplot(mean_df_ratio_df %>% filter(Y>=-1198), aes(x=Y, y=Mean_ratio))+
   xlab(x_year_label)+
   ylab("Mean number of unsuitable individuals/all individuals")+
   ggtitle("Mean number of unsuitable individuals/all individuals")+
-  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = mean_df_ratio_df %>% filter((Y==0)), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_ratio), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_ratio_df %>% filter((Y==0)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_ratio), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
 ggsave(p, file=sprintf("%s/Figures/Trial_Error_ALL.png", base))
 
-p<-ggplot(mean_df_ratio_df %>% filter((Y>=-1100)&(EVO_TYPE!="Lamarck")), aes(x=Y, y=Mean_ratio))+
+p<-ggplot(mean_df_ratio_df %>% filter((Y>=-1100)&(EVO_TYPE!="Lamarck")&(EVO_TYPE!="AI Lamarck")), aes(x=Y, y=Mean_ratio))+
   geom_line(aes(color=EVO_TYPE))+
   #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, 
   #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
@@ -285,10 +553,10 @@ p<-ggplot(mean_df_ratio_df %>% filter((Y>=-1100)&(EVO_TYPE!="Lamarck")), aes(x=Y
   xlab(x_year_label)+
   ylab("Mean number of unsuitable individuals/all individuals")+
   ggtitle("Mean number of unsuitable individuals/all individuals")+
-  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = mean_df_ratio_df %>% filter((Y==0)&(EVO_TYPE!="Lamarck")), 
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_ratio), hjust = -.1)+
-  xlim(c(-1200, 350))+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_ratio_df %>% filter((Y==0)&(EVO_TYPE!="Lamarck")), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_ratio), hjust = -.1)+
+  #xlim(c(-1200, 350))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
 ggsave(p, file=sprintf("%s/Figures/Trial_Error_NO_Lamarck.png", base))
@@ -301,10 +569,82 @@ p<-ggplot(mean_df_ratio_df %>% filter((Y<=-1100)&(Y>=-1198)),
   xlab(x_year_label)+
   ylab("Mean number of unsuitable individuals/all individuals")+
   ggtitle("Mean number of unsuitable individuals/all individuals")+
-  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"), guide = 'none')+
-  geom_text(data = mean_df_ratio_df %>% filter((Y==-1100)&(EVO_TYPE!=3)),
-            aes(label = EVO_TYPE, colour = EVO_TYPE, x = -1100, y = Mean_ratio), hjust = -.1)+
-  xlim(c(-1198, -1050))+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_ratio_df %>% filter((Y==-1100)&(EVO_TYPE!=3)),
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = -1100, y = Mean_ratio), hjust = -.1)+
+  #xlim(c(-1198, -1050))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/Trial_Error_1100.png", base))
+
+
+mean_df_nb<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_nb.rda")
+mean_df_nb<-fix_df(mean_df_nb)
+p<-ggplot(mean_df_nb, aes(x=Y))+
+  geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_LOW-(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN),
+  #                ymax=Mean_TEMP_LOW+(CI_TEMP_LOW_HIGH-CI_TEMP_LOW_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  geom_line(aes(y=Mean_TEMP_HIGH, color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_TEMP_HIGH-(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN),
+  #                ymax=Mean_TEMP_HIGH+(CI_TEMP_HIGH_HIGH-CI_TEMP_HIGH_MEAN), 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Temperature")+
+  ggtitle("High and low limit of temperature (full set)")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_nb %>% filter(Y==0), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_TEMP_LOW), hjust = -.1)+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+ggsave(p, file=sprintf("%s/Figures/TEMP_LOW_HIGH.png", base))
+
+p<-ggplot(mean_df_nb
+mean_df_ratio_df<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_df_ratio_df.rda")
+mean_df_ratio_df<-fix_df(mean_df_ratio_df)
+p<-ggplot(mean_df_ratio_df %>% filter(Y>=-1198), aes(x=Y, y=Mean_ratio))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unsuitable individuals/all individuals")+
+  ggtitle("Mean number of unsuitable individuals/all individuals")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_ratio_df %>% filter((Y==0)), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_ratio), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+
+ggsave(p, file=sprintf("%s/Figures/Trial_Error_ALL.png", base))
+
+p<-ggplot(mean_df_ratio_df %>% filter((Y>=-1100)&(EVO_TYPE!="Lamarck")&(EVO_TYPE!="AI Lamarck")), aes(x=Y, y=Mean_ratio))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, 
+  #                fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unsuitable individuals/all individuals")+
+  ggtitle("Mean number of unsuitable individuals/all individuals")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_ratio_df %>% filter((Y==0)&(EVO_TYPE!="Lamarck")), 
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = 0, y = Mean_ratio), hjust = -.1)+
+  #xlim(c(-1200, 350))+
+  facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
+
+ggsave(p, file=sprintf("%s/Figures/Trial_Error_NO_Lamarck.png", base))
+
+p<-ggplot(mean_df_ratio_df %>% filter((Y<=-1100)&(Y>=-1198)), 
+          aes(x=Y, y=Mean_ratio))+
+  geom_line(aes(color=EVO_TYPE))+
+  #geom_ribbon(aes(ymin=Mean_ratio-CI_ratio, ymax=Mean_ratio+CI_ratio, fill=EVO_TYPE), color=NA, alpha=ribbon_alpha)+
+  theme_bw()+
+  xlab(x_year_label)+
+  ylab("Mean number of unsuitable individuals/all individuals")+
+  ggtitle("Mean number of unsuitable individuals/all individuals")+
+  scale_colour_manual(values = cols,aesthetics = c("colour", "fill"))+
+  #geom_text(data = mean_df_ratio_df %>% filter((Y==-1100)&(EVO_TYPE!=3)),
+  #          aes(label = EVO_TYPE, colour = EVO_TYPE, x = -1100, y = Mean_ratio), hjust = -.1)+
+  #xlim(c(-1198, -1050))+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, file=sprintf("%s/Figures/Trial_Error_1100.png", base))
 
@@ -457,6 +797,7 @@ NULL_DF$SUITABLE<-1
 NULL_DF$WARP_LABEL<-"NARROW GOOD 0.05"
 mean_df_nb_sub<-bind_rows(mean_df_nb_sub, NULL_DF)
 
+unique(mean_df_nb_sub$EVO_TYPE)
 
 p<-ggplot(mean_df_nb_sub, aes(x=Y))+
   geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+
@@ -606,7 +947,7 @@ NULL_DF<-mean_df_nb_sub_2[1,]
 NULL_DF$SUITABLE<-1
 NULL_DF$WARP_LABEL<-"NARROW GOOD 0.05"
 mean_df_nb_sub_2<-bind_rows(mean_df_nb_sub_2, NULL_DF)
-
+unique(mean_df_nb_sub_2$EVO_TYPE)
 
 p<-ggplot(mean_df_nb_sub_2, aes(x=Y))+
   geom_line(aes(y=Mean_TEMP_LOW, color=EVO_TYPE))+

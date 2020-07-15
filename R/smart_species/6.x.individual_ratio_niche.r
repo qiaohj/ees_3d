@@ -61,7 +61,7 @@ max_prec<-readRDS(sprintf("%s/Tables/ENV/max_prec.rda", base))
 simulations<-simulations %>% filter(nb!="BROAD")
 simulations<-simulations %>% filter(is_run==1)
 
-#simulations<-simulations[sample(nrow(simulations)),]
+simulations<-simulations[sample(nrow(simulations)),]
 
 target<-sprintf("%s/Tables/individual_ratio_nb_%s.rda", base, iii)
 if (file.exists(target)){

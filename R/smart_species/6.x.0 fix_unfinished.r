@@ -8,7 +8,7 @@ print(Sys.getenv('R_MAX_NSIZE'))
 
 setwd("~/git/ees_3d/R/smart_species")
 args = commandArgs(trailingOnly=TRUE)
-iii=4
+iii=9
 iii = args[1]
 start = as.numeric(args[2])
 if (is.na(start)){

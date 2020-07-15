@@ -5,7 +5,7 @@ library(dplyr)
 setwd("~/git/ees_3d/R/smart_species")
 base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
 result_all<-NULL
-evo_type_c<-c(1,2,3,4,5,7,8)
+evo_type_c<-c(1,2,3,4,5,7,8,9)
 for (i in evo_type_c){
   print(i)
   result<-readRDS(sprintf("%s/Tables/individual_ratio_%d.rda", base, i))
@@ -20,10 +20,21 @@ for (i in evo_type_c){
 result_all$AVERAGE_N_CELL<-result_all$N_CELL/result_all$N_SP
 saveRDS(result_all, sprintf("%s/Tables/individual_ratio.rda", base))
 
-result<-result_all
 
+result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
 result<-result%>%ungroup()
+NULL_DF<-result %>% dplyr::filter(EVO_TYPE==1)
+result<-result %>% dplyr::filter(EVO_TYPE!=1)
+NULL_DF$EVO_RATIO<-0.005
+result<-bind_rows(result, NULL_DF)
+NULL_DF$EVO_RATIO<-0.05
+result<-bind_rows(result, NULL_DF)
+result[which(result$EVO_RATIO==0.1), "EVO_RATIO"]<-0.05
+result[which(result$EVO_RATIO==0.01), "EVO_RATIO"]<-0.005
+unique(result$EVO_TYPE)
+unique(result$Y)
 
+#result<-result_all
 N_Sim<-result %>%
   dplyr::group_by(Y, NB, DA, EVO_RATIO, EVO_TYPE) %>%
   dplyr::summarize(N=length(unique(GLOBAL_ID))
@@ -99,23 +110,24 @@ saveRDS(mean_df_ratio_df, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_mode
 function(x){
   x[which(x==1)]<-"Lazy"
   x[which(x==2)]<-"Darwin"
-  x[which(x==3)]<-"Lamarck"
+  x[which(x==3)]<-"AI Lamarck"
   x[which(x==4)]<-"AI"
   x[which(x==5)]<-"Lamarck II"
   x[which(x==6)]<-"Darwin xII"
   x[which(x==7)]<-"Darwin II"
   x[which(x==8)]<-"Combined"
+  x[which(x==9)]<-"Lamarck"
   x
 }
 
 fix_df<-function(p_df){
   #p_df<-p_df %>% filter((EVO_TYPE!=6))
-  p_df[which(p_df$EVO_RATIO==0.01), "EVO_RATIO"]<-0.005
-  p_df[which(p_df$EVO_RATIO==0.1), "EVO_RATIO"]<-0.05
-  p_df_1<-p_df %>%filter(EVO_RATIO==1)
-  p_df_1$EVO_RATIO<-0.05
-  p_df[which(p_df$EVO_RATIO==1), "EVO_RATIO"]<-0.005
-  p_df<-bind_rows(p_df, p_df_1)
+  #p_df[which(p_df$EVO_RATIO==0.01), "EVO_RATIO"]<-0.005
+  #p_df[which(p_df$EVO_RATIO==0.1), "EVO_RATIO"]<-0.05
+  #p_df_1<-p_df %>%filter(EVO_RATIO==1)
+  #p_df_1$EVO_RATIO<-0.05
+  #p_df[which(p_df$EVO_RATIO==1), "EVO_RATIO"]<-0.005
+  #p_df<-bind_rows(p_df, p_df_1)
   #p_df$EVO_RATIO<-1
   p_df$EVO_TYPE<-fix_type(p_df$EVO_TYPE)
   p_df$WARP_LABEL<-paste(p_df$NB, p_df$DA, p_df$EVO_RATIO)
@@ -154,11 +166,11 @@ for (EVO_TYPE in evo_type_c){
   }else{
     FULL_DF_0.1<-FULL_DF
     FULL_DF_0.1$EVO_TYPE<-EVO_TYPE
-    FULL_DF_0.1$EVO_RATIO<-0.1
+    #FULL_DF_0.1$EVO_RATIO<-0.1
     
     FULL_DF_0.01<-FULL_DF
     FULL_DF_0.01$EVO_TYPE<-EVO_TYPE
-    FULL_DF_0.01$EVO_RATIO<-0.01
+    #FULL_DF_0.01$EVO_RATIO<-0.01
     ITEM<-bind_rows(FULL_DF_0.1, FULL_DF_0.01)
   }
   if (is.null(FULL_DF_2)){
@@ -168,8 +180,8 @@ for (EVO_TYPE in evo_type_c){
   }
 }
 
-result[which(result$EVO_RATIO==0.005), "EVO_RATIO"]<-0.01
-result[which(result$EVO_RATIO==0.05), "EVO_RATIO"]<-0.1
+#result[which(result$EVO_RATIO==0.005), "EVO_RATIO"]<-0.01
+#result[which(result$EVO_RATIO==0.05), "EVO_RATIO"]<-0.1
 
 ALL_DF<-left_join(FULL_DF_2, result, by=c("Y", "SUITABLE", "NB", "DA", "GLOBAL_ID", "EVO_TYPE", "EVO_RATIO"))
 
@@ -414,22 +426,12 @@ mean_sort_N_UNIQUE_CELL[is.na(mean_sort_N_UNIQUE_CELL)]<-0
 mean_sort_N_UNIQUE_CELL$label<-paste(mean_sort_N_UNIQUE_CELL$NB, mean_sort_N_UNIQUE_CELL$DA, mean_sort_N_UNIQUE_CELL$EVO_TYPE)
 saveRDS(mean_sort_N_UNIQUE_CELL, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/mean_sort_N_UNIQUE_CELL_Fixed_0.005.rda")
 
-result<-readRDS(sprintf("%s/Tables/individual_ratio.rda", base))
-NULL_DF<-result %>% filter(EVO_TYPE==1)
-result<-result %>% filter(EVO_TYPE!=1)
-NULL_DF$EVO_RATIO<-0.005
-result<-bind_rows(result, NULL_DF)
-NULL_DF$EVO_RATIO<-0.05
-result<-bind_rows(result, NULL_DF)
-result[which(result$EVO_RATIO==0.1), "EVO_RATIO"]<-0.05
-result[which(result$EVO_RATIO==0.01), "EVO_RATIO"]<-0.005
-View(result%>%filter(EVO_TYPE==5))
-
 target_label<-result %>% dplyr::filter((Y==0)&(EVO_TYPE==3))
 
 target_labels<-paste(target_label$NB, target_label$DA, target_label$EVO_RATIO, target_label$GLOBAL_ID)
 saveRDS(target_labels, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/target_labels_3.rda")
 
+target_labels<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/target_labels_3.rda")
 result$focused_label<-paste(result$NB, result$DA, result$EVO_RATIO, result$GLOBAL_ID)
 result_sub<-result%>%dplyr::filter(focused_label %in% target_labels)
 saveRDS(result_sub, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/individual_ratio_sub_3.rda")
@@ -480,17 +482,7 @@ saveRDS(mean_df_sub, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_com
 
 
 result_nb<-readRDS("../../../ees_3d_data/SMART_SPECIES/Tables/individual_ratio_nb.rda")
-NULL_DF<-result_nb %>% filter(EVO_TYPE==1)
-result_nb<-result_nb %>% filter(EVO_TYPE!=1)
-NULL_DF$EVO_RATIO<-0.005
-result_nb<-bind_rows(result_nb, NULL_DF)
-NULL_DF$EVO_RATIO<-0.05
-result_nb<-bind_rows(result_nb, NULL_DF)
-result_nb[which(result_nb$EVO_RATIO==0.1), "EVO_RATIO"]<-0.05
-result_nb[which(result_nb$EVO_RATIO==0.01), "EVO_RATIO"]<-0.005
 
-unique(result_nb$EVO_TYPE)
-unique(result_nb$EVO_RATIO)
 mean_df_nb<-result_nb %>%
   dplyr::group_by(Y, NB, DA, EVO_RATIO, EVO_TYPE) %>%
   dplyr::summarize(Mean_TEMP_LOW = mean(TEMP_LOW, na.rm=TRUE),
@@ -542,6 +534,7 @@ saveRDS(mean_df_nb, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comp
 result_nb$focused_label<-paste(result_nb$NB, result_nb$DA, result_nb$EVO_RATIO, result_nb$GLOBAL_ID)
 result_nb_sub<-result_nb%>%dplyr::filter(focused_label %in% target_labels)
 saveRDS(result_nb_sub, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/individual_ratio_nb_sub_3.rda")
+unique(result_nb_sub$EVO_TYPE)
 
 mean_df_nb_sub<-result_nb_sub %>%
   dplyr::group_by(Y, NB, DA, EVO_RATIO, EVO_TYPE) %>%
@@ -592,6 +585,7 @@ saveRDS(mean_df_nb_sub, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_
 
 
 result_nb_sub_2<-result_nb%>%dplyr::filter(!(focused_label %in% target_labels))
+unique(result_nb_sub_2$EVO_TYPE)
 saveRDS(result_nb_sub_2, "../../../ees_3d_data/SMART_SPECIES/Tables/9.null_model_comparison_analysis/individual_ratio_nb_sub_no_3.rda")
 
 mean_df_nb_sub_2<-result_nb_sub_2 %>%
