@@ -150,7 +150,7 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
 
     if (p_id == -1) {
         //sql = "SELECT * FROM simulations WHERE is_run=1 order by random()";
-        sql = "SELECT * FROM simulations WHERE is_run=1 order by random()";
+        sql = "SELECT * FROM simulations WHERE is_run=1 and evo_type=1 order by random()";
     } else {
         sql = "SELECT * FROM simulations WHERE is_run=1 and id=" + to_string(p_id);
     }
