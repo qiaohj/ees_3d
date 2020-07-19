@@ -67,31 +67,53 @@ getSPID<-function(tree, node){
                    label))
   }
 }
-node<-Ntip(tree)+3
-getSPID(tree, Ntip(tree)+3)
-getSPID(tree, Ntip(tree))
-getSPID(tree, 1)
-start=1808
-if (start==1){
-  stat<-NULL
-  detail<-NULL
-  speciation_df<-NULL
-  extinction_df<-NULL
-  sp_character<-NULL
-}else{
-  stat<-readRDS(sprintf("%s/Data/stat.rda", base))
-  detail<-readRDS(sprintf("%s/Data/detail.rda", base))
-  sp_character<-readRDS(sprintf("%s/Data/sp_character.rda", base))
-  extinction_df<-readRDS(sprintf("%s/Data/extinction_df.rda", base))
-  speciation_df<-readRDS(sprintf("%s/Data/speciation_df.rda", base))
-  stat<-stat%>%dplyr::filter(global_id!=start)
-  detail<-detail%>%dplyr::filter(global_id!=start)
-  sp_character<-sp_character%>%dplyr::filter(global_id!=start)
-  extinction_df<-extinction_df%>%dplyr::filter(ID!=start)
-  speciation_df<-speciation_df%>%dplyr::filter(global_id!=start)
+#node<-Ntip(tree)+3
+#getSPID(tree, Ntip(tree)+3)
+#getSPID(tree, Ntip(tree))
+#getSPID(tree, 1)
+args = commandArgs(trailingOnly=TRUE)
+start=as.numeric(args[1])
+end=as.numeric(args[2])
+
+if (F){
+  if (start==1){
+    stat<-NULL
+    detail<-NULL
+    speciation_df<-NULL
+    extinction_df<-NULL
+    sp_character<-NULL
+  }else{
+    stat<-readRDS(sprintf("%s/Data/stat.rda", base))
+    detail<-readRDS(sprintf("%s/Data/detail.rda", base))
+    sp_character<-readRDS(sprintf("%s/Data/sp_character.rda", base))
+    extinction_df<-readRDS(sprintf("%s/Data/extinction_df.rda", base))
+    speciation_df<-readRDS(sprintf("%s/Data/speciation_df.rda", base))
+    stat<-stat%>%dplyr::filter(global_id!=start)
+    detail<-detail%>%dplyr::filter(global_id!=start)
+    sp_character<-sp_character%>%dplyr::filter(global_id!=start)
+    extinction_df<-extinction_df%>%dplyr::filter(ID!=start)
+    speciation_df<-speciation_df%>%dplyr::filter(global_id!=start)
+  }
 }
-for (i in c(start:nrow(simulations))){
-  print(paste(i, nrow(simulations)))
+if (F){
+  stat[which(is.na(stat$evo_ratio)),]
+  stat$label<-paste(stat$global_id, stat$da, stat$nb, stat$evo_type, stat$evo_ratio, sep="_")
+  for (i in c(1:nrow(simulations))){
+    s<-simulations[i,]
+    if (s$label %in% stat$label){
+      print(paste(i, "yes"))
+    }else{
+      asdf
+    }
+  }
+}
+stat<-NULL
+detail<-NULL
+speciation_df<-NULL
+extinction_df<-NULL
+sp_character<-NULL
+for (i in c(start:end)){
+  print(paste(i, start, end))
   s<-simulations[i,]
   nb<-strsplit(s$nb_v, "\\|")[[1]]
   nb_temp<-as.numeric(strsplit(nb[1], ",")[[1]])
@@ -207,7 +229,7 @@ for (i in c(start:nrow(simulations))){
     
     #Speciation
     if (node$type=="NODE"){
-      print(paste(j, nrow(node_labels), "SPECIATION"))
+      print(paste(i, start, end, j, nrow(node_labels), "SPECIATION"))
       item<-node_labels%>%dplyr::filter(PARENT==node$SP)
       dis<-log_df%>%dplyr::filter((SUITABLE==1)&(Y==node$to)&(SP_ID %in% item$SP))
       ch<-chull(dis %>% dplyr::select(lon, lat))
@@ -247,7 +269,7 @@ for (i in c(start:nrow(simulations))){
     }
     #Extinction
     if ((node$type=="LEAF")&(node$to!=0)){
-      print(paste(j, nrow(node_labels), "EXTINCTION"))
+      print(paste(i, start, end, j, nrow(node_labels), "EXTINCTION"))
       dis<-log_df%>%dplyr::filter((Y==node$to)&(SP_ID==node$SP))
       dis$MIN_TEMP_IN<-between(dis$MIN_TEMP, nb_temp[1], nb_temp[2])
       dis$MAX_TEMP_IN<-between(dis$MAX_TEMP, nb_temp[1], nb_temp[2])
@@ -287,8 +309,8 @@ extinction_df[which(extinction_df$evo_ratio==0.1), "evo_ratio"]<-0.05
 speciation_df[which(speciation_df$evo_ratio==0.01), "evo_ratio"]<-0.005
 speciation_df[which(speciation_df$evo_ratio==0.1), "evo_ratio"]<-0.05
 
-saveRDS(stat, sprintf("%s/Data/stat.rda", base))
-saveRDS(detail, sprintf("%s/Data/detail.rda", base))
-saveRDS(sp_character, sprintf("%s/Data/sp_character.rda", base))
-saveRDS(extinction_df, sprintf("%s/Data/extinction_df.rda", base))
-saveRDS(speciation_df, sprintf("%s/Data/speciation_df.rda", base))
+saveRDS(stat, sprintf("%s/Data/items/stat_%d_%d.rda", base, start, end))
+saveRDS(detail, sprintf("%s/Data/items/detail_%d_%d.rda", base, start, end))
+saveRDS(sp_character, sprintf("%s/Data/items/sp_character_%d_%d.rda", base, start, end))
+saveRDS(extinction_df, sprintf("%s/Data/items/extinction_df_%d_%d.rda", base, start, end))
+saveRDS(speciation_df, sprintf("%s/Data/items/speciation_df_%d_%d.rda", base, start, end))
