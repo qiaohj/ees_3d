@@ -314,3 +314,10 @@ saveRDS(detail, sprintf("%s/Data/items/detail_%d_%d.rda", base, start, end))
 saveRDS(sp_character, sprintf("%s/Data/items/sp_character_%d_%d.rda", base, start, end))
 saveRDS(extinction_df, sprintf("%s/Data/items/extinction_df_%d_%d.rda", base, start, end))
 saveRDS(speciation_df, sprintf("%s/Data/items/speciation_df_%d_%d.rda", base, start, end))
+
+if (F){
+  cc<-c()
+  for (f in seq(from=11001, to=12000, by=100)){
+    cc<-c(cc, sprintf("Rscript data.r %d %d", f, f+99))
+  }
+}
