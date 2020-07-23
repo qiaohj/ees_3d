@@ -35,13 +35,14 @@ for (i in c(1:nrow(simulations))){
   s<-simulations[i,]
   log<-sprintf("%s/Results/%s/%s.log", base, s$label, s$label)
   if (!file.exists(log)){
+    print("SKIP 0")
     next()
   }
   target<-sprintf("%s.env.rda", log)
   sp_niche<-NA
   if (file.exists(target)){
-    print("SKIP 1")
-    next()
+    #print("SKIP 1")
+    #next()
     ffize<-file.info(target)$size
     print(paste(ffize, target))
     
