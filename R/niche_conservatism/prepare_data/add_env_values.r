@@ -19,7 +19,8 @@ base2<-"/media/huijieqiao/Butterfly/SMART_SPECIES"
 mask_df<-readRDS(sprintf("%s/Data/ENV/mask_df.rda", base))
 
 simulations<-NULL
-for (i in c(1,2,7)){
+#for (i in c(1,2,7)){
+for (i in c(7)){
   print(i)
   mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_%s.sqlite", db_base, i))  
   simulation<-dbReadTable(mydb, "simulations")
@@ -45,10 +46,10 @@ for (i in c(1:nrow(simulations))){
   s<-simulations[i,]
   log<-sprintf("%s/RESULTS/%s/%s.log", base2, s$label, s$label)
   target<-sprintf("%s.env.rda", log)
-  sp_niche<-NULL
+  sp_niche<-NA
   if (file.exists(target)){
-    #print("SKIP 1")
-    #next()
+    print("SKIP 1")
+    next()
     ffize<-file.info(target)$size
     print(paste(ffize, target))
     

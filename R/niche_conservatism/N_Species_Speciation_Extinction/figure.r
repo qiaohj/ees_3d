@@ -36,6 +36,8 @@ fix_type<-function(x){
 }
 
 fix_df<-function(p_df){
+  
+  
   colnames(p_df)<-toupper(colnames(p_df))
   p_df<-p_df%>%dplyr::filter(EVO_TYPE %in% c(1,2,4,5,7,8,9))
   p_df$EVO_TYPE<-fix_type(p_df$EVO_TYPE)
@@ -51,45 +53,13 @@ fix_df<-function(p_df){
   p_df$WARP_LABEL<-paste(p_df$NB, p_df$DA, p_df$EVO_RATIO)
   p_df
 }
-stat<-readRDS(sprintf("%s/Data/stat.rda", base))
-stat<-fix_df(stat)
-
-
 cols<-c("turquoise",
         "chocolate",
         "black")
 rep=100
-sample_size=100
-seeds<-unique(stat$GLOBAL_ID)
-
 x_year_label<-"Year (*100)"
 ribbon_alpha<-0.1
-names(cols)<-unique(stat$EVO_TYPE)
-stat_speciation<-stat%>%
-  dplyr::select(GLOBAL_ID, DA, NB, EVO_TYPE, EVO_RATIO, N_SPECIATION, WARP_LABEL)
-colnames(stat_speciation)[6]<-"N"
-stat_speciation$TYPE<-"SPECIATION"
-stat_extinction<-stat%>%
-  dplyr::select(GLOBAL_ID, DA, NB, EVO_TYPE, EVO_RATIO, N_EXTINCT, WARP_LABEL)
-colnames(stat_extinction)[6]<-"N"
-stat_extinction$TYPE<-"EXTINCTION"
-stat_df<-bind_rows(stat_extinction, stat_speciation)
 
-if (F){
-  stat_df_rep<-NULL
-  for (i in c(1:rep)){
-    print(i)
-    sub_seeds<-seeds[sample(length(seeds), sample_size)]
-    sub_stat_df<-stat_df%>%dplyr::filter(GLOBAL_ID %in% sub_seeds)
-    sub_stat_df$REP<-i
-    if (is.null(stat_df_rep)){
-      stat_df_rep<-sub_stat_df
-    }else{
-      stat_df_rep<-bind_rows(stat_df_rep, sub_stat_df)
-    }
-  }
-  saveRDS(stat_df_rep, sprintf("%s/Data/stat_df_rep.rda", base))
-}
 
 stat_df_rep<-readRDS(sprintf("%s/Data/stat_df_rep.rda", base))
 stat_df_sum<-stat_df_rep%>%dplyr::group_by(DA, NB, EVO_TYPE, EVO_RATIO, WARP_LABEL, TYPE, REP)%>%
@@ -134,12 +104,14 @@ p<-ggplot(stat_df_sum %>% dplyr::filter(TYPE=="EXTINCTION"),
 ggsave(p, filename=sprintf("%s/Figures/extinction_by_scenario.png", base))
 
 
+stat<-readRDS(sprintf("%s/Data/stat.rda", base))
+stat<-fix_df(stat)
 stat_rank<-stat%>%
   dplyr::group_by(GLOBAL_ID, DA, NB, EVO_RATIO, WARP_LABEL) %>% 
   dplyr::mutate(RANK_SPECIATION = rank(N_SPECIATION * -1, ties.method = "min"),
-                RANK_EXTINCTION = rank(N_EXTINCT * -1, ties.method = "min"),
+                RANK_EXTINCTION = rank(N_EXTINCTION * -1, ties.method = "min"),
                 ALL_SPECIATION = n_distinct(N_SPECIATION),
-                ALL_EXTINCTION = n_distinct(N_EXTINCT))
+                ALL_EXTINCTION = n_distinct(N_EXTINCTION))
 
 stat_rank_speciation<-stat_rank%>%dplyr::filter(ALL_SPECIATION!=1)
 
@@ -175,58 +147,6 @@ p<-ggplot(stat_rank_extinction,
 ggsave(p, filename=sprintf("%s/Figures/extinction_rank_by_scenario.png", base))
 
 
-if (F){
-  detail<-readRDS(sprintf("%s/Data/detail.rda", base))
-  detail<-fix_df(detail)
-  detail_df_rep<-NULL
-  for (i in c(1:rep)){
-    print(i)
-    sub_seeds<-seeds[sample(length(seeds), sample_size)]
-    sub_detail_df<-detail%>%dplyr::filter(GLOBAL_ID %in% sub_seeds)
-    sub_detail_df$REP<-i
-    if (is.null(detail_df_rep)){
-      detail_df_rep<-sub_detail_df
-    }else{
-      detail_df_rep<-bind_rows(detail_df_rep, sub_detail_df)
-    }
-  }
-  saveRDS(detail_df_rep, sprintf("%s/Data/detail_df_rep.rda", base))
-  
-  detail_df_rep<-readRDS(sprintf("%s/Data/detail_df_rep.rda", base))
-  year=100
-  speciation_extinction_by_year<-NULL
-  for (i in c(1:rep)){ 
-    detail_df_rep_sub<-detail_df_rep%>%dplyr::filter(REP==i)
-    for (year in c(1200:0)){
-      print(paste(year, i))
-      N_SPECIES<-detail_df_rep_sub%>%dplyr::filter((TO<=year)&(FROM>=year))%>%
-        dplyr::group_by(DA, NB, EVO_TYPE, EVO_RATIO, WARP_LABEL)%>%
-        dplyr::summarise(N_SPECIES=n())
-      N_SPECIATION<-detail_df_rep_sub%>%dplyr::filter((year==TO)&(TYPE=="NODE"))%>%
-        dplyr::group_by(DA, NB, EVO_TYPE, EVO_RATIO, WARP_LABEL)%>%
-        dplyr::summarise(N_SPECIATION=n())
-      N_EXTINCTION<-detail_df_rep_sub%>%dplyr::filter((year==TO)&(TYPE=="LEAF"))%>%
-        dplyr::group_by(DA, NB, EVO_TYPE, EVO_RATIO, WARP_LABEL)%>%
-        dplyr::summarise(N_EXTINCTION=n())
-      
-      item<-left_join(N_SPECIES, N_SPECIATION, by=c("DA", "NB", "EVO_TYPE", "EVO_RATIO", "WARP_LABEL"))
-      item<-left_join(item, N_EXTINCTION, by=c("DA", "NB", "EVO_TYPE", "EVO_RATIO", "WARP_LABEL"))
-      item[is.na(item)]<-0
-      item$YEAR<-year
-      item$REP<-i
-      if (is.null(speciation_extinction_by_year)){
-        speciation_extinction_by_year<-item
-      }else{
-        speciation_extinction_by_year<-bind_rows(speciation_extinction_by_year, item)
-      }
-    }
-    saveRDS(speciation_extinction_by_year, 
-            sprintf("%s/Data/speciation_extinction_by_year.rda", base))
-    
-  }
-  saveRDS(speciation_extinction_by_year, 
-          sprintf("%s/Data/speciation_extinction_by_year.rda", base))
-}
 speciation_extinction_by_year<-readRDS(sprintf("%s/Data/speciation_extinction_by_year.rda", base))
 speciation_extinction_by_year_se<-speciation_extinction_by_year%>%ungroup()%>%
   dplyr::group_by(DA, NB, EVO_TYPE, EVO_RATIO, WARP_LABEL, YEAR)%>%
@@ -299,8 +219,8 @@ ggsave(p, filename=sprintf("%s/Figures/speciation_by_year.png", base))
 p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter((YEAR>=-1100)&(YEAR<0)), 
           aes(x=YEAR, y= MEAN_N_EXTINCTION, color=EVO_TYPE))+
   geom_line()+
-  geom_errorbar(aes(ymin=MEAN_N_EXTINCTION-CI_N_EXTINCTION, ymax=MEAN_N_EXTINCTION+CI_N_EXTINCTION), width=.2,
-                position=position_dodge(.9), alpha=ribbon_alpha)+
+  #geom_errorbar(aes(ymin=MEAN_N_EXTINCTION-CI_N_EXTINCTION, ymax=MEAN_N_EXTINCTION+CI_N_EXTINCTION), width=.2,
+  #              position=position_dodge(.9), alpha=ribbon_alpha)+
   theme_bw()+
   xlab("Time step")+
   ylab("N EXTINCTION")+
