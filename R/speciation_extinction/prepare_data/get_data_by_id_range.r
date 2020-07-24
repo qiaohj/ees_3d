@@ -189,33 +189,35 @@ for (i in c(start:end)){
   }
   #Area, Niche Breadth, Lat, Lon Range
   dis<-log_df%>%dplyr::filter(SUITABLE==1)
-  dis_n<-dis%>%dplyr::group_by(Y, SP_ID)%>%
-    dplyr::summarise(AREA=n(),
-                     MIN_TEMP=min(MIN_TEMP),
-                     MAX_MIN_TEMP=max(MIN_TEMP),
-                     MIN_MAX_TEMP=min(MAX_TEMP),
-                     MAX_TEMP=max(MAX_TEMP),
-                     MIN_PREC=min(MAX_PREC),
-                     MAX_PREC=max(MAX_PREC),
-                     MIN_LAT=min(lat),
-                     MAX_LAT=max(lat),
-                     MIN_LON=min(lon),
-                     MAX_LON=max(lon))
-  dis_n$RANG_TEMP<-dis_n$MAX_TEMP-dis_n$MIN_TEMP
-  dis_n$RANG_PREC<-dis_n$MAX_PREC-dis_n$MIN_PREC
-  dis_n$RANG_LON<-dis_n$MAX_LON-dis_n$MIN_LON
-  dis_n$RANG_LAT<-dis_n$MAX_LAT-dis_n$MIN_LAT
-  dis_n$global_id<-s$global_id
-  dis_n$da<-s$da
-  dis_n$nb<-s$nb
-  dis_n$evo_type<-s$evo_type
-  dis_n$evo_ratio<-s$niche_envolution_individual_ratio
-  dis_n$from<-s$from
-  dis_n$id<-s$id
-  if (is.null(sp_character)){
-    sp_character<-dis_n
-  }else{
-    sp_character<-bind_rows(sp_character, dis_n)
+  if (nrow(dis)>0){
+    dis_n<-dis%>%dplyr::group_by(Y, SP_ID)%>%
+      dplyr::summarise(AREA=n(),
+                       MIN_TEMP=min(MIN_TEMP, na.rm = T),
+                       MAX_MIN_TEMP=max(MIN_TEMP, na.rm = T),
+                       MIN_MAX_TEMP=min(MAX_TEMP, na.rm = T),
+                       MAX_TEMP=max(MAX_TEMP, na.rm = T),
+                       MIN_PREC=min(MAX_PREC, na.rm = T),
+                       MAX_PREC=max(MAX_PREC, na.rm = T),
+                       MIN_LAT=min(lat, na.rm = T),
+                       MAX_LAT=max(lat, na.rm = T),
+                       MIN_LON=min(lon, na.rm = T),
+                       MAX_LON=max(lon, na.rm = T))
+    dis_n$RANG_TEMP<-dis_n$MAX_TEMP-dis_n$MIN_TEMP
+    dis_n$RANG_PREC<-dis_n$MAX_PREC-dis_n$MIN_PREC
+    dis_n$RANG_LON<-dis_n$MAX_LON-dis_n$MIN_LON
+    dis_n$RANG_LAT<-dis_n$MAX_LAT-dis_n$MIN_LAT
+    dis_n$global_id<-s$global_id
+    dis_n$da<-s$da
+    dis_n$nb<-s$nb
+    dis_n$evo_type<-s$evo_type
+    dis_n$evo_ratio<-s$niche_envolution_individual_ratio
+    dis_n$from<-s$from
+    dis_n$id<-s$id
+    if (is.null(sp_character)){
+      sp_character<-dis_n
+    }else{
+      sp_character<-bind_rows(sp_character, dis_n)
+    }
   }
   for (j in c(1:nrow(node_labels))){
     
