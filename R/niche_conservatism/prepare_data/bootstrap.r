@@ -63,7 +63,7 @@ sp_character<-readRDS(sprintf("%s/Data/sp_character.rda", base))
 sp_character<-fix_df(sp_character)
 
 
-
+i=1
 
 for (i in c(1:rep)){
   #stat_df_rep<-NULL

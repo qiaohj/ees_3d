@@ -239,6 +239,7 @@ for (i in c(start:end)){
       potential_ba<-mask_df%>%dplyr::filter(between(lon, range_lon[1], range_lon[2])&
                                                between(lat, range_lat[1], range_lat[2])&
                                                ((Y==node$to)|(is.na(Y))))
+      potential_ba$Y<-node$to
       potential_ba$in_out<-in.chull(potential_ba$lon, potential_ba$lat,
                                 pull(dis[ch, "lon"]), pull(dis[ch, "lat"]))
       
@@ -313,4 +314,7 @@ if (F){
   for (f in seq(from=1, to=20000, by=1000)){
     cc<-c(cc, sprintf("Rscript get_data_by_id_range.r %d %d", f, f+999))
   }
+  
+  df<-readRDS("/home/huijieqiao/git/ees_3d_data/niche_conservatism/Data/items_with_NA/speciation_df_1_100.rda")
+  head(df[which(is.na(df$MAX_PREC)),])
 }
