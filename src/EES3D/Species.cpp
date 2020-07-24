@@ -55,7 +55,8 @@ Species::Species(sqlite3_stmt *stmt, int burn_in_year, vector<int> p_timeLine,
     //LOG(INFO)<<"speciesExtinctionThreaholdPercentage"<<speciesExtinctionThreaholdPercentage;
     maxSpeciesDistribution = 0;
     appearedYearI = timeLine.size() - from;
-    disappearedYearI = timeLine.size() - to + 1;
+    disappearedYearI = timeLine.size() - 1;
+    //LOG(INFO)<<"timeLine.size():"<<timeLine.size()<<" to "<<to<< " disappearedYearI is "<<disappearedYearI;
     parent = NULL;
     clade_extinction_status = 0;
     number_of_clade_extinction = 0;
@@ -329,6 +330,8 @@ string Species::getNewickTree(bool isroot, bool iscolor) {
             output += string(t_char);
         } else {
             char t_char[100];
+            //LOG(INFO)<<"appearedYearI:"<<appearedYearI<<" disappearedYearI:"<<disappearedYearI<<" parent_year_i:"<<parent_year_i<<
+            //       " timeLine[appearedYearI]:"<<timeLine[appearedYearI]<<" timeLine[disappearedYearI]:"<<timeLine[disappearedYearI];
             sprintf(t_char, "SP%d @ %d-%d:%d", global_id, timeLine[appearedYearI],
                     timeLine[disappearedYearI],
                     disappearedYearI - parent_year_i);
@@ -347,6 +350,7 @@ void Species::addChild(Species* child) {
     children.push_back(child);
 }
 void Species::setDisappearedYearI(int p_disappeared_year_i) {
+    LOG(INFO)<<"SET disappearedYearI "<< p_disappeared_year_i;
     disappearedYearI = p_disappeared_year_i;
 }
 int Species::getDisappearedYearI() {

@@ -17,7 +17,7 @@ base<-"/home/huijieqiao/git/ees_3d_data/niche_conservatism"
 db_base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
 base2<-"/media/huijieqiao/Butterfly/SMART_SPECIES"
 
-rdas<-list.files(sprintf("%s/Data/items", base), pattern="\\.rda", full.names = T)
+rdas<-list.files(sprintf("%s/Data/items_with_NA", base), pattern="\\.rda", full.names = T)
 
 stat<-NULL
 detail<-NULL

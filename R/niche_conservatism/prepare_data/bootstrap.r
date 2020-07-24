@@ -66,43 +66,43 @@ sp_character<-fix_df(sp_character)
 
 
 for (i in c(1:rep)){
-  stat_df_rep<-NULL
-  detail_df_rep<-NULL
+  #stat_df_rep<-NULL
+  #detail_df_rep<-NULL
   speciation_df_rep<-NULL
-  extinction_df_rep<-NULL
-  sp_character_rep<-NULL
+  #extinction_df_rep<-NULL
+  #sp_character_rep<-NULL
   print(i)
   sub_seeds<-seeds_rep%>%dplyr::filter(REP==i)
-  sub_stat_df<-stat%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
-  sub_stat_df$REP<-i
-  sub_detail_df<-detail%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
-  sub_detail_df$REP<-i
+  #sub_stat_df<-stat%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  #sub_stat_df$REP<-i
+  #sub_detail_df<-detail%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  #sub_detail_df$REP<-i
   sub_speciation_df<-speciation_df%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
   sub_speciation_df$REP<-i
-  sub_extinction_df<-extinction_df%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
-  sub_extinction_df$REP<-i
-  sub_sp_character<-sp_character%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
-  sub_sp_character$REP<-i
+  #sub_extinction_df<-extinction_df%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  #sub_extinction_df$REP<-i
+  #sub_sp_character<-sp_character%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  #sub_sp_character$REP<-i
   
-  if (is.null(stat_df_rep)){
-    stat_df_rep<-sub_stat_df
-    detail_df_rep<-sub_detail_df
+  if (is.null(speciation_df_rep)){
+    #stat_df_rep<-sub_stat_df
+    #detail_df_rep<-sub_detail_df
     speciation_df_rep<-sub_speciation_df
-    extinction_df_rep<-sub_extinction_df
-    sp_character_rep<-sub_sp_character
+    #extinction_df_rep<-sub_extinction_df
+    #sp_character_rep<-sub_sp_character
   }else{
-    stat_df_rep<-bind_rows(stat_df_rep, sub_stat_df)
-    detail_df_rep<-bind_rows(detail_df_rep, sub_detail_df)
+    #stat_df_rep<-bind_rows(stat_df_rep, sub_stat_df)
+    #detail_df_rep<-bind_rows(detail_df_rep, sub_detail_df)
     speciation_df_rep<-bind_rows(speciation_df_rep, sub_speciation_df)
-    extinction_df_rep<-bind_rows(extinction_df_rep, sub_extinction_df)
-    sp_character_rep<-bind_rows(sp_character_rep, sub_sp_character)
+    #extinction_df_rep<-bind_rows(extinction_df_rep, sub_extinction_df)
+    #sp_character_rep<-bind_rows(sp_character_rep, sub_sp_character)
   }
 
-  saveRDS(stat_df_rep, sprintf("%s/Data/items_rep/stat_df_rep_%d.rda", base, i))
-  saveRDS(detail_df_rep, sprintf("%s/Data/items_rep/detail_df_rep_%d.rda", base, i))
+  #saveRDS(stat_df_rep, sprintf("%s/Data/items_rep/stat_df_rep_%d.rda", base, i))
+  #saveRDS(detail_df_rep, sprintf("%s/Data/items_rep/detail_df_rep_%d.rda", base, i))
   saveRDS(speciation_df_rep, sprintf("%s/Data/items_rep/speciation_df_rep_%d.rda", base, i))
-  saveRDS(extinction_df_rep, sprintf("%s/Data/items_rep/extinction_df_rep_%d.rda", base, i))
-  saveRDS(sp_character_rep, sprintf("%s/Data/items_rep/sp_character_rep_%d.rda", base, i))
+  #saveRDS(extinction_df_rep, sprintf("%s/Data/items_rep/extinction_df_rep_%d.rda", base, i))
+  #saveRDS(sp_character_rep, sprintf("%s/Data/items_rep/sp_character_rep_%d.rda", base, i))
   
 }
 #saveRDS(stat_df_rep, sprintf("%s/Data/stat_df_rep.rda", base))

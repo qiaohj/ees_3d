@@ -168,8 +168,8 @@ for (i in c(start:end)){
   }
   
   node_labels<-node_labels %>% 
-    rowwise() %>% 
-    mutate(SP=getSPID(tree, index),
+    dplyr::rowwise() %>% 
+    dplyr::mutate(SP=getSPID(tree, index),
            PARENT=getSPID(tree, getParent(tree, index)))
   if (min(node_labels$to)!=min(log_df$Y)){
     aasdf

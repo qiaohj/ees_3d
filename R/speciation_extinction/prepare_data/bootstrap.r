@@ -1,5 +1,5 @@
 library("dplyr")
-base<-"/home/huijieqiao/git/ees_3d_data/niche_conservatism"
+base<-"/media/huijieqiao/Speciation_Extin"
 
 fix_type<-function(x){
   x[which(x==1)]<-"Lazy"
