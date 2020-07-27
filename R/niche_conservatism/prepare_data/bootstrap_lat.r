@@ -1,4 +1,5 @@
 library("dplyr")
+library("Hmisc")
 base<-"/home/huijieqiao/git/ees_3d_data/niche_conservatism"
 
 fix_type<-function(x){
@@ -33,26 +34,31 @@ fix_df<-function(p_df){
 stat<-readRDS(sprintf("%s/Data/stat.rda", base))
 stat<-fix_df(stat)
 
-sample_size<-100
+sample_size<-10
 rep<-100
 if (F){
-  seeds<-unique(stat$GLOBAL_ID)
+  
+  mask_df<-readRDS(sprintf("%s/Data/ENV/mask_df.rda", base))
+  stat<-inner_join(stat, mask_df%>%dplyr::filter(Y==0), by=c("GLOBAL_ID"="global_id"))
+  cuts<-seq(from=-92.5, to=92.5, by=5)
+  
+  seeds<-unique(stat[, c("GLOBAL_ID", "lon", "lat")])
+  seeds$cuts<-cut2(seeds$lat, cuts = cuts)
+  
   seeds_rep<-NULL
   for (i in c(1:rep)){
     print(i)
-    sub_seeds<-data.frame(GLOBAL_ID=seeds[sample(length(seeds), sample_size)], REP=i)
+    seeds_df <- seeds %>% dplyr::group_by(cuts) %>% dplyr::sample_n(10, replace=T)
+    seeds_df$REP<-i
     if (is.null(seeds_rep)){
-      seeds_rep<-sub_seeds
+      seeds_rep<-seeds_df
     }else{
-      seeds_rep<-bind_rows(seeds_rep, sub_seeds)
+      seeds_rep<-bind_rows(seeds_rep, seeds_df)
     }
   }
-  mask_df<-readRDS(sprintf("%s/Data/ENV/mask_df.rda", base))
-  seeds_rep<-inner_join(seeds_rep, mask_df%>%dplyr::filter(Y==0), by=c("GLOBAL_ID"="global_id"))
-  saveRDS(seeds_rep, sprintf("%s/Data/seeds_rep.rda", base))
-  
+  saveRDS(seeds_rep, sprintf("%s/Data/seeds_rep_lat.rda", base))
 }
-seeds_rep<-readRDS(sprintf("%s/Data/seeds_rep.rda", base))
+seeds_rep<-readRDS(sprintf("%s/Data/seeds_rep_lat.rda", base))
 
 
 detail<-readRDS(sprintf("%s/Data/detail.rda", base))
@@ -87,6 +93,44 @@ for (i in c(1:rep)){
   sub_sp_character<-sp_character%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
   sub_sp_character$REP<-i
   
+  seed_N<-data.frame(table(sub_seeds$GLOBAL_ID))
+  seed_N<-seed_N[which(seed_N$Freq>1),]
+  j=1
+  sub_stat_df_2<-sub_stat_df
+  sub_detail_df_2<-sub_detail_df
+  sub_speciation_df_2<-sub_speciation_df
+  sub_extinction_df_2<-sub_extinction_df
+  sub_sp_character_2<-sub_sp_character
+  for (j in c(1:nrow(seed_N))){
+    print(paste(i, j, nrow(seed_N)))
+    seed_item<-seed_N[j,]
+    
+    sub_stat_df_item<-sub_stat_df%>%dplyr::filter(GLOBAL_ID %in% seed_item$Var1)
+    sub_stat_df_item<-bind_rows(replicate(seed_item$Freq-1, sub_stat_df_item, simplify = FALSE))
+    sub_stat_df_2<-bind_rows(sub_stat_df_2, sub_stat_df_item)
+    
+    sub_detail_df_item<-sub_detail_df%>%dplyr::filter(GLOBAL_ID %in% seed_item$Var1)
+    sub_detail_df_item<-bind_rows(replicate(seed_item$Freq-1, sub_detail_df_item, simplify = FALSE))
+    sub_detail_df_2<-bind_rows(sub_detail_df_2, sub_detail_df_item)
+    
+    sub_speciation_df_item<-sub_speciation_df%>%dplyr::filter(GLOBAL_ID %in% seed_item$Var1)
+    sub_speciation_df_item<-bind_rows(replicate(seed_item$Freq-1, sub_speciation_df_item, simplify = FALSE))
+    sub_speciation_df_2<-bind_rows(sub_speciation_df_2, sub_speciation_df_item)
+    
+    sub_extinction_df_item<-sub_extinction_df%>%dplyr::filter(GLOBAL_ID %in% seed_item$Var1)
+    sub_extinction_df_item<-bind_rows(replicate(seed_item$Freq-1, sub_extinction_df_item, simplify = FALSE))
+    sub_extinction_df_2<-bind_rows(sub_extinction_df_2, sub_extinction_df_item)
+    
+    sub_sp_character_item<-sub_sp_character%>%dplyr::filter(GLOBAL_ID %in% seed_item$Var1)
+    sub_sp_character_item<-bind_rows(replicate(seed_item$Freq-1, sub_sp_character_item, simplify = FALSE))
+    sub_sp_character_2<-bind_rows(sub_sp_character_2, sub_sp_character_item)
+  }
+  sub_stat_df<-sub_stat_df_2
+  sub_detail_df<-sub_detail_df_2
+  sub_speciation_df<-sub_speciation_df_2
+  sub_extinction_df<-sub_extinction_df_2
+  sub_sp_character<-sub_sp_character_2
+  
   if (is.null(speciation_df_rep)){
     stat_df_rep<-sub_stat_df
     detail_df_rep<-sub_detail_df
@@ -100,12 +144,12 @@ for (i in c(1:rep)){
     extinction_df_rep<-bind_rows(extinction_df_rep, sub_extinction_df)
     sp_character_rep<-bind_rows(sp_character_rep, sub_sp_character)
   }
-
-  saveRDS(stat_df_rep, sprintf("%s/Data/items_rep/stat_df_rep_%d.rda", base, i))
-  saveRDS(detail_df_rep, sprintf("%s/Data/items_rep/detail_df_rep_%d.rda", base, i))
-  saveRDS(speciation_df_rep, sprintf("%s/Data/items_rep/speciation_df_rep_%d.rda", base, i))
-  saveRDS(extinction_df_rep, sprintf("%s/Data/items_rep/extinction_df_rep_%d.rda", base, i))
-  saveRDS(sp_character_rep, sprintf("%s/Data/items_rep/sp_character_rep_%d.rda", base, i))
+  
+  saveRDS(stat_df_rep, sprintf("%s/Data/items_rep_lat/stat_df_rep_lat_%d.rda", base, i))
+  saveRDS(detail_df_rep, sprintf("%s/Data/items_rep_lat/detail_df_rep_lat_%d.rda", base, i))
+  saveRDS(speciation_df_rep, sprintf("%s/Data/items_rep_lat/speciation_df_rep_lat_%d.rda", base, i))
+  saveRDS(extinction_df_rep, sprintf("%s/Data/items_rep_lat/extinction_df_rep_lat_%d.rda", base, i))
+  saveRDS(sp_character_rep, sprintf("%s/Data/items_rep_lat/sp_character_rep_lat_%d.rda", base, i))
   
 }
 #saveRDS(stat_df_rep, sprintf("%s/Data/stat_df_rep.rda", base))
