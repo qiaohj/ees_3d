@@ -11,8 +11,14 @@ speciation_by_lat<-NULL
 extinction_by_lat<-NULL
 for (i in c(1:rep)){ 
   print(i)
-  sub_detail_df<-readRDS(sprintf("%s/Data/items_rep/speciation_df_rep_%d.rda", base, i))
+  sub_detail_df<-readRDS(sprintf("%s/Data/items_rep_lat/speciation_df_rep_lat_%d.rda", base, i))
   sub_detail_df$LAT_ROUND<-round(sub_detail_df$LAT)
+  #sub_detail_df%>%dplyr::group_by(GLOBAL_ID)%>%dplyr::summarise(N=n_distinct(DA,NB,EVO_TYPE,EVO_RATIO,WARP_LABEL))
+  item_natural_barrier<-sub_detail_df%>%dplyr::filter(is.na(MIN_TEMP_IN))%>%
+    dplyr::group_by(LAT_ROUND, EVO_TYPE, EVO_RATIO, REP)%>%
+    dplyr::summarise(N=n_distinct(GLOBAL_ID, Y))
+  item_natural_barrier$ENV<-"NATURAL"
+  
   item_min_temp<-sub_detail_df%>%dplyr::filter(!MIN_TEMP_IN)%>%
     dplyr::group_by(LAT_ROUND, EVO_TYPE, EVO_RATIO, REP)%>%
     dplyr::summarise(N=n_distinct(GLOBAL_ID, Y))
@@ -30,6 +36,8 @@ for (i in c(1:rep)){
   
   item<-bind_rows(item_min_temp, item_max_temp)
   item<-bind_rows(item, item_max_prec)
+  item<-bind_rows(item, item_natural_barrier)
+  
   if (is.null(speciation_by_lat)){
     speciation_by_lat<-item
   }else{
