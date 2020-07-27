@@ -137,7 +137,8 @@ detail<-NULL
 speciation_df<-NULL
 extinction_df<-NULL
 sp_character<-NULL
-i=18313
+i=18313 #three node
+i=2701 #for debug
 for (i in c(start:end)){
   print(paste(i, start, end))
   s<-simulations[i,]
@@ -252,9 +253,11 @@ for (i in c(start:end)){
       sp_character<-bind_rows(sp_character, dis_n)
     }
   }
-  
+  keys<-dis_suitable %>%ungroup()%>%
+    group_by(Y)%>%group_keys()
   dis_suitable_year <- dis_suitable %>%ungroup()%>%
-    group_by(Y)%>%group_split()
+    group_by(Y)%>%group_split()%>%setNames(pull(keys))
+  
   j=390
   for (j in c(1:nrow(node_labels))){
     
@@ -264,7 +267,7 @@ for (i in c(start:end)){
     if (node$type=="NODE"){
       
       item<-node_labels%>%dplyr::filter(PARENT==node$SP)
-      dis<-dis_suitable_year[[node$to]]%>%dplyr::filter(SP_ID %in% item$SP)
+      dis<-dis_suitable_year[[as.character(node$to)]]%>%dplyr::filter(SP_ID %in% item$SP)
       SP_IDS<-unique(dis$SP_ID)
       print(paste(i, start, end, j, nrow(node_labels), "SPECIATION. N_SPs:", length(SP_IDS)))
       if (length(SP_IDS)<2){
