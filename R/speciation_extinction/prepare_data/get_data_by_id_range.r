@@ -45,7 +45,7 @@ simulations<-dbReadTable(mydb, "simulations")
 dbDisconnect(mydb) 
 
 simulations<-simulations %>% dplyr::filter(evo_type==1)
-
+simulations[12113,]
 handle_label<-function(label){
   if (length(label)==4){
     label<-c(label, label[4])
