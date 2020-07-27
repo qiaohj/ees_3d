@@ -65,7 +65,7 @@ handle_label<-function(label){
 simulations<-simulations %>% filter(nb!="BROAD")
 simulations<-simulations %>% filter(is_run==1)
 cmd<-c()
-i=15234
+
 
 getID<-function(label){
   gsub("SP", "", strsplit(label, " ")[[1]][1])
@@ -137,7 +137,7 @@ detail<-NULL
 speciation_df<-NULL
 extinction_df<-NULL
 sp_character<-NULL
-
+i=18313
 for (i in c(start:end)){
   print(paste(i, start, end))
   s<-simulations[i,]
@@ -255,7 +255,7 @@ for (i in c(start:end)){
   
   dis_suitable_year <- dis_suitable %>%ungroup()%>%
     group_by(Y)%>%group_split()
-  
+  j=390
   for (j in c(1:nrow(node_labels))){
     
     node<-node_labels[j,]
@@ -267,9 +267,9 @@ for (i in c(start:end)){
       dis<-dis_suitable_year[[node$to]]%>%dplyr::filter(SP_ID %in% item$SP)
       SP_IDS<-unique(dis$SP_ID)
       print(paste(i, start, end, j, nrow(node_labels), "SPECIATION. N_SPs:", length(SP_IDS)))
-      if (length(SP_IDS)!=2){
-        print("MORE SPECIES ERROR")
-        asdfdf
+      if (length(SP_IDS)<2){
+        print("SPECIES NUMBER ERROR")
+        next()
       }
       range_lon<-range(dis$lon)
       range_lat<-range(dis$lat)
@@ -277,21 +277,19 @@ for (i in c(start:end)){
                                                between(lat, range_lat[1], range_lat[2])&
                                                ((Y==node$to)|(is.na(Y))))
       potential_ba$Y<-node$to
-      sp1<-data.frame(dis%>%dplyr::filter(SP_ID==SP_IDS[1]))
-      
-      concave1<-concaveman(as.matrix(sp1[, c("lon", "lat")]))
-      potential_ba$in_sp1<-point.in.polygon(potential_ba$lon, potential_ba$lat, 
-                                            concave1[,1], concave1[,2])
-      
-      sp2<-data.frame(dis%>%dplyr::filter(SP_ID==SP_IDS[2]))
-      concave2<-concaveman(as.matrix(sp2[, c("lon", "lat")]))
-      potential_ba$in_sp2<-point.in.polygon(potential_ba$lon, potential_ba$lat, 
-                                            concave2[,1], concave2[,2])
+      potential_ba$in_sp<-0
+      for (sp_id in SP_IDS){
+        sp1<-data.frame(dis%>%dplyr::filter(SP_ID==sp_id))
+        
+        concave1<-concaveman(as.matrix(sp1[, c("lon", "lat")]))
+        potential_ba$in_sp<-potential_ba$in_sp+point.in.polygon(potential_ba$lon, potential_ba$lat, 
+                                                                concave1[,1], concave1[,2])
+      }
       concave<-concaveman(as.matrix(dis[, c("lon", "lat")]))
-      potential_ba$in_sp<-point.in.polygon(potential_ba$lon, potential_ba$lat, 
+      potential_ba$in_all_sp<-point.in.polygon(potential_ba$lon, potential_ba$lat, 
                                            concave[,1], concave[,2])
       
-      potential_ba<-potential_ba%>%dplyr::filter((in_sp>0)&(in_sp1==0)&(in_sp2==0))
+      potential_ba<-potential_ba%>%dplyr::filter((in_all_sp>0)&(in_sp==0))
       
       if (nrow(potential_ba)==0){
         next()
