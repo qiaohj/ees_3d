@@ -53,7 +53,7 @@ handle_label<-function(label){
   label[c(1,4,5)]
 }
 cmd<-c()
-i=15234
+i=12113
 
 getID<-function(label){
   gsub("SP", "", strsplit(label, " ")[[1]][1])
@@ -318,3 +318,7 @@ if (F){
   
   
 }
+
+
+
+
