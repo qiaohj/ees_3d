@@ -11,7 +11,7 @@ library("ggplot2")
 
 
 
-base<-"/media/huijieqiao/Speciation_Extin"
+base<-"/media/huijieqiao/Speciation_Extin/Speciation_Extinction"
 
 
 

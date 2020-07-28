@@ -1,4 +1,4 @@
-base<-"/media/huijieqiao/Speciation_Extin"
+base<-"/media/huijieqiao/Speciation_Extin/Speciation_Extinction"
 args = commandArgs(trailingOnly=TRUE)
 start=as.numeric(args[1])
 end=as.numeric(args[2])
@@ -94,7 +94,7 @@ detail<-NULL
 speciation_df<-NULL
 extinction_df<-NULL
 sp_character<-NULL
-
+i=1
 for (i in c(start:end)){
   print(paste(i, start, end))
   s<-simulations[i,]
@@ -176,7 +176,7 @@ for (i in c(start:end)){
   node_labels$NB<-s$nb
   node_labels$EVO_TYPE<-s$evo_type
   node_labels$EVO_RATIO<-s$niche_envolution_individual_ratio
-  node_labels$FROM<-s$from
+  node_labels$START_POINT<-s$from
   node_labels$ID<-s$id
   if (is.null(stat)){
     stat<-s
@@ -209,7 +209,7 @@ for (i in c(start:end)){
     dis_n$NB<-s$nb
     dis_n$EVO_TYPE<-s$evo_type
     dis_n$EVO_RATIO<-s$niche_envolution_individual_ratio
-    dis_n$FROM<-s$from
+    dis_n$START_POINT<-s$from
     dis_n$ID<-s$id
     if (is.null(sp_character)){
       sp_character<-dis_n
@@ -218,9 +218,12 @@ for (i in c(start:end)){
     }
   }
   
+  keys<-dis_suitable %>%ungroup()%>%
+    group_by(Y)%>%group_keys()
   dis_suitable_year <- dis_suitable %>%ungroup()%>%
-    group_by(Y)%>%group_split()
+    group_by(Y)%>%group_split()%>%setNames(pull(keys))
   
+  j=292
   for (j in c(1:nrow(node_labels))){
     
     node<-node_labels[j,]
@@ -229,12 +232,12 @@ for (i in c(start:end)){
     if (node$type=="NODE"){
       
       item<-node_labels%>%dplyr::filter(PARENT==node$SP)
-      dis<-dis_suitable_year[[node$to]]%>%dplyr::filter(SP_ID %in% item$SP)
+      dis<-dis_suitable_year[[as.character(node$to)]]%>%dplyr::filter(SP_ID %in% item$SP)
       SP_IDS<-unique(dis$SP_ID)
       print(paste(i, start, end, j, nrow(node_labels), "SPECIATION. N_SPs:", length(SP_IDS)))
-      if (length(SP_IDS)!=2){
-        print("MORE SPECIES ERROR")
-        asdfdf
+      if (length(SP_IDS)<2){
+        print("SPECIES NUMBER ERROR")
+        next()
       }
       range_lon<-range(dis$lon)
       range_lat<-range(dis$lat)
@@ -242,21 +245,19 @@ for (i in c(start:end)){
                                               between(lat, range_lat[1], range_lat[2])&
                                               ((Y==node$to)|(is.na(Y))))
       potential_ba$Y<-node$to
-      sp1<-data.frame(dis%>%dplyr::filter(SP_ID==SP_IDS[1]))
-      
-      concave1<-concaveman(as.matrix(sp1[, c("lon", "lat")]))
-      potential_ba$in_sp1<-point.in.polygon(potential_ba$lon, potential_ba$lat, 
-                                            concave1[,1], concave1[,2])
-      
-      sp2<-data.frame(dis%>%dplyr::filter(SP_ID==SP_IDS[2]))
-      concave2<-concaveman(as.matrix(sp2[, c("lon", "lat")]))
-      potential_ba$in_sp2<-point.in.polygon(potential_ba$lon, potential_ba$lat, 
-                                            concave2[,1], concave2[,2])
+      potential_ba$in_sp<-0
+      for (sp_id in SP_IDS){
+        sp1<-data.frame(dis%>%dplyr::filter(SP_ID==sp_id))
+        
+        concave1<-concaveman(as.matrix(sp1[, c("lon", "lat")]))
+        potential_ba$in_sp<-potential_ba$in_sp+point.in.polygon(potential_ba$lon, potential_ba$lat, 
+                                                                concave1[,1], concave1[,2])
+      }
       concave<-concaveman(as.matrix(dis[, c("lon", "lat")]))
-      potential_ba$in_sp<-point.in.polygon(potential_ba$lon, potential_ba$lat, 
-                                           concave[,1], concave[,2])
+      potential_ba$in_all_sp<-point.in.polygon(potential_ba$lon, potential_ba$lat, 
+                                               concave[,1], concave[,2])
       
-      potential_ba<-potential_ba%>%dplyr::filter((in_sp>0)&(in_sp1==0)&(in_sp2==0))
+      potential_ba<-potential_ba%>%dplyr::filter((in_all_sp>0)&(in_sp==0))
       
       if (nrow(potential_ba)==0){
         next()
@@ -270,7 +271,7 @@ for (i in c(start:end)){
       potential_ba$NB<-s$nb
       potential_ba$EVO_TYPE<-s$evo_type
       potential_ba$EVO_RATIO<-s$niche_envolution_individual_ratio
-      potential_ba$FROM<-s$from
+      potential_ba$START_POINT<-s$from
       potential_ba$ID<-s$id
       if(F){
         #ggplot(data=dis, aes(x=lon, y=lat))+
@@ -300,7 +301,7 @@ for (i in c(start:end)){
       dis$NB<-s$nb
       dis$EVO_TYPE<-s$evo_type
       dis$EVO_RATIO<-s$niche_envolution_individual_ratio
-      dis$FROM<-s$from
+      dis$START_POINT<-s$from
       dis$ID<-s$id
       if (is.null(extinction_df)){
         extinction_df<-dis
