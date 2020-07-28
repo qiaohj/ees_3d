@@ -31,9 +31,14 @@ bind<-function(df1, df2){
   return(df1)
 }
 
-df_N_SP_all<-NULL
+#df_N_SP_all<-NULL
 for (i in c(1:length(rdas))){
   print(paste(i, length(rdas), rdas[i]))
+  target<-sprintf("%s/Data/item_richness/df_N_SP_%d.rda", base, i)
+  if (file.exists(target)){
+    next()
+  }
+  saveRDS(NA, target)
   f<-rdas[i]
   df<-readRDS(f)
   if (is.null(df)){
@@ -43,6 +48,7 @@ for (i in c(1:length(rdas))){
   df_N_SP<-df%>%
     dplyr::group_by(Y, lon,lat, MIN_TEMP, MAX_TEMP, MAX_PREC, ID, da, nb, evo_type, evo_ratio)%>%
     dplyr::summarise(N_SP=n())
-  df_N_SP_all<-bind(df_N_SP_all, df_N_SP)
+  saveRDS(df_N_SP, target)
+  #df_N_SP_all<-bind(df_N_SP_all, df_N_SP)
 }
-saveRDS(df_N_SP_all, sprintf("%s/Data/df_N_SP_all.rda", base))
+

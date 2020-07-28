@@ -53,15 +53,12 @@ if (F){
   
 }
 seeds_rep<-readRDS(sprintf("%s/Data/seeds_rep.rda", base))
-
-
 detail<-readRDS(sprintf("%s/Data/detail.rda", base))
 detail<-fix_df(detail)
 speciation_df<-readRDS(sprintf("%s/Data/speciation_df.rda", base))
 speciation_df<-fix_df(speciation_df)
 extinction_df<-readRDS(sprintf("%s/Data/extinction_df.rda", base))
 extinction_df<-fix_df(extinction_df)
-colnames(extinction_df)
 sp_character<-readRDS(sprintf("%s/Data/sp_character.rda", base))
 sp_character<-fix_df(sp_character)
 
@@ -69,6 +66,9 @@ sp_character<-fix_df(sp_character)
 i=1
 
 for (i in c(1:rep)){
+  if (file.exists(sprintf("%s/Data/items_rep/stat_df_rep_%d.rda", base, i))){
+    next()
+  }
   stat_df_rep<-NULL
   detail_df_rep<-NULL
   speciation_df_rep<-NULL
@@ -76,15 +76,15 @@ for (i in c(1:rep)){
   sp_character_rep<-NULL
   print(i)
   sub_seeds<-seeds_rep%>%dplyr::filter(REP==i)
-  sub_stat_df<-stat%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_stat_df<-stat%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_stat_df$REP<-i
-  sub_detail_df<-detail%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_detail_df<-detail%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_detail_df$REP<-i
-  sub_speciation_df<-speciation_df%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_speciation_df<-speciation_df%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_speciation_df$REP<-i
-  sub_extinction_df<-extinction_df%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_extinction_df<-extinction_df%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_extinction_df$REP<-i
-  sub_sp_character<-sp_character%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_sp_character<-sp_character%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_sp_character$REP<-i
   
   if (is.null(speciation_df_rep)){

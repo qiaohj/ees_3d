@@ -75,6 +75,11 @@ sp_character<-fix_df(sp_character)
 i=1
 
 for (i in c(1:rep)){
+  if (file.exists(sprintf("%s/Data/items_rep_lat/stat_df_rep_lat_%d.rda", base, i))){
+    next()
+  }
+  saveRDS(NA, sprintf("%s/Data/items_rep_lat/stat_df_rep_lat_%d.rda", base, i))
+  
   stat_df_rep<-NULL
   detail_df_rep<-NULL
   speciation_df_rep<-NULL
@@ -82,15 +87,15 @@ for (i in c(1:rep)){
   sp_character_rep<-NULL
   print(i)
   sub_seeds<-seeds_rep%>%dplyr::filter(REP==i)
-  sub_stat_df<-stat%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_stat_df<-stat%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_stat_df$REP<-i
-  sub_detail_df<-detail%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_detail_df<-detail%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_detail_df$REP<-i
-  sub_speciation_df<-speciation_df%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_speciation_df<-speciation_df%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_speciation_df$REP<-i
-  sub_extinction_df<-extinction_df%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_extinction_df<-extinction_df%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_extinction_df$REP<-i
-  sub_sp_character<-sp_character%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_sp_character<-sp_character%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_sp_character$REP<-i
   
   seed_N<-data.frame(table(sub_seeds$GLOBAL_ID))
@@ -105,23 +110,23 @@ for (i in c(1:rep)){
     print(paste(i, j, nrow(seed_N)))
     seed_item<-seed_N[j,]
     
-    sub_stat_df_item<-sub_stat_df%>%dplyr::filter(GLOBAL_ID %in% seed_item$Var1)
+    sub_stat_df_item<-sub_stat_df%>%dplyr::filter(SEED_ID %in% seed_item$Var1)
     sub_stat_df_item<-bind_rows(replicate(seed_item$Freq-1, sub_stat_df_item, simplify = FALSE))
     sub_stat_df_2<-bind_rows(sub_stat_df_2, sub_stat_df_item)
     
-    sub_detail_df_item<-sub_detail_df%>%dplyr::filter(GLOBAL_ID %in% seed_item$Var1)
+    sub_detail_df_item<-sub_detail_df%>%dplyr::filter(SEED_ID %in% seed_item$Var1)
     sub_detail_df_item<-bind_rows(replicate(seed_item$Freq-1, sub_detail_df_item, simplify = FALSE))
     sub_detail_df_2<-bind_rows(sub_detail_df_2, sub_detail_df_item)
     
-    sub_speciation_df_item<-sub_speciation_df%>%dplyr::filter(GLOBAL_ID %in% seed_item$Var1)
+    sub_speciation_df_item<-sub_speciation_df%>%dplyr::filter(SEED_ID %in% seed_item$Var1)
     sub_speciation_df_item<-bind_rows(replicate(seed_item$Freq-1, sub_speciation_df_item, simplify = FALSE))
     sub_speciation_df_2<-bind_rows(sub_speciation_df_2, sub_speciation_df_item)
     
-    sub_extinction_df_item<-sub_extinction_df%>%dplyr::filter(GLOBAL_ID %in% seed_item$Var1)
+    sub_extinction_df_item<-sub_extinction_df%>%dplyr::filter(SEED_ID %in% seed_item$Var1)
     sub_extinction_df_item<-bind_rows(replicate(seed_item$Freq-1, sub_extinction_df_item, simplify = FALSE))
     sub_extinction_df_2<-bind_rows(sub_extinction_df_2, sub_extinction_df_item)
     
-    sub_sp_character_item<-sub_sp_character%>%dplyr::filter(GLOBAL_ID %in% seed_item$Var1)
+    sub_sp_character_item<-sub_sp_character%>%dplyr::filter(SEED_ID %in% seed_item$Var1)
     sub_sp_character_item<-bind_rows(replicate(seed_item$Freq-1, sub_sp_character_item, simplify = FALSE))
     sub_sp_character_2<-bind_rows(sub_sp_character_2, sub_sp_character_item)
   }
