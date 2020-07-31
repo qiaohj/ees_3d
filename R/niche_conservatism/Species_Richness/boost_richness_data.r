@@ -1,7 +1,3 @@
-
-#it doesn't work because of the Error: Internal error: Dictionary is full!
-#too many records
-
 library("dplyr")
 library("DBI")
 library("phytools")
@@ -13,7 +9,7 @@ library("sp")
 library("ggplot2")
 library("sgeostat")
 
-
+seeds_rep<-readRDS(sprintf("%s/Data/seeds_rep.rda", base))
 
 base<-"/home/huijieqiao/git/ees_3d_data/niche_conservatism"
 db_base<-"/home/huijieqiao/git/ees_3d_data/SMART_SPECIES"
@@ -23,7 +19,7 @@ rdas<-list.files(sprintf("%s/Data/items_distribution", base), pattern="\\.rda", 
 
 distribution<-NULL
 
-i=15
+i=100
 bind<-function(df1, df2){
   if (is.null(df1)){
     df1<-df2

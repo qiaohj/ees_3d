@@ -16,12 +16,16 @@ library("patchwork")
 library("hrbrthemes")
 library("pastecs")
 library("mgcv")
+library("RColorBrewer")
+display.brewer.all(colorblindFriendly = T)
 
 base<-"/home/huijieqiao/git/ees_3d_data/niche_conservatism"
-
-
-
-
+colors<-brewer.pal(8, "Dark2")
+event_type_col<-colors[c(3, 1)]
+evo_type_col<-c("Darwin I"=colors[1],
+                "Darwin II"=colors[3],
+                "Lazy"=colors[7])
+rank_col<-colors[c(1:3)]
 fix_type<-function(x){
   x[which(x==1)]<-"Lazy"
   x[which(x==2)]<-"Darwin I"
@@ -76,7 +80,9 @@ p<-ggplot(stat_df_sum_se,
   geom_bar(stat="identity", position = "dodge2")+
   geom_errorbar(aes(ymin=MEAN-CI, ymax=MEAN+CI), width=.2,
                 position=position_dodge(.9))+
+  scale_fill_manual(values=event_type_col)+
   theme_bw()+
+  theme(legend.title = element_blank())+
   xlab("niche evolution type")+
   ylab("N")+
   ggtitle("N of speciation and extinction per niche evolution type")+
@@ -87,6 +93,8 @@ p<-ggplot(stat_df_sum %>% dplyr::filter(TYPE=="SPECIATION"),
           aes(x=EVO_TYPE, y= N, fill=factor(EVO_TYPE)))+
   geom_boxplot(position = "dodge2")+
   theme_bw()+
+  theme(legend.title = element_blank())+
+  scale_fill_manual(values=evo_type_col)+
   xlab("niche evolution type")+
   ylab("N")+
   ggtitle("N of speciation per niche evolution type")+
@@ -97,6 +105,8 @@ p<-ggplot(stat_df_sum %>% dplyr::filter(TYPE=="EXTINCTION"),
           aes(x=EVO_TYPE, y= N, fill=factor(EVO_TYPE)))+
   geom_boxplot(position = "dodge2")+
   theme_bw()+
+  theme(legend.title = element_blank())+
+  scale_fill_manual(values=evo_type_col)+
   xlab("niche evolution type")+
   ylab("N")+
   ggtitle("N of extinction per niche evolution type")+
@@ -107,7 +117,7 @@ ggsave(p, filename=sprintf("%s/Figures/extinction_by_scenario.png", base))
 stat<-readRDS(sprintf("%s/Data/stat.rda", base))
 stat<-fix_df(stat)
 stat_rank<-stat%>%
-  dplyr::group_by(GLOBAL_ID, DA, NB, EVO_RATIO, WARP_LABEL) %>% 
+  dplyr::group_by(SEED_ID, DA, NB, EVO_RATIO, WARP_LABEL) %>% 
   dplyr::mutate(RANK_SPECIATION = rank(N_SPECIATION * -1, ties.method = "min"),
                 RANK_EXTINCTION = rank(N_EXTINCTION * -1, ties.method = "min"),
                 ALL_SPECIATION = n_distinct(N_SPECIATION),
@@ -123,6 +133,8 @@ p<-ggplot(stat_rank_speciation,
           aes(x=EVO_TYPE, y= N, fill=factor(RANK_SPECIATION)))+
   geom_bar(stat="identity", position = "dodge2")+
   theme_bw()+
+  theme(legend.title = element_blank())+
+  scale_fill_manual(values=rank_col)+
   xlab("niche evolution type")+
   ylab("N")+
   ggtitle("Rank speciation per niche evolution type")+
@@ -139,6 +151,8 @@ p<-ggplot(stat_rank_extinction,
           aes(x=EVO_TYPE, y= N, fill=factor(RANK_EXTINCTION)))+
   geom_bar(stat="identity", position = "dodge2")+
   theme_bw()+
+  theme(legend.title = element_blank())+
+  scale_fill_manual(values=rank_col)+
   xlab("niche evolution type")+
   ylab("N")+
   ggtitle("Rank extinction per niche evolution type")+
@@ -192,15 +206,19 @@ speciation_extinction_by_year_se$AVERAGE_EXTINCTION<-
 p<-ggplot(speciation_extinction_by_year_se, 
           aes(x=YEAR, y= MEAN_N_SPECIES, color=factor(EVO_TYPE)))+
   geom_line()+
-  geom_errorbar(aes(ymin=MEAN_N_SPECIES-CI_N_SPECIES, ymax=MEAN_N_SPECIES+CI_N_SPECIES), width=.2,
+  geom_errorbar(aes(ymin=MEAN_N_SPECIES-CI_N_SPECIES, 
+                    ymax=MEAN_N_SPECIES+CI_N_SPECIES), width=.2,
                 position=position_dodge(.9), alpha=ribbon_alpha)+
+  scale_fill_manual(values=evo_type_col)+
+  scale_color_manual(values=evo_type_col)+
   theme_bw()+
+  theme(legend.title = element_blank())+
   xlab("Time step")+
   ylab("N Species")+
   ggtitle("N of Species by year")+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, filename=sprintf("%s/Figures/species_by_year.png", base))
-
+asdfasdf
 speciation_extinction_by_year_se$EVO_TYPE<-factor(speciation_extinction_by_year_se$EVO_TYPE, 
                                                   levels = c("Lazy", "Darwin II", "Darwin I"))
 p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter(YEAR>=-1100), 
