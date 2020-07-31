@@ -1,5 +1,5 @@
 library("dplyr")
-base<-"/media/huijieqiao/Speciation_Extin"
+base<-"/media/huijieqiao/Speciation_Extin/Speciation_Extinction"
 
 fix_type<-function(x){
   x[which(x==1)]<-"Lazy"
@@ -73,15 +73,15 @@ for (i in c(1:rep)){
   sp_character_rep<-NULL
   print(i)
   sub_seeds<-seeds_rep%>%dplyr::filter(REP==i)
-  sub_stat_df<-stat%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_stat_df<-stat%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_stat_df$REP<-i
-  sub_detail_df<-detail%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_detail_df<-detail%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_detail_df$REP<-i
-  sub_speciation_df<-speciation_df%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_speciation_df<-speciation_df%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_speciation_df$REP<-i
-  sub_extinction_df<-extinction_df%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_extinction_df<-extinction_df%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_extinction_df$REP<-i
-  sub_sp_character<-sp_character%>%dplyr::filter(GLOBAL_ID %in% sub_seeds$GLOBAL_ID)
+  sub_sp_character<-sp_character%>%dplyr::filter(SEED_ID %in% sub_seeds$GLOBAL_ID)
   sub_sp_character$REP<-i
   
   if (is.null(stat_df_rep)){
