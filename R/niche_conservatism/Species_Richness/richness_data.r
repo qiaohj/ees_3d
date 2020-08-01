@@ -21,7 +21,7 @@ rdas<-list.files(sprintf("%s/Data/items_distribution", base), pattern="\\.rda", 
 
 distribution<-NULL
 
-i=6
+i=17
 bind<-function(df1, df2){
   if (is.null(df1)){
     df1<-df2
