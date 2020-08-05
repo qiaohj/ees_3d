@@ -1,6 +1,12 @@
 library("dplyr")
 library("Rmisc")
 library("ggplot2")
+library("RColorBrewer")
+colors<-brewer.pal(8, "Dark2")
+event_type_col<-colors[c(3, 1)]
+evo_type_col<-c("Darwin I"=colors[1],
+                "Darwin II"=colors[3],
+                "Lazy"=colors[7])
 base<-"/home/huijieqiao/git/ees_3d_data/niche_conservatism"
 
 range_df<-readRDS(sprintf("%s/Data/range_df.rda", base))
@@ -67,6 +73,8 @@ p<-ggplot(range_temp %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYP
   geom_errorbar(aes(ymin=MEAN-CI, ymax=MEAN+CI), width=.2,
                 position=position_dodge(.9), alpha=0.2)+
   geom_line()+
+  scale_fill_manual(values=evo_type_col)+
+  scale_color_manual(values=evo_type_col)+
   theme_bw()+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
@@ -78,6 +86,8 @@ p<-ggplot(range_prec %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYP
   
   geom_errorbar(aes(ymin=MEAN-CI, ymax=MEAN+CI), width=.2,
                 position=position_dodge(.9), alpha=0.2)+
+  scale_fill_manual(values=evo_type_col)+
+  scale_color_manual(values=evo_type_col)+
   geom_line()+
   theme_bw()+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
@@ -89,6 +99,8 @@ p<-ggplot(range_area %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYP
   
   geom_errorbar(aes(ymin=MEAN-CI, ymax=MEAN+CI), width=.2,
                 position=position_dodge(.9), alpha=0.2)+
+  scale_fill_manual(values=evo_type_col)+
+  scale_color_manual(values=evo_type_col)+
   geom_line()+
   theme_bw()+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
@@ -100,6 +112,8 @@ p<-ggplot(range_lat %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYPE
   
   geom_errorbar(aes(ymin=MEAN-CI, ymax=MEAN+CI), width=.2,
                 position=position_dodge(.9), alpha=0.2)+
+  scale_fill_manual(values=evo_type_col)+
+  scale_color_manual(values=evo_type_col)+
   geom_line()+
   theme_bw()+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
@@ -112,6 +126,8 @@ p<-ggplot(range_lon %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYPE
   geom_errorbar(aes(ymin=MEAN-CI, ymax=MEAN+CI), width=.2,
                 position=position_dodge(.9), alpha=0.2)+
   geom_line()+
+  scale_fill_manual(values=evo_type_col)+
+  scale_color_manual(values=evo_type_col)+
   theme_bw()+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
