@@ -218,7 +218,7 @@ p<-ggplot(speciation_extinction_by_year_se,
   ggtitle("N of Species by year")+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, filename=sprintf("%s/Figures/species_by_year.png", base))
-asdfasdf
+
 speciation_extinction_by_year_se$EVO_TYPE<-factor(speciation_extinction_by_year_se$EVO_TYPE, 
                                                   levels = c("Lazy", "Darwin II", "Darwin I"))
 p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter(YEAR>=-1100), 
@@ -227,6 +227,8 @@ p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter(YEAR>=-1100),
   geom_errorbar(aes(ymin=MEAN_N_SPECIATION-CI_N_SPECIATION, 
                     ymax=MEAN_N_SPECIATION+CI_N_SPECIATION), width=.2,
                 position=position_dodge(.9), alpha=ribbon_alpha)+
+  scale_fill_manual(values=evo_type_col)+
+  scale_color_manual(values=evo_type_col)+
   theme_bw()+
   xlab("Time step")+
   ylab("N SPECIATION")+
@@ -237,6 +239,8 @@ ggsave(p, filename=sprintf("%s/Figures/speciation_by_year.png", base))
 p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter((YEAR>=-1100)&(YEAR<0)), 
           aes(x=YEAR, y= MEAN_N_EXTINCTION, color=EVO_TYPE))+
   geom_line()+
+  scale_fill_manual(values=evo_type_col)+
+  scale_color_manual(values=evo_type_col)+
   #geom_errorbar(aes(ymin=MEAN_N_EXTINCTION-CI_N_EXTINCTION, ymax=MEAN_N_EXTINCTION+CI_N_EXTINCTION), width=.2,
   #              position=position_dodge(.9), alpha=ribbon_alpha)+
   theme_bw()+
@@ -249,6 +253,8 @@ ggsave(p, filename=sprintf("%s/Figures/extinction_by_year.png", base))
 p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter(YEAR>=-1100), 
           aes(x=YEAR, y= AVERAGE_SPECIATION, color=EVO_TYPE))+
   geom_line()+
+  scale_fill_manual(values=evo_type_col)+
+  scale_color_manual(values=evo_type_col)+
   #geom_errorbar(aes(ymin=MEAN_N_SPECIATION-CI_N_SPECIATION, ymax=MEAN_N_SPECIATION+CI_N_SPECIATION), width=.2,
   #              position=position_dodge(.9), alpha=ribbon_alpha)+
   theme_bw()+
@@ -261,6 +267,8 @@ ggsave(p, filename=sprintf("%s/Figures/speciation_per_species_by_year.png", base
 p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter((YEAR>=-1100)&(YEAR<0)), 
           aes(x=YEAR, y= AVERAGE_EXTINCTION, color=EVO_TYPE))+
   geom_line()+
+  scale_fill_manual(values=evo_type_col)+
+  scale_color_manual(values=evo_type_col)+
   #geom_errorbar(aes(ymin=MEAN_N_EXTINCTION-CI_N_EXTINCTION, ymax=MEAN_N_EXTINCTION+CI_N_EXTINCTION), width=.2,
   #              position=position_dodge(.9), alpha=ribbon_alpha)+
   theme_bw()+
