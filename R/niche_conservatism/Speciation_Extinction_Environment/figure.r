@@ -28,7 +28,7 @@ p<-ggplot(speciation_by_lat_se%>%filter(EVO_TYPE=="Lazy"), aes(x=LAT_ROUND, y=ME
   geom_line()+
   theme_bw()+
   facet_wrap( ~ EVO_TYPE+EVO_RATIO+DA+NB, ncol=4, scales = 'free')
-ggsave(p, filename=sprintf("%s/Figures/speciation_by_lat.png", base))
+ggsave(p, filename=sprintf("%s/Figures/speciation_by_lat.pdf", base))
 
 extinction_by_lat_se<-extinction_by_lat%>%
   dplyr::group_by(LAT_ROUND, EVO_TYPE, EVO_RATIO, ENV)%>%
@@ -43,4 +43,4 @@ p<-ggplot(extinction_by_lat_se, aes(x=LAT_ROUND, y=MEAN, color=factor(ENV)))+
   geom_line()+
   theme_bw()+
   facet_wrap( ~ EVO_TYPE+EVO_RATIO, ncol=2, scales = 'free')
-ggsave(p, filename=sprintf("%s/Figures/extinction_by_lat.png", base))
+ggsave(p, filename=sprintf("%s/Figures/extinction_by_lat.pdf", base))

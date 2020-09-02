@@ -83,7 +83,7 @@ if (F){
   }
   saveRDS(env_df_new, sprintf("%s/Data/env_se.rda", base))
 }
-
+library(ggplot2)
 env_se<-readRDS(sprintf("%s/Data/env_se.rda", base))
 
 ggplot(env_se, aes(x=year, y=mean, color=factor(type)))+geom_line()
@@ -117,9 +117,10 @@ p<-ggplot() +
     sec.axis = sec_axis(~(.-min_prec)*scale-offset, name="Monthly Precipitation")
   ) + 
   
-  theme_ipsum() +
+  theme_bw() +
   ggtitle("Environmental variables")
-ggsave(p, filename=sprintf("%s/Figures/Speciation_Extinction/env_curves.png", base), width=10, height = 5)
+ggsave(p, filename=sprintf("%s/Figures/env_curves.png", base), width=10, height = 5)
+ggsave(p, filename=sprintf("%s/Figures/env_curves.pdf", base), width=10, height = 5)
 
 p<-ggplot() +
   geom_line(data=env_se%>%dplyr::filter(type!="Maximum Monthly Precipitation"),
@@ -140,4 +141,5 @@ p<-ggplot() +
   
   theme_ipsum() +
   ggtitle("Environmental variables")
-ggsave(p, filename=sprintf("%s/Figures/Speciation_Extinction/env_curves_with_smooth.png", base), width=10, height = 5)
+ggsave(p, filename=sprintf("%s/Figures/env_curves_with_smooth.png", base), width=10, height = 5)
+ggsave(p, filename=sprintf("%s/Figures/env_curves_with_smooth.pdf", base), width=10, height = 5)

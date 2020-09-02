@@ -78,7 +78,7 @@ p<-ggplot(range_temp %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYP
   theme_bw()+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
-ggsave(p, filename=sprintf("%s/Figures/range_temp_by_year.png", base))
+ggsave(p, filename=sprintf("%s/Figures/range_temp_by_year.pdf", base))
 
 
 range_prec<-readRDS(sprintf("%s/Data/range_prec.rda", base))
@@ -92,7 +92,7 @@ p<-ggplot(range_prec %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYP
   theme_bw()+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
-ggsave(p, filename=sprintf("%s/Figures/range_prec_by_year.png", base))
+ggsave(p, filename=sprintf("%s/Figures/range_prec_by_year.pdf", base))
 
 range_area<-readRDS(sprintf("%s/Data/range_area.rda", base))
 p<-ggplot(range_area %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYPE)))+
@@ -105,7 +105,7 @@ p<-ggplot(range_area %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYP
   theme_bw()+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
-ggsave(p, filename=sprintf("%s/Figures/range_area_by_year.png", base))
+ggsave(p, filename=sprintf("%s/Figures/range_area_by_year.pdf", base))
 
 range_lat<-readRDS(sprintf("%s/Data/range_lat.rda", base))
 p<-ggplot(range_lat %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYPE)))+
@@ -118,7 +118,7 @@ p<-ggplot(range_lat %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYPE
   theme_bw()+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
-ggsave(p, filename=sprintf("%s/Figures/range_lat_by_year.png", base))
+ggsave(p, filename=sprintf("%s/Figures/range_lat_by_year.pdf", base))
 
 range_lon<-readRDS(sprintf("%s/Data/range_lon.rda", base))
 p<-ggplot(range_lon %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYPE)))+
@@ -131,4 +131,4 @@ p<-ggplot(range_lon %>% filter(Y>=-1100), aes(x=Y, y=MEAN, color=factor(EVO_TYPE
   theme_bw()+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
-ggsave(p, filename=sprintf("%s/Figures/range_lon_by_year.png", base))
+ggsave(p, filename=sprintf("%s/Figures/range_lon_by_year.pdf", base))

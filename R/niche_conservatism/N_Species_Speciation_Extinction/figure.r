@@ -88,6 +88,7 @@ p<-ggplot(stat_df_sum_se,
   ggtitle("N of speciation and extinction per niche evolution type")+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, filename=sprintf("%s/Figures/speciation_extinction_by_scenario.png", base))
+ggsave(p, filename=sprintf("%s/Figures/speciation_extinction_by_scenario.pdf", base))
 
 p<-ggplot(stat_df_sum %>% dplyr::filter(TYPE=="SPECIATION"), 
           aes(x=EVO_TYPE, y= N, fill=factor(EVO_TYPE)))+
@@ -100,6 +101,7 @@ p<-ggplot(stat_df_sum %>% dplyr::filter(TYPE=="SPECIATION"),
   ggtitle("N of speciation per niche evolution type")+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, filename=sprintf("%s/Figures/speciation_by_scenario.png", base))
+ggsave(p, filename=sprintf("%s/Figures/speciation_by_scenario.pdf", base))
 
 p<-ggplot(stat_df_sum %>% dplyr::filter(TYPE=="EXTINCTION"), 
           aes(x=EVO_TYPE, y= N, fill=factor(EVO_TYPE)))+
@@ -112,6 +114,7 @@ p<-ggplot(stat_df_sum %>% dplyr::filter(TYPE=="EXTINCTION"),
   ggtitle("N of extinction per niche evolution type")+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, filename=sprintf("%s/Figures/extinction_by_scenario.png", base))
+ggsave(p, filename=sprintf("%s/Figures/extinction_by_scenario.pdf", base))
 
 
 stat<-readRDS(sprintf("%s/Data/stat.rda", base))
@@ -141,6 +144,7 @@ p<-ggplot(stat_rank_speciation,
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
 ggsave(p, filename=sprintf("%s/Figures/speciation_rank_by_scenario.png", base))
+ggsave(p, filename=sprintf("%s/Figures/speciation_rank_by_scenario.pdf", base))
 
 stat_rank_extinction<-stat_rank%>%dplyr::filter(ALL_EXTINCTION!=1)
 
@@ -159,6 +163,7 @@ p<-ggplot(stat_rank_extinction,
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 
 ggsave(p, filename=sprintf("%s/Figures/extinction_rank_by_scenario.png", base))
+ggsave(p, filename=sprintf("%s/Figures/extinction_rank_by_scenario.pdf", base))
 
 
 speciation_extinction_by_year<-readRDS(sprintf("%s/Data/speciation_extinction_by_year.rda", base))
@@ -218,6 +223,7 @@ p<-ggplot(speciation_extinction_by_year_se,
   ggtitle("N of Species by year")+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, filename=sprintf("%s/Figures/species_by_year.png", base))
+ggsave(p, filename=sprintf("%s/Figures/species_by_year.pdf", base))
 
 speciation_extinction_by_year_se$EVO_TYPE<-factor(speciation_extinction_by_year_se$EVO_TYPE, 
                                                   levels = c("Lazy", "Darwin II", "Darwin I"))
@@ -235,6 +241,7 @@ p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter(YEAR>=-1100),
   ggtitle("N of SPECIATION by year")+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, filename=sprintf("%s/Figures/speciation_by_year.png", base))
+ggsave(p, filename=sprintf("%s/Figures/speciation_by_year.pdf", base))
 
 p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter((YEAR>=-1100)&(YEAR<0)), 
           aes(x=YEAR, y= MEAN_N_EXTINCTION, color=EVO_TYPE))+
@@ -249,6 +256,7 @@ p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter((YEAR>=-1100)&(YEAR
   ggtitle("N of EXTINCTION by year")+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, filename=sprintf("%s/Figures/extinction_by_year.png", base))
+ggsave(p, filename=sprintf("%s/Figures/extinction_by_year.pdf", base))
 
 p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter(YEAR>=-1100), 
           aes(x=YEAR, y= AVERAGE_SPECIATION, color=EVO_TYPE))+
@@ -263,6 +271,7 @@ p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter(YEAR>=-1100),
   ggtitle("SPECIATION PER SPECIES by year")+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, filename=sprintf("%s/Figures/speciation_per_species_by_year.png", base))
+ggsave(p, filename=sprintf("%s/Figures/speciation_per_species_by_year.pdf", base))
 
 p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter((YEAR>=-1100)&(YEAR<0)), 
           aes(x=YEAR, y= AVERAGE_EXTINCTION, color=EVO_TYPE))+
@@ -277,6 +286,7 @@ p<-ggplot(speciation_extinction_by_year_se %>% dplyr::filter((YEAR>=-1100)&(YEAR
   ggtitle("N EXTINCTION PER SPECIES by year")+
   facet_wrap( ~ WARP_LABEL, ncol=2, scales = 'free')
 ggsave(p, filename=sprintf("%s/Figures/extinction_per_species_by_year.png", base))
+ggsave(p, filename=sprintf("%s/Figures/extinction_per_species_by_year.pdf", base))
 
 
 

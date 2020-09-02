@@ -19,8 +19,8 @@ base2<-"/media/huijieqiao/Butterfly/SMART_SPECIES"
 mask_df<-readRDS(sprintf("%s/Data/ENV/mask_df.rda", base))
 
 simulations<-NULL
-#for (i in c(1,2,7)){
-for (i in c(7)){
+for (i in c(1,2,7)){
+  #for (i in c(7)){
   print(i)
   mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/conf_%s.sqlite", db_base, i))  
   simulation<-dbReadTable(mydb, "simulations")

@@ -126,7 +126,7 @@ for (i in c(1:nrow(example))){
     ggtitle(label)+
     theme_bw()+
     theme(legend.title = element_blank())
-  ggsave(p, file=sprintf("%s/Figures/Niche_Change_Example/%s.png", base, label))
+  ggsave(p, file=sprintf("%s/Figures/Niche_Change_Example/%s.pdf", base, label))
   cuts<-seq(from=-1200, to=0, by=10)
   df_i$Y_CUT<-Hmisc::cut2(df_i$Y, cuts=cuts)
   p<-ggplot(df_i %>%filter(ENV_RANGE_TYPE=="TEMP"), aes(x=Y_CUT))+
@@ -134,6 +134,6 @@ for (i in c(1:nrow(example))){
     ggtitle(label)+
     theme_bw()+
     theme(legend.title = element_blank())
-  ggsave(p, file=sprintf("%s/Figures/Niche_Change_Example/CHANGE_RATIO_%s.png", base, label),
+  ggsave(p, file=sprintf("%s/Figures/Niche_Change_Example/CHANGE_RATIO_%s.pdf", base, label),
          width=15, height=5)
 }
