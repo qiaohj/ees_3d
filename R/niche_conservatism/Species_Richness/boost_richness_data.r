@@ -30,7 +30,7 @@ bind<-function(df1, df2){
   return(df1)
 }
 
-
+i=75
 for (i in c(1:length(rdas))){
   print(paste(i, length(rdas), rdas[i]))
   target<-sprintf("%s/Data/item_richness_rep/df_richness_%d.rda", base, i)
