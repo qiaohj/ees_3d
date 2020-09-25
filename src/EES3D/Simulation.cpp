@@ -65,7 +65,6 @@ void Simulation::saveGroupmap(int year_i, unordered_map<Species*, vector<ISEA*>>
         return;
     }
     //logs.push_back("insert into map (YEAR, ID, group_id, sp_id ) values ");
-    int i = 0;
     //LOG(DEBUG)<<"Saving group map";
     for (auto sp_it : species_group_maps) {
         Species *sp = sp_it.first;
@@ -87,12 +86,6 @@ void Simulation::saveGroupmap(int year_i, unordered_map<Species*, vector<ISEA*>>
                 if (group_id >= 0) {
                     string sp_id = sp->getIDWithParentID();
                     char line[sp_id.size() + 100];
-                    if (i == 0) {
-                        //sprintf(line, " (%u,%u,%u,%s) ", timeLine[year_i], id, group_id, sp_id.c_str());
-                    } else {
-                        //sprintf(line, " ,(%u,%u,%u,%s) ", timeLine[year_i], id, group_id, sp_id.c_str());
-                    }
-                    i = 1;
                     sprintf(line, "%u,%u,%u,%u,%s,%u", timeLine[year_i], id, group_id, n, sp_id.c_str(), suitable);
                     logs.push_back(line);
                 }
@@ -298,12 +291,17 @@ int Simulation::run() {
 
     LOG(DEBUG)<<"Total timeLine is "<<timeLine.size();
     unordered_map<Species*, unordered_map<int, vector<Organism*> > > organisms_in_current_year;
+    unordered_map<Species*, unordered_map<int, int>> N_organisms_in_current_year;
     LOG(DEBUG)<<"Add ancestor as the first dataset";
     unordered_map<int, vector<Organism*>> seeds;
+    unordered_map<int, int> N_seeds;
     for (auto it : all_organisms[timeLine.size() - from]){
         seeds[it->getID()].push_back(it);
+        N_seeds[it->getID()] = 1;
     }
     organisms_in_current_year[this->ancestor] = seeds;
+    N_organisms_in_current_year[this->ancestor] = N_seeds;
+
     for (unsigned year_i = timeLine.size() - from + 1; year_i<timeLine.size(); year_i++) {
     	if (!CommonFun::between(timeLine[year_i], from, to)){
     		LOG(INFO) << "Not in Simulation Range, Break!";
@@ -441,6 +439,8 @@ int Simulation::run() {
             it.second.clear();
         }
         organisms_in_current_year.clear();
+
+
         //If it is the beginning of the simulation, generate a suitable layer for the species;
         LOG(DEBUG) << "Current year is " << year_i << " and timeline is " << timeLine[year_i];
         if (year_i == from) {
@@ -513,12 +513,21 @@ int Simulation::run() {
                 int id = it->getID();
                 //species id, index
                 organisms_in_current_year[s_it.first][id].push_back(it);
+                N_organisms_in_current_year[s_it.first][id] += 1;
+                if (id==4365){
+                    LOG(DEBUG)<<"SIZE 1 is "<<N_organisms_in_current_year[s_it.first][id];
+                }
+
                 all_organisms[year_i].push_back(it);
             }
             for (auto it : unsuitable_organisms_item) {
                 int id = it->getID();
                 //species id, index
                 unsuitable_organisms[s_it.first][id].push_back(it);
+                N_organisms_in_current_year[s_it.first][id] = 0;
+                if (id==4365){
+                    LOG(DEBUG)<<"SIZE 2 is "<<N_organisms_in_current_year[s_it.first][id];
+                }
             }
             //LOG(DEBUG)<<"end to simulate organism by organism.";
         }
@@ -556,6 +565,8 @@ int Simulation::run() {
                 LOG(DEBUG)<<"SET DisappearedYearI 1";
                 sp_it->first->setDisappearedYearI(year_i);
                 sp_it = organisms_in_current_year.erase(sp_it);
+                //need to check
+                N_organisms_in_current_year.erase(species);
             }
         }
         LOG(DEBUG)<<"end to remove unsuitable organisms. species size is "<< organisms_in_current_year.size();
@@ -644,9 +655,13 @@ int Simulation::run() {
 
         LOG(DEBUG)<<"Begin to rebuild the organism structure in this year";
         unordered_map<Species*, unordered_map<int, vector<Organism*> > > tmp_set;
+        unordered_map<Species*, unordered_map<int, int > > N_tmp_set;
+
         for (auto sp_it = organisms_in_current_year.begin(); sp_it!= organisms_in_current_year.end();) {
             LOG(DEBUG)<<"get all organisms in this year";
+            Species *species = sp_it->first;
             unordered_map<int, vector<Organism*> > organisms = sp_it->second;
+            unordered_map<int, int > N_organisms = N_organisms_in_current_year[species];
             //count all the species
             unordered_map<int, int> species_ids;
             set<int> temp_species_ids;
@@ -663,6 +678,12 @@ int Simulation::run() {
             temp_species_ids.clear();
             //if there is a new species, remove the old one from the array and put the new species in.
             if (species_ids.size() > 1) {
+                LOG(DEBUG) << "x0";
+
+                LOG(DEBUG) << "x1";
+                LOG(DEBUG) << species;
+                N_organisms_in_current_year.erase(species);
+
                 for (auto sp_id_it : species_ids) {
                     LOG(DEBUG)<<"New species found";
                     Species *new_species = new Species(sp_id_it.second, sp_it->first, year_i);
@@ -671,17 +692,20 @@ int Simulation::run() {
                     all_species[new_species->getIDWithParentID()] = new_species;
                     LOG(DEBUG)<<"Generate the distribution map of the new species";
                     unordered_map<int, vector<Organism*> > new_map;
+                    unordered_map<int, int > N_new_map;
 
                     for (auto c_it : organisms) {
                         for (auto o_it : c_it.second) {
                             if (o_it->getTempSpeciesId() == sp_id_it.first) {
                                 new_map[c_it.first].push_back(o_it);
                                 o_it->setSpecies(new_species);
+                                N_new_map[c_it.first] = N_organisms[c_it.first];
                             }
                         }
                     }
                     LOG(DEBUG)<<"Put the map to new species";
                     tmp_set[new_species] = new_map;
+                    N_tmp_set[new_species] = N_new_map;
 
                 }
                 for (auto it_t : sp_it->second){
@@ -691,6 +715,8 @@ int Simulation::run() {
                 sp_it->second.clear();
                 sp_it = organisms_in_current_year.erase(sp_it);
 
+
+
             } else {
                 sp_it++;
             }
@@ -699,6 +725,7 @@ int Simulation::run() {
         LOG(DEBUG)<<"Add new species to set";
         for (auto it : tmp_set){
             organisms_in_current_year[it.first] = it.second;
+            N_organisms_in_current_year[it.first] = N_tmp_set[it.first];
         }
         LOG(DEBUG)<<"End to rebuild the organism structure in this year. species size is "<<organisms_in_current_year.size();
 
@@ -715,7 +742,7 @@ int Simulation::run() {
                 for (auto o_id : sp_it.second) {
                     if (o_id.second.size() > 0) {
                         group_maps[sp_it.first][0]->setValue(o_id.second.front()->getID(), o_id.second.front()->getGroupId());
-                        group_maps[sp_it.first][1]->setValue(o_id.second.front()->getID(), o_id.second.size());
+                        group_maps[sp_it.first][1]->setValue(o_id.second.front()->getID(), N_organisms_in_current_year[species][o_id.first]);
                     }
                 }
             } else {
@@ -826,6 +853,12 @@ int Simulation::run() {
         it.second.clear();
     }
     organisms_in_current_year.clear();
+
+    //clean the last N_organisms_in_current_year
+    for (auto it : N_organisms_in_current_year){
+        it.second.clear();
+    }
+    N_organisms_in_current_year.clear();
 
     generateSpeciationInfo();
     malloc_trim(0);

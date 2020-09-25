@@ -350,7 +350,7 @@ void Species::addChild(Species* child) {
     children.push_back(child);
 }
 void Species::setDisappearedYearI(int p_disappeared_year_i) {
-    LOG(INFO)<<"SET disappearedYearI "<< p_disappeared_year_i;
+    LOG(DEBUG)<<"SET disappearedYearI "<< p_disappeared_year_i;
     disappearedYearI = p_disappeared_year_i;
 }
 int Species::getDisappearedYearI() {

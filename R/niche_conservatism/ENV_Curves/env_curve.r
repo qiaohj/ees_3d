@@ -1,5 +1,8 @@
+base<-"/home/huijieqiao/git/ees_3d_data/niche_conservatism"
 if (F){
   library("DBI")
+  library("mgcv")
+  library("pastecs")
   mydb <- dbConnect(RSQLite::SQLite(), sprintf("%s/ISEA3H8/SQLITE/env_Hadley3D.sqlite", base))  
   max_prec<-dbReadTable(mydb, "Debiased_Maximum_Monthly_Precipitation")
   max_temp<-dbReadTable(mydb, "Debiased_Maximum_Monthly_Temperature")
@@ -37,9 +40,19 @@ if (F){
                 "Maximum Monthly Temperature",
                 "Minimum Monthly Temperature")){
     print(var)
+    if (var=="Maximum Monthly Precipitation"){
+      k<-40
+    }else{
+      k<-20
+    }
+    if (var=="Maximum Monthly Temperature"){
+      type_first<-1
+    }else{
+      type_first<--1
+    } 
     env_df<-env_se%>%dplyr::filter(type==var)
     
-    max_temp_gam<-gam(mean~s(year, k=20),data=env_df)
+    max_temp_gam<-gam(mean~s(year, k=k),data=env_df)
     #plot(max_temp_gam)
     
     env_df$predicted<-predict(max_temp_gam, env_df)
@@ -73,17 +86,27 @@ if (F){
     }
     env_df[which(env_df$group==group), "length"]<-length
     unique(env_df[, c("group", "length")])
-    
+    if (type_first==1){
+      env_df[which((env_df$direction==0)&(env_df$year==-1200)), "peak"]<-T
+    }else{
+      env_df[which((env_df$direction==0)&(env_df$year==-1200)), "pit"]<-T
+    }
+    env_df[which(env_df$direction==0), "direction"]<-type_first
     if (is.null(env_df_new)){
       env_df_new<-env_df
     }else{
       env_df_new<-bind_rows(env_df_new, env_df)
     }
-    ggplot(env_df, aes(x=year, y=predicted, color=factor(direction)))+geom_point()
+    ggplot(env_df, aes(x=year, y=predicted, color=factor(direction)))+
+      geom_point(aes(y=mean), color="black")+
+      geom_point()
   }
   saveRDS(env_df_new, sprintf("%s/Data/env_se.rda", base))
 }
+setwd("~/git/ees_3d/R/niche_conservatism/ENV_Curves")
+library(dplyr)
 library(ggplot2)
+library(hrbrthemes)
 env_se<-readRDS(sprintf("%s/Data/env_se.rda", base))
 
 ggplot(env_se, aes(x=year, y=mean, color=factor(type)))+geom_line()
@@ -143,3 +166,15 @@ p<-ggplot() +
   ggtitle("Environmental variables")
 ggsave(p, filename=sprintf("%s/Figures/env_curves_with_smooth.png", base), width=10, height = 5)
 ggsave(p, filename=sprintf("%s/Figures/env_curves_with_smooth.pdf", base), width=10, height = 5)
+
+env_se_item<-env_se%>%dplyr::group_by(group, type)%>%dplyr::summarise(
+  direction=max(direction),
+  max=max(mean),
+  min=min(mean),
+  length=mean(length)
+)
+env_se_item$speed<-(env_se_item$max-env_se_item$min)/env_se_item$length
+env_se_item_se<-env_se_item%>%ungroup()%>%dplyr::group_by(type, direction)%>%
+  dplyr::summarise(mean_speed=mean(speed),
+                   sd_speed=sd(speed))
+write.csv(env_se_item, sprintf("%s/Tables/Env_speed.csv", base))
