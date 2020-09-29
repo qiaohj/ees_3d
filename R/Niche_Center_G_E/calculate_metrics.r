@@ -40,7 +40,7 @@ ll<-readRDS("/home/huijieqiao/git/ees_3d_data/niche_conservatism/Data/ENV/mask_d
 ll_start<-ll%>%dplyr::filter(Y==1200)
 i=12
 for (i in c(1:length(items))){
-  #for (i in c(12:12)){
+  #for (i in c(2:2)){
   item<-items[i]
   item_s<-strsplit(item, "_")[[1]]
   ID<-as.numeric(item_s[1])
@@ -54,7 +54,7 @@ for (i in c(1:length(items))){
   }
   target_rda<-sprintf("%s/%s/center_density.rda", target_dir, item)
   if (file.exists(target_rda)){
-    #next()
+    next()
   }
   saveRDS(NULL, target_rda)
   s<-simulations%>%dplyr::filter((global_id==ID)&(da==DA)&(nb==NB))
