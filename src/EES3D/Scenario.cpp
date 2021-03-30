@@ -168,6 +168,9 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
             int from = sqlite3_column_int(stmt, SIMULATION_from);
 			int to = sqlite3_column_int(stmt, SIMULATION_to);
 			int step = sqlite3_column_int(stmt, SIMULATION_step);
+			int species_evo_type = sqlite3_column_int(stmt, SIMULATION_species_evo_type);
+			double directional_speed = sqlite3_column_double(stmt, SIMULATION_directional_speed);
+			int species_evo_level = sqlite3_column_int(stmt, SIMULATION_species_evo_level);
 
             string label = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_label)));
             //LOG(DEBUG) << "init Species";
@@ -182,7 +185,7 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
             vector<string> environment_labels = CommonFun::splitStr(environments_str, ",");
             //LOG(INFO)<<"evo_type is "<<evo_type;
             Simulation *simulation = new Simulation(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, timeLine, neighborInfo,
-                    environment_labels, mask_table, details, evo_type, from, to, step);
+                    environment_labels, mask_table, details, evo_type, from, to, step, species_evo_type, directional_speed, species_evo_level);
 
             /*-------------------
              * If the target folder exists and the is_overwrite parameter is false, skip the simulation,

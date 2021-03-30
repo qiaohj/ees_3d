@@ -15,7 +15,8 @@
 #include <utility>
 Simulation::Simulation(Species *p_species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
         vector<int> &p_timeLine, Neighbor* neighborInfo, vector<string> &environment_labels, string mask_table, bool p_details,
-        int p_evoType, int p_from, int p_to, int p_step) {
+        int p_evoType, int p_from, int p_to, int p_step,
+        int p_species_evo_type, double p_directional_speed, int p_species_evo_level) {
     this->sys_start = clock();
     this->sys_end = clock();
     this->max_memory = 0;
@@ -40,7 +41,9 @@ Simulation::Simulation(Species *p_species, string label, int burnInYear, string 
     this->from = p_from;
     this->to = p_to;
     this->step = p_step;
-
+    this->species_evo_level = p_species_evo_level;
+    this->species_evo_type = p_species_evo_type;
+    this->directional_speed = p_directional_speed;
 }
 void Simulation::setIndexSimulation(int indexSimulation){
     this->indexSimulation = indexSimulation;
