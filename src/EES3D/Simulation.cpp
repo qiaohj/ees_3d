@@ -16,7 +16,7 @@
 Simulation::Simulation(Species *p_species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit,
         vector<int> &p_timeLine, Neighbor* neighborInfo, vector<string> &environment_labels, string mask_table, bool p_details,
         int p_evoType, int p_from, int p_to, int p_step,
-        int p_species_evo_type, double p_directional_speed, int p_species_evo_level) {
+        int p_species_evo_type, float p_directional_speed, int p_species_evo_level) {
     this->sys_start = clock();
     this->sys_end = clock();
     this->max_memory = 0;
@@ -136,6 +136,9 @@ void Simulation::commitLog(){
     LOG(INFO)<<"Outputting log file";
     string logFile = this->targetFolder + "/" + label + ".log";
     CommonFun::writeFile(logs, logFile.c_str());
+    string sp_logFile = this->targetFolder + "/" + label + ".sp.log";
+    CommonFun::writeFile(sp_logs, sp_logFile.c_str());
+
     if (details){
         string nb_logFile = this->targetFolder + "/" + label + ".nb.log";
         CommonFun::writeFile(nb_logs, nb_logFile.c_str());
@@ -314,7 +317,7 @@ int Simulation::run() {
         double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
         int memory = (int)CommonFun::getCurrentRSS(pow(1024, 2));
         this->max_memory = (max_memory>memory)?max_memory:memory;
-        LOG(INFO) << "v3.7 Current year @ "<<year_i<<" : " << timeLine[year_i] << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"<<totalSimulation<<") N_sp:"<<
+        LOG(INFO) << "v3.8 Current year @ "<<year_i<<" : " << timeLine[year_i] << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"<<totalSimulation<<") N_sp:"<<
                 //organisms_in_current_year->size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
                 organisms_in_current_year.size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << memory << "MB.";
         LOG(DEBUG) << "Load environments of year " << timeLine[year_i] << " via index " << year_i;
@@ -323,7 +326,67 @@ int Simulation::run() {
         //Create the active individual organisms via cloning the individual organisms from the previous time step.
         unordered_map<Species*, unordered_map<int, Organism*>> actived_organisms;
         LOG(DEBUG) << "Found " << all_organisms[year_i - 1].size() << " organisms at time " << timeLine[year_i - 1] << ".";
+        //Change the niche breadth by species
+        for (auto sp_it : organisms_in_current_year) {
+            if (year_i == timeLine.size() - from + 1){
+                continue;
+            }
+            if (this->species_evo_level==0){
+                if (this->species_evo_type==2){
+                    unordered_map<string, ISEA*> previous_environments = getEnvironmentMap(timeLine[year_i - 1]);
+                    Species *sp = sp_it.first;
+                    unordered_map<string, float> previous_environment_values;
+                    unordered_map<string, float> current_environment_values;
+                    for (auto env_key : previous_environments){
+                        previous_environment_values[env_key.first] = 0;
+                        current_environment_values[env_key.first] = 0;
+                    }
+                    for (auto c_it : sp_it.second) {
+                        for (auto env_key : previous_environments){
+                            previous_environment_values[env_key.first] += previous_environments[env_key.first]->readByID(c_it.first);
+                            current_environment_values[env_key.first] += current_environments[env_key.first]->readByID(c_it.first);
+                        }
+                    }
+                    for (auto env_key : previous_environments){
+                        previous_environment_values[env_key.first] /= sp_it.second.size();
+                        current_environment_values[env_key.first] /= sp_it.second.size();
+                    }
+                    if ((this->species_evo_type==2)){
+                        for (auto env_key : previous_environments){
+                            float delta_v = current_environment_values[env_key.first] - previous_environment_values[env_key.first];
+                            delta_v *= this->directional_speed;
+                            LOG(DEBUG)<<"delta v is "<<delta_v;
+                            for (auto c_it : sp_it.second) {
+                                for (auto r_it : c_it.second){
+                                    r_it->getNicheBreadth()[env_key.first]->setMin(r_it->getNicheBreadth()[env_key.first]->getMin() + delta_v);
+                                    r_it->getNicheBreadth()[env_key.first]->setMax(r_it->getNicheBreadth()[env_key.first]->getMax() + delta_v);
+                                }
+                            }
+                        }
 
+                    }
+                    char sql[5000];
+                    string nb_str = "";
+
+                    for (auto c_it : sp_it.second) {
+                        for (auto it : c_it.second.front()->getNicheBreadth()){
+                            char nb[500];
+                            sprintf(nb, "%s,%f,%f,", it.first.c_str(), it.second->getMin(), it.second->getMax());
+                            nb_str += nb;
+                        }
+                        break;
+                    }
+
+                    sprintf(sql, "%d,%s,%s",
+                                    year_i, sp_it.first->getIDWithParentID().c_str(), nb_str.c_str());
+                    string sql_c = sql;
+                    sp_logs.push_back(sql_c);
+
+                }
+            }
+        }
+
+        //Change the niche breadth by orgamism
         for (auto sp_it : organisms_in_current_year) {
             Species *sp = sp_it.first;
             if ((evoType==5)||(evoType==8)){

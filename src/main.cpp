@@ -13,8 +13,8 @@
  * 4. result folder. A path to save the result
  * 5. memory limit (in MB). A number to set up the maximum memory allocate to the application
  * 6. is overwrite. An ZERO value means skip the simulation if the result folder exists and NONE-ZERO value means run the simulation no matter that the folder exists or not.
- * 7. with detail. An ZERO
- *  value means output the details of the simulation or not.
+ * 7. is_debug 0/1
+ * 8. with detail. 0/1 means output the details of the simulation or not.
  *
  */
 using namespace std;

@@ -59,13 +59,22 @@ Organism::Organism(int p_year_i, Species* p_species, Organism* p_parent, int p_i
     //LOG(INFO)<<"evoType_temp is "<<evoType_temp;
     switch (evoType_temp) {
         case 1:{
-            t_details = false;
+            t_details = details;
             //LOG(DEBUG)<<"1. I DO "<<nicheBreadthType;
-            for (auto it : p_species->getNicheBreadth()) {
-                NicheBreadth *p_NicheBreadth = it.second;
-                NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
-                nicheBreadth[it.first] = new_NicheBreadth;
-                //memo += it.first + "," + to_string(envs[it.first]) + ",";
+            if (parent){
+                for (auto it : this->parent->getNicheBreadth()) {
+                    NicheBreadth *p_NicheBreadth = it.second;
+                    NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                    nicheBreadth[it.first] = new_NicheBreadth;
+                    //memo += it.first + "," + to_string(envs[it.first]) + ",";
+                }
+            }else{
+                for (auto it : species->getNicheBreadth()) {
+                    NicheBreadth *p_NicheBreadth = it.second;
+                    NicheBreadth *new_NicheBreadth = new NicheBreadth(p_NicheBreadth->getMin(), p_NicheBreadth->getMax());
+                    nicheBreadth[it.first] = new_NicheBreadth;
+                    //memo += it.first + "," + to_string(envs[it.first]) + ",";
+                }
             }
             break;
         }

@@ -40,6 +40,7 @@ private:
     clock_t sys_end;
     int max_memory;
     vector<string> logs;
+    vector<string> sp_logs;
     vector<string> nb_logs;
     //vector<string> nb_logs_4;
     unordered_map<string, Species*> all_species;
@@ -66,7 +67,7 @@ private:
     int to;
     int step;
     int species_evo_type;
-    double directional_speed;
+    float directional_speed;
     int species_evo_level;
 public:
     /**
@@ -74,7 +75,7 @@ public:
      */
     Simulation(Species *species, string label, int burnInYear, string target, bool p_overwrite, unsigned long memLimit, vector<int> &p_timeLine, Neighbor *neighborInfo,
             vector<string> &environment_labels, string mask_table, bool p_details, int p_evoType, int p_from, int p_to, int p_step,
-            int species_evo_type, double directional_speed, int species_evo_level);
+            int species_evo_type, float directional_speed, int species_evo_level);
     int getMinDividedYear_old(int speciation_year, vector<Organism*> group_1, vector<Organism*> group_2, int current_year_i);
     int getMinDividedYear_Disjoint(int speciation_year, vector<Organism*> &group_1, vector<Organism*> &group_2, int current_year_i);
     int getDividedYearI(Organism *o_1, Organism *o_2);
