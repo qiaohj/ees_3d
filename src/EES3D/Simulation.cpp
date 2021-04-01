@@ -331,8 +331,20 @@ int Simulation::run() {
             if (year_i == timeLine.size() - from + 1){
                 continue;
             }
+            //species_evo_level
+            //0: species as a whole responds (until speciation)
+            //1: geographically contiguous pieces of species responds
             if (this->species_evo_level==0){
-                if (this->species_evo_type==2){
+                //species_evo_type
+                //1: niche conservatism
+                //2: niche shift (directional)
+                //3: niche expansion (directional)
+                //4: niche expansion (omnidirectional)
+                //5: niche shift (random in box center)
+                //6: niche shift (random symmetrical change in box limit)
+                //7: niche shift (random asymmetrical change in box limit)
+                if ((this->species_evo_type==2)||(this->species_evo_type==3)||(this->species_evo_type==4)||
+                     (this->species_evo_type==5)||(this->species_evo_type==6)||(this->species_evo_type==7)){
                     unordered_map<string, ISEA*> previous_environments = getEnvironmentMap(timeLine[year_i - 1]);
                     Species *sp = sp_it.first;
                     unordered_map<string, float> previous_environment_values;
@@ -351,15 +363,32 @@ int Simulation::run() {
                         previous_environment_values[env_key.first] /= sp_it.second.size();
                         current_environment_values[env_key.first] /= sp_it.second.size();
                     }
-                    if ((this->species_evo_type==2)){
+                    //2: niche shift (directional)
+                    //3: niche expansion (directional)
+                    //4: niche expansion (omnidirectional)
+                    if ((this->species_evo_type==2)||(this->species_evo_type==3)||(this->species_evo_type==4)){
                         for (auto env_key : previous_environments){
                             float delta_v = current_environment_values[env_key.first] - previous_environment_values[env_key.first];
                             delta_v *= this->directional_speed;
-                            LOG(DEBUG)<<"delta v is "<<delta_v;
+                            LOG(DEBUG)<<"delta v of species is "<<delta_v;
                             for (auto c_it : sp_it.second) {
                                 for (auto r_it : c_it.second){
-                                    r_it->getNicheBreadth()[env_key.first]->setMin(r_it->getNicheBreadth()[env_key.first]->getMin() + delta_v);
-                                    r_it->getNicheBreadth()[env_key.first]->setMax(r_it->getNicheBreadth()[env_key.first]->getMax() + delta_v);
+                                    if ((this->species_evo_type==2)){
+                                        r_it->getNicheBreadth()[env_key.first]->setMin(r_it->getNicheBreadth()[env_key.first]->getMin() + delta_v);
+                                        r_it->getNicheBreadth()[env_key.first]->setMax(r_it->getNicheBreadth()[env_key.first]->getMax() + delta_v);
+                                    }
+                                    if ((this->species_evo_type==3)){
+                                        if (delta_v<0){
+                                            r_it->getNicheBreadth()[env_key.first]->setMin(r_it->getNicheBreadth()[env_key.first]->getMin() + delta_v);
+                                        }else{
+                                            r_it->getNicheBreadth()[env_key.first]->setMax(r_it->getNicheBreadth()[env_key.first]->getMax() + delta_v);
+                                        }
+                                    }
+                                    if ((this->species_evo_type==4)){
+                                        delta_v = abs(delta_v);
+                                        r_it->getNicheBreadth()[env_key.first]->setMin(r_it->getNicheBreadth()[env_key.first]->getMin() - delta_v);
+                                        r_it->getNicheBreadth()[env_key.first]->setMax(r_it->getNicheBreadth()[env_key.first]->getMax() + delta_v);
+                                    }
                                 }
                             }
                         }
@@ -381,6 +410,81 @@ int Simulation::run() {
                                     year_i, sp_it.first->getIDWithParentID().c_str(), nb_str.c_str());
                     string sql_c = sql;
                     sp_logs.push_back(sql_c);
+
+                }
+            }
+            //species_evo_level
+            //0: species as a whole responds (until speciation)
+            //1: geographically contiguous pieces of species responds
+            if (this->species_evo_level==1){
+                //species_evo_type
+                //1: niche conservatism
+                //2: niche shift (directional)
+                //3: niche expansion (directional)
+                //4: niche expansion (omnidirectional)
+                //5: niche shift (random in box center)
+                //6: niche shift (random symmetrical change in box limit)
+                //7: niche shift (random asymmetrical change in box limit)
+                if ((this->species_evo_type==2)||(this->species_evo_type==3)||(this->species_evo_type==4)||
+                        (this->species_evo_type==5)||(this->species_evo_type==6)||(this->species_evo_type==7)){
+                    unordered_map<string, ISEA*> previous_environments = getEnvironmentMap(timeLine[year_i - 1]);
+                    Species *sp = sp_it.first;
+                    unordered_map<int, unordered_set<int> > ids_groups;
+                    unordered_map<int, vector<Organism*> > org_groups;
+
+                    for (auto it : sp_it.second){
+                        for (auto o_it: it.second){
+                            ids_groups[o_it->getGroupId()].insert(it.first);
+                            org_groups[o_it->getGroupId()].push_back(o_it);
+                        }
+                    }
+                    for (auto it : ids_groups){
+                        unordered_map<string, float> previous_environment_values;
+                        unordered_map<string, float> current_environment_values;
+                        for (auto env_key : previous_environments){
+                            previous_environment_values[env_key.first] = 0;
+                            current_environment_values[env_key.first] = 0;
+                        }
+                        for (auto c_it : it.second) {
+
+                            for (auto env_key : previous_environments){
+                                previous_environment_values[env_key.first] += previous_environments[env_key.first]->readByID(c_it);
+                                current_environment_values[env_key.first] += current_environments[env_key.first]->readByID(c_it);
+                            }
+                        }
+                        for (auto env_key : previous_environments){
+                            previous_environment_values[env_key.first] /= it.second.size();
+                            current_environment_values[env_key.first] /= it.second.size();
+                        }
+                        if ((this->species_evo_type==2)){
+                            for (auto env_key : previous_environments){
+                                float delta_v = current_environment_values[env_key.first] - previous_environment_values[env_key.first];
+                                delta_v *= this->directional_speed;
+                                LOG(DEBUG)<<"delta v of group is "<<delta_v;
+                                for (auto c_it : org_groups[it.first]) {
+                                    c_it->getNicheBreadth()[env_key.first]->setMin(c_it->getNicheBreadth()[env_key.first]->getMin() + delta_v);
+                                    c_it->getNicheBreadth()[env_key.first]->setMax(c_it->getNicheBreadth()[env_key.first]->getMax() + delta_v);
+                                }
+                            }
+
+                        }
+                        char sql[5000];
+                        string nb_str = "";
+
+                        for (auto c_it : sp_it.second) {
+                            for (auto it : c_it.second.front()->getNicheBreadth()){
+                                char nb[500];
+                                sprintf(nb, "%s,%f,%f,", it.first.c_str(), it.second->getMin(), it.second->getMax());
+                                nb_str += nb;
+                            }
+                            break;
+                        }
+
+                        sprintf(sql, "%d,%s,%s,%d",
+                                        year_i, sp_it.first->getIDWithParentID().c_str(), nb_str.c_str(), it.first);
+                        string sql_c = sql;
+                        sp_logs.push_back(sql_c);
+                    }
 
                 }
             }

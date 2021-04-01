@@ -20,6 +20,7 @@ using namespace std;
 #include <vector>
 #include <sqlite3.h>
 #include <malloc.h>
+#include <unordered_set>
 #include "NicheBreadth.h"
 #include "DBField.h"
 #include "Species.h"
