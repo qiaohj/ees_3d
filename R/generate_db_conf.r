@@ -23,6 +23,10 @@ v_mean_temp<-v_mean_temp[which(v_mean_temp$year==1200),]
 v_mean_prec<-dbReadTable(envdb, "Debiased_Mean_Annual_Precipitation")
 v_mean_prec<-v_mean_prec[which(v_mean_prec$year==1200),]
 
+v_max_prec<-dbReadTable(envdb, "Debiased_Maximum_Monthly_Precipitation")
+v_max_temp<-dbReadTable(envdb, "Debiased_Maximum_Monthly_Temperature")
+v_min_temp<-dbReadTable(envdb, "Debiased_Minimum_Monthly_Temperature")
+
 dbDisconnect(envdb)
 mask$random_index<-sample(nrow(mask))
 
