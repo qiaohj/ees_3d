@@ -42,6 +42,7 @@ private:
     int max_memory;
     vector<string> logs;
     vector<string> sp_logs;
+    vector<string> delta_logs;
     vector<string> nb_logs;
     //vector<string> nb_logs_4;
     unordered_map<string, Species*> all_species;
