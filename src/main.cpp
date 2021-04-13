@@ -438,7 +438,7 @@ int run(int argc, const char *argv[]) {
     bool is_detail = (atoi(argv[8])==1);
     //initialize the logger
 
-    string LOGFILE = target + "/runtime.log";
+    string LOGFILE = target + "/runtimexx.log";
     el::Configurations defaultConf;
     defaultConf.setToDefault();
     defaultConf.set(el::Level::Global, el::ConfigurationType::Enabled, "true");
