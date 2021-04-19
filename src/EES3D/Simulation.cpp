@@ -645,6 +645,19 @@ int Simulation::run() {
 
 
 							}
+							char sql[5000];
+							string nb_str = "";
+
+							for (auto it : organisms_groups[group_it.first].front()->getNicheBreadth()){
+								char nb[500];
+								sprintf(nb, "%s,%f,%f,", it.first.c_str(), it.second->getMin(), it.second->getMax());
+								nb_str += nb;
+							}
+
+							sprintf(sql, "%d,%s,%s,%d",
+											year_i, sp_it.first->getIDWithParentID().c_str(), nb_str.c_str(), group_it.first);
+							string sql_c = sql;
+							sp_logs.push_back(sql_c);
 						}
 					}
 
