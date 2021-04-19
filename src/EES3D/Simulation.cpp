@@ -484,64 +484,170 @@ int Simulation::run() {
                 //7: niche shift (random asymmetrical change in box limit)
                 if ((this->species_evo_type==2)||(this->species_evo_type==3)||(this->species_evo_type==4)||
                         (this->species_evo_type==5)||(this->species_evo_type==6)||(this->species_evo_type==7)){
-                    unordered_map<string, ISEA*> previous_environments = getEnvironmentMap(timeLine[year_i - 1]);
-                    Species *sp = sp_it.first;
-                    unordered_map<int, unordered_set<int> > ids_groups;
-                    unordered_map<int, vector<Organism*> > org_groups;
+                	//2: niche shift (directional)
+					//3: niche expansion (directional)
+					//4: niche expansion (omnidirectional)
+					if ((this->species_evo_type==2)||(this->species_evo_type==3)||(this->species_evo_type==4)){
+						unordered_map<string, ISEA*> previous_environments = getEnvironmentMap(timeLine[year_i - 1]);
+						Species *sp = sp_it.first;
+						unordered_map<int, unordered_set<int> > ids_groups;
+						unordered_map<int, vector<Organism*> > organisms_groups;
 
-                    for (auto it : sp_it.second){
-                        for (auto o_it: it.second){
-                            ids_groups[o_it->getGroupId()].insert(it.first);
-                            org_groups[o_it->getGroupId()].push_back(o_it);
-                        }
+						for (auto it : sp_it.second){
+							for (auto o_it: it.second){
+								ids_groups[o_it->getGroupId()].insert(it.first);
+								organisms_groups[o_it->getGroupId()].push_back(o_it);
+							}
+						}
+						for (auto group_it : ids_groups){
+							unordered_map<string, float> previous_environment_values;
+							unordered_map<string, float> current_environment_values;
+							//get the mean niche breadth
+
+							for (auto env_key : previous_environments){
+								previous_environment_values[env_key.first] = 0;
+								current_environment_values[env_key.first] = 0;
+								double min=0, max=0;
+								for (auto c_it : organisms_groups[group_it.first]) {
+									max += c_it->getNicheBreadth()[env_key.first]->getMax();
+									min += c_it->getNicheBreadth()[env_key.first]->getMin();
+								}
+								min /= organisms_groups[group_it.first].size();
+								max /= organisms_groups[group_it.first].size();
+								for (auto c_it : organisms_groups[group_it.first]) {
+									//if (!CommonFun::AlmostEqualRelative(c_it->getNicheBreadth()[env_key.first]->getMax(), max)){
+									//	LOG(INFO)<<"old max is "<<c_it->getNicheBreadth()[env_key.first]->getMax()<<" new max is "<<max;
+									//	LOG(INFO)<<"old min is "<<c_it->getNicheBreadth()[env_key.first]->getMin()<<" new min is "<<min;
+									//}
+									c_it->getNicheBreadth()[env_key.first]->setMax(max);
+									c_it->getNicheBreadth()[env_key.first]->setMin(min);
+								}
+
+							}
+							for (auto c_it : group_it.second) {
+								//if (group_it.first>1){
+								//	LOG(INFO)<<c_it<<", group id is "<<group_it.first;
+								//}
+								for (auto env_key : previous_environments){
+									previous_environment_values[env_key.first] += previous_environments[env_key.first]->readByID(c_it);
+									current_environment_values[env_key.first] += current_environments[env_key.first]->readByID(c_it);
+								}
+							}
+							for (auto env_key : previous_environments){
+								previous_environment_values[env_key.first] /= group_it.second.size();
+								current_environment_values[env_key.first] /= group_it.second.size();
+							}
+
+							for (auto env_key : previous_environments){
+								//LOG(INFO)<<previous_environment_values[env_key.first];
+								//LOG(INFO)<<current_environment_values[env_key.first];
+
+								float delta_v = current_environment_values[env_key.first] - previous_environment_values[env_key.first];
+								char delta_str[5000];
+								string nb_str = "";
+								sprintf(delta_str, "%d,%s,%f,%f,%s,%d",
+										year_i, sp_it.first->getIDWithParentID().c_str(),
+										delta_v, delta_v, env_key.first.c_str(), group_it.first);
+								string delta_s = delta_str;
+								delta_logs.push_back(delta_s);
+
+								delta_v *= this->directional_speed;
+								//LOG(INFO)<<"delta v of group is "<<delta_v<<" for group no."<<group_it.first;
+								for (auto c_it : organisms_groups[group_it.first]) {
+									if ((this->species_evo_type==2)){
+										c_it->getNicheBreadth()[env_key.first]->setMin(c_it->getNicheBreadth()[env_key.first]->getMin() + delta_v);
+										c_it->getNicheBreadth()[env_key.first]->setMax(c_it->getNicheBreadth()[env_key.first]->getMax() + delta_v);
+									}
+									if ((this->species_evo_type==3)){
+										if (delta_v<0){
+											c_it->getNicheBreadth()[env_key.first]->setMin(c_it->getNicheBreadth()[env_key.first]->getMin() + delta_v);
+										}else{
+											c_it->getNicheBreadth()[env_key.first]->setMax(c_it->getNicheBreadth()[env_key.first]->getMax() + delta_v);
+										}
+									}
+									if ((this->species_evo_type==4)){
+										delta_v = abs(delta_v);
+										c_it->getNicheBreadth()[env_key.first]->setMin(c_it->getNicheBreadth()[env_key.first]->getMin() - delta_v);
+										c_it->getNicheBreadth()[env_key.first]->setMax(c_it->getNicheBreadth()[env_key.first]->getMax() + delta_v);
+									}
+								}
+							}
+
+
+							char sql[5000];
+							string nb_str = "";
+
+							for (auto it : organisms_groups[group_it.first].front()->getNicheBreadth()){
+								char nb[500];
+								sprintf(nb, "%s,%f,%f,", it.first.c_str(), it.second->getMin(), it.second->getMax());
+								nb_str += nb;
+							}
+
+							sprintf(sql, "%d,%s,%s,%d",
+											year_i, sp_it.first->getIDWithParentID().c_str(), nb_str.c_str(), group_it.first);
+							string sql_c = sql;
+							sp_logs.push_back(sql_c);
+						}
                     }
-                    for (auto it : ids_groups){
-                        unordered_map<string, float> previous_environment_values;
-                        unordered_map<string, float> current_environment_values;
-                        for (auto env_key : previous_environments){
-                            previous_environment_values[env_key.first] = 0;
-                            current_environment_values[env_key.first] = 0;
-                        }
-                        for (auto c_it : it.second) {
 
-                            for (auto env_key : previous_environments){
-                                previous_environment_values[env_key.first] += previous_environments[env_key.first]->readByID(c_it);
-                                current_environment_values[env_key.first] += current_environments[env_key.first]->readByID(c_it);
-                            }
-                        }
-                        for (auto env_key : previous_environments){
-                            previous_environment_values[env_key.first] /= it.second.size();
-                            current_environment_values[env_key.first] /= it.second.size();
-                        }
-                        if ((this->species_evo_type==2)){
-                            for (auto env_key : previous_environments){
-                                float delta_v = current_environment_values[env_key.first] - previous_environment_values[env_key.first];
-                                delta_v *= this->directional_speed;
-                                LOG(DEBUG)<<"delta v of group is "<<delta_v;
-                                for (auto c_it : org_groups[it.first]) {
-                                    c_it->getNicheBreadth()[env_key.first]->setMin(c_it->getNicheBreadth()[env_key.first]->getMin() + delta_v);
-                                    c_it->getNicheBreadth()[env_key.first]->setMax(c_it->getNicheBreadth()[env_key.first]->getMax() + delta_v);
-                                }
-                            }
+					//5: niche shift (random in box center)
+					//6: niche shift (random symmetrical change in box limit)
+					//7: niche shift (random asymmetrical change in box limit)
+					if ((this->species_evo_type==5)||(this->species_evo_type==6)||(this->species_evo_type==7)){
+						unordered_map<int, unordered_set<int> > ids_groups;
+						unordered_map<int, vector<Organism*> > organisms_groups;
 
-                        }
-                        char sql[5000];
-                        string nb_str = "";
+						for (auto it : sp_it.second){
+							for (auto o_it: it.second){
+								ids_groups[o_it->getGroupId()].insert(it.first);
+								organisms_groups[o_it->getGroupId()].push_back(o_it);
+							}
+						}
+						for (auto group_it : ids_groups){
 
-                        for (auto c_it : sp_it.second) {
-                            for (auto it : c_it.second.front()->getNicheBreadth()){
-                                char nb[500];
-                                sprintf(nb, "%s,%f,%f,", it.first.c_str(), it.second->getMin(), it.second->getMax());
-                                nb_str += nb;
-                            }
-                            break;
-                        }
+							for (auto env_key : current_environments){
+								float range = organisms_groups[group_it.first].front()->getNicheBreadth()[env_key.first]->getMax() -
+										organisms_groups[group_it.first].front()->getNicheBreadth()[env_key.first]->getMin();
+								float delta_c = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - 0.5) * 2.0;
+								float delta_box = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - 0.5) * 2.0;
 
-                        sprintf(sql, "%d,%s,%s,%d",
-                                        year_i, sp_it.first->getIDWithParentID().c_str(), nb_str.c_str(), it.first);
-                        string sql_c = sql;
-                        sp_logs.push_back(sql_c);
-                    }
+								char delta_str[5000];
+								string nb_str = "";
+								sprintf(delta_str, "%d,%s,%f,%f,%s,%d",
+										year_i, sp_it.first->getIDWithParentID().c_str(), delta_c, delta_box, env_key.first.c_str(), group_it.first);
+								string delta_s = delta_str;
+								delta_logs.push_back(delta_s);
+
+
+								delta_c = range * delta_c * this->directional_speed;
+								delta_box = range * delta_box * this->directional_speed;
+								LOG(DEBUG)<<"delta c of group is "<<delta_c;
+								LOG(DEBUG)<<"delta_box of group is "<<delta_box;
+
+								for (auto r_it : organisms_groups[group_it.first]){
+									if ((this->species_evo_type==5)){
+										r_it->getNicheBreadth()[env_key.first]->setMin(r_it->getNicheBreadth()[env_key.first]->getMin() + delta_c);
+										r_it->getNicheBreadth()[env_key.first]->setMax(r_it->getNicheBreadth()[env_key.first]->getMax() + delta_c);
+									}
+									if ((this->species_evo_type==6)){
+										//delta_box = abs(delta_box);
+										r_it->getNicheBreadth()[env_key.first]->setMin(r_it->getNicheBreadth()[env_key.first]->getMin() - delta_box);
+										r_it->getNicheBreadth()[env_key.first]->setMax(r_it->getNicheBreadth()[env_key.first]->getMax() + delta_box);
+									}
+									if ((this->species_evo_type==7)){
+										r_it->getNicheBreadth()[env_key.first]->setMin(r_it->getNicheBreadth()[env_key.first]->getMin() + delta_c);
+										r_it->getNicheBreadth()[env_key.first]->setMax(r_it->getNicheBreadth()[env_key.first]->getMax() + delta_c);
+										r_it->getNicheBreadth()[env_key.first]->setMin(r_it->getNicheBreadth()[env_key.first]->getMin() - delta_box);
+										r_it->getNicheBreadth()[env_key.first]->setMax(r_it->getNicheBreadth()[env_key.first]->getMax() + delta_box);
+									}
+
+								}
+
+
+							}
+						}
+					}
+
 
                 }
             }
@@ -905,10 +1011,6 @@ int Simulation::run() {
             temp_species_ids.clear();
             //if there is a new species, remove the old one from the array and put the new species in.
             if (species_ids.size() > 1) {
-                LOG(DEBUG) << "x0";
-
-                LOG(DEBUG) << "x1";
-                LOG(DEBUG) << species;
                 N_organisms_in_current_year.erase(species);
 
                 for (auto sp_id_it : species_ids) {
