@@ -64,7 +64,7 @@ bool Simulation::getOverwrite(){
  *-----------------------*/
 void Simulation::saveGroupmap(int year_i, unordered_map<Species*, vector<ISEA*>> &species_group_maps, int suitable) {
     if (species_group_maps.size() == 0) {
-        LOG(ERROR)<<"suitable:"<<suitable<<". NO MAP, RETURN";
+        LOG(DEBUG)<<"suitable:"<<suitable<<". NO MAP, RETURN";
         return;
     }
     //logs.push_back("insert into map (YEAR, ID, group_id, sp_id ) values ");
