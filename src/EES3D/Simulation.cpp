@@ -285,7 +285,8 @@ void Simulation::generateSuitable() {
         i++;
     }
     output.push_back("; COMMIT;");
-    if (output.size() > 0) {
+    if (i > 0) {
+    	LOG(DEBUG)<<boost::algorithm::join(output, " ");;
         CommonFun::executeSQL(output, log_db, false);
 
     }
@@ -1221,10 +1222,12 @@ void Simulation::generateSpeciationInfo() {
     for (auto sp_it : roots) {
         string tree = sp_it->getNewickTree(true, false);
         string sql = "INSERT INTO trees (TYPE, CONTENT) VALUES ('NEWICK', " + CommonFun::quoteSql(&tree) + ");";
+        //LOG(INFO)<<sql;
         CommonFun::executeSQL(sql, log_db, true);
         vector<string> htmltree = sp_it->getHTMLTree();
         tree = boost::algorithm::join(htmltree, " ");
         sql = "INSERT INTO trees (TYPE, CONTENT) VALUES ('HTML', " + CommonFun::quoteSql(&tree) + ");";
+        //LOG(INFO)<<sql;
         CommonFun::executeSQL(sql, log_db, true);
         htmltree.clear();
     }
