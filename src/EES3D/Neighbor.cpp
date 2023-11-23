@@ -16,6 +16,7 @@
 
 Neighbor::Neighbor(sqlite3 *env_db) {
     sqlite3_stmt *stmt1;
+    LOG(INFO)<<"Loading neighbor";
     string sql = "SELECT * FROM neighbor";
     sqlite3_prepare(env_db, sql.c_str(), -1, &stmt1, NULL);
     bool done = false;
@@ -29,6 +30,9 @@ Neighbor::Neighbor(sqlite3 *env_db) {
             vector<string> tokens = CommonFun::splitStr(neighbor, ",");
             set<int> values;
             for (string token : tokens) {
+            	if (token==""){
+            		continue;
+            	}
                 values.insert(stoul(token));
             }
             neighbors[key] = values;
@@ -46,7 +50,7 @@ Neighbor::Neighbor(sqlite3 *env_db) {
     }
 
     sqlite3_finalize(stmt1);
-
+    LOG(INFO)<<"Loading distances";
     sqlite3_stmt *stmt2;
     sql = "SELECT * FROM distances";
     sqlite3_prepare(env_db, sql.c_str(), -1, &stmt2, NULL);

@@ -539,9 +539,11 @@ void Organism::setRandomDispersalAbility(){
 			break;
 		}
 	}
-	//LOG(DEBUG)<<"Dispersal ability is " <<dispersal_ability << " calculated by "<<r;
+	//LOG(DEBUG)<<"1. Dispersal ability is " <<dispersal_ability << " calculated by "<<r << " and id is "<<id;
+	//dispersal_ability /= 2;
+	//LOG(DEBUG)<<"2. Dispersal ability is " <<dispersal_ability << " calculated by "<<r << " and id is "<<id;
 	dispersalAbility = dispersal_ability;
-	//dispersalAbility = 1;
+
 }
 
 void Organism::setDispersalAbility(int p_dispersal_ability) {

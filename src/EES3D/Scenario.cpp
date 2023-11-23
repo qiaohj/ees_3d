@@ -149,11 +149,12 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
     string sql;
 
     if (p_id == -1) {
-        //sql = "SELECT * FROM simulations WHERE is_run=1 order by random()";
+        sql = "SELECT * FROM simulations WHERE is_run=1 order by random()";
         //sql = "SELECT * FROM simulations WHERE is_run=1 and global_id=17569 order by random()";
         //sql = "SELECT * FROM simulations WHERE is_run=1 and evo_type=1 and species_evo_type=2 and species_evo_level=0 and nb='NARROW' order by random()";
-    	//sql = "SELECT * FROM simulations WHERE is_run=1 and evo_type=1 and global_id in (27790,25837,24109,54786,19759,13651,17569,18517,4497,4847,9898,11847,40440,23724) order by random()";
-        sql = "SELECT * FROM simulations WHERE is_run=1 and nb='BROAD' order by random()";
+    	//sql = "select * from simulations where global_id=19980 and da='POOR' and nb='BROAD' and is_run=1 and species_evo_level=0";
+    	sql = "SELECT * FROM simulations WHERE is_run=1 and nb='BROAD' and da='GOOD' order by random()";
+    	//sql = "SELECT * FROM simulations WHERE is_run=1 and nb='BROAD' and da='GOOD' and species_evo_type=1 and species_evo_level=0 order by random()";
     } else {
         sql = "SELECT * FROM simulations WHERE is_run=1 and id=" + to_string(p_id);
     }
