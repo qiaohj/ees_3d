@@ -478,14 +478,16 @@ int run(int argc, const char *argv[]) {
 /*-----------------------------------------
  * Main entrance for the simulation application
  * Parameters
- * 1. configure's base folder, which the application can load the configuration for species and scenario.
- * 2. scenario configuration. A JSON format configuration file to set up the parameter of the scenario
- * 3. species configuration. A JSON format configuration file to set up the parameter of the species in the simulation.
- * 4. result folder. A path to save the result
- * 5. memory limit (in MB). A number to set up the maximum memory allocate to the application
+ * 0. configure's base folder, which the application can load the configuration for species and scenario.
+ * 1. scenario configuration. A JSON format configuration file to set up the parameter of the scenario
+ * 2. species configuration. A JSON format configuration file to set up the parameter of the species in the simulation.
+ * 3. result folder. A path to save the result
+ * 4. id of simulations, -1 means all.
+ * 5. memory limit (in GB). A number to set up the maximum memory allocate to the application
  * 6. is overwrite. An ZERO value means skip the simulation if the result folder exists and NONE-ZERO value means run the simulation no matter
  * that the folder exists or not.
- * 7. with detail. An ZERO value means output the details of the simulation or not.
+ * 7. is_debug
+ * 8. with detail. An ZERO value means output the details of the simulation or not.
  *
  *-----------------------------------------*/
 int main(int argc, const char *argv[]){

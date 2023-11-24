@@ -34,7 +34,7 @@ Simulation::Simulation(Species *p_species, string label, int burnInYear, string 
     this->environment_labels = environment_labels;
     this->mask_table = mask_table;
     this->mask = NULL;
-    this->targetFolder = target + "/" + label;
+    this->targetFolder = target + "/" + to_string(p_species->getID()) + "/" + label;
     this->organism_uid = 0;
     this->details = p_details;
     this->evoType = p_evoType;
@@ -217,7 +217,8 @@ bool Simulation::init(unordered_map<string, EnvVar*> &environments_base, sqlite3
     organism_uid = 0;
     unordered_map<string, ISEA*> current_environments = getEnvironmentMap(timeLine.front());
     for (int seed : seeds) {
-        Organism *organism = new Organism(timeLine.size() - from, ancestor, NULL, seed, ++organism_uid, nb_logs, details, current_environments, mask, evoType);
+        Organism *organism = new Organism(timeLine.size() - from + to -1,
+        		ancestor, NULL, seed, ++organism_uid, nb_logs, details, current_environments, mask, evoType);
         orgamisms.push_back(organism);
     }
 
@@ -254,6 +255,7 @@ void Simulation::generateSuitable() {
         int  v = 0;
         for (auto item : nicheBreadth) {
             float env_value = current_environments[item.first]->readByID(id);
+
             if ((env_value > item.second->getMax()) || (env_value < item.second->getMin())) {
                 v = 0;
                 break;
@@ -265,7 +267,6 @@ void Simulation::generateSuitable() {
             values.insert(id);
         }
     }
-
     vector<string> output;
     char line[100];
     // Note: The old version has only 5 columns without lon and lat columns.
@@ -311,8 +312,9 @@ int Simulation::run() {
     }
     organisms_in_current_year[this->ancestor] = seeds;
     N_organisms_in_current_year[this->ancestor] = N_seeds;
+    LOG(DEBUG)<<"timeLine.size():"<<timeLine.size()<<"from:"<<from<<"to:"<<to;
     for (unsigned year_i = timeLine.size() + to - from; year_i<timeLine.size(); year_i++) {
-    	//for (unsigned year_i = timeLine.size() - from + 1; year_i<=5; year_i++) {
+    	//for (unsigned year_i = timeLine.size() - from + to; year_i<=5; year_i++) {
     	if (!CommonFun::between(timeLine[year_i], from, to)){
     		LOG(INFO) << "Not in Simulation Range, Break!";
     		continue;
@@ -321,25 +323,27 @@ int Simulation::run() {
         double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
         int memory = (int)CommonFun::getCurrentRSS(pow(1024, 2));
         this->max_memory = (max_memory>memory)?max_memory:memory;
-        LOG(INFO) << "v3.9 Current year @ "<<year_i<<" : " << timeLine[year_i] << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"<<totalSimulation<<") N_sp:"<<
+        LOG(INFO) << "v3.9 Current year @ "<<year_i<<" : " << timeLine[year_i] << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"
+        		<<totalSimulation<<") N_sp:"<<
                 //organisms_in_current_year->size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
                 organisms_in_current_year.size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << memory << "MB.";
         LOG(DEBUG) << "Load environments of year " << timeLine[year_i] << " via index " << year_i;
 
         unordered_map<string, ISEA*> current_environments = getEnvironmentMap(timeLine[year_i]);
+
         //Create the active individual organisms via cloning the individual organisms from the previous time step.
         unordered_map<Species*, unordered_map<int, Organism*>> actived_organisms;
         LOG(DEBUG) << "Found " << all_organisms[year_i - 1].size() << " organisms at time " << timeLine[year_i - 1] << ".";
         //Change the niche breadth by species
         for (auto sp_it : organisms_in_current_year) {
-            if (year_i == timeLine.size() - from + 1){
+        	if (year_i == timeLine.size() - from + 1){
                 continue;
             }
             //species_evo_level
             //0: species as a whole responds (until speciation)
             //1: geographically contiguous pieces of species responds
             if (this->species_evo_level==0){
-                //species_evo_type
+            	//species_evo_type
                 //1: niche conservatism
                 //2: niche shift (directional)
                 //3: niche expansion (directional)
@@ -666,7 +670,6 @@ int Simulation::run() {
                 }
             }
         }
-
         //Change the niche breadth by organism
         for (auto sp_it : organisms_in_current_year) {
             Species *sp = sp_it.first;
@@ -790,7 +793,7 @@ int Simulation::run() {
 
         //If it is the beginning of the simulation, generate a suitable layer for the species;
         LOG(DEBUG) << "Current year is " << year_i << " and timeline is " << timeLine[year_i];
-        if (year_i == from) {
+        if (year_i == 1) {
             generateSuitable();
         }
 
@@ -798,14 +801,14 @@ int Simulation::run() {
         LOG(DEBUG)<<"start to simulate organism by species. Count of species is " << actived_organisms.size();
         unordered_map<Species*, unordered_map<int, vector<Organism*> > > unsuitable_organisms;
         for (auto s_it : actived_organisms) {
-            //LOG(DEBUG)<<"start to simulate organism by organism. Current species is "<< s_it.first->getIDWithParentID() << ". Count of organisms is " << s_it.second.size();
+            LOG(DEBUG)<<"start to simulate organism by organism. Current species is "<< s_it.first->getIDWithParentID() << ". Count of organisms is " << s_it.second.size();
             vector<Organism*> new_organisms;
             vector<Organism*> unsuitable_organisms_item;
 
             for (auto o_it : s_it.second) {
                 Organism *organism = o_it.second;
                 //if current year no smaller than individual organism's next run year, then move this organism.
-                //LOG(DEBUG)<<"Organism index is "<< organism->getID()<<". Current year is "<<year_i<<". Next year is "<<organism->getNextRunYearI();
+                LOG(DEBUG)<<"Organism index is "<< organism->getID()<<". Current year is "<<year_i<<". Next year is "<<organism->getNextRunYearI();
                 if ((int)year_i >= organism->getNextRunYearI()) {
                     unordered_map<int, int> next_cells;
                     switch (organism->getDispersalMethod()) {
@@ -849,23 +852,19 @@ int Simulation::run() {
                     }
                 }
             }
-            //LOG(DEBUG)<<"new_organisms SIZE:"<<new_organisms.size();
-            //LOG(DEBUG)<<"unsuitable_organisms_item SIZE:"<<unsuitable_organisms_item.size();
+            LOG(DEBUG)<<"new_organisms SIZE:"<<new_organisms.size();
+            LOG(DEBUG)<<"unsuitable_organisms_item SIZE:"<<unsuitable_organisms_item.size();
 
             if (new_organisms.size()==0){
-                //LOG(DEBUG)<<"SET DisappearedYearI 0";
+                LOG(DEBUG)<<"SET DisappearedYearI 0";
                 s_it.first->setDisappearedYearI(year_i);
             }
-            //LOG(DEBUG) << "new_organisms size is "<<new_organisms.size();
+            LOG(DEBUG) << "new_organisms size is "<<new_organisms.size();
             for (auto it : new_organisms) {
                 int id = it->getID();
                 //species id, index
                 organisms_in_current_year[s_it.first][id].push_back(it);
                 N_organisms_in_current_year[s_it.first][id] += 1;
-                if (id==4365){
-                    LOG(DEBUG)<<"SIZE 1 is "<<N_organisms_in_current_year[s_it.first][id];
-                }
-
                 all_organisms[year_i].push_back(it);
             }
             for (auto it : unsuitable_organisms_item) {
@@ -873,11 +872,8 @@ int Simulation::run() {
                 //species id, index
                 unsuitable_organisms[s_it.first][id].push_back(it);
                 N_organisms_in_current_year[s_it.first][id] = 0;
-                if (id==4365){
-                    LOG(DEBUG)<<"SIZE 2 is "<<N_organisms_in_current_year[s_it.first][id];
-                }
             }
-            //LOG(DEBUG)<<"end to simulate organism by organism.";
+            LOG(DEBUG)<<"end to simulate organism by organism.";
         }
 
         LOG(DEBUG)<<"end to simulate organism by species. Count of species is " << actived_organisms.size()<< " and organism size is "<<all_organisms[year_i].size();
@@ -1456,7 +1452,7 @@ int Simulation::getUnmarkedID(unordered_map<int, vector<Organism*>> &organisms) 
 unordered_map<string, ISEA*> Simulation::getEnvironmentMap(int p_year) {
     unordered_map<string, ISEA*> maps;
     for (auto item : environments) {
-        ISEA *layer = item.second->getValues(p_year);
+    	ISEA *layer = item.second->getValues(p_year);
         maps[item.first] = layer;
     }
     return maps;
@@ -1467,9 +1463,9 @@ void Simulation::getDispersalMap_2(Organism *organism, unordered_map<int, int> &
 	int p_dispersal_ability = organism->getDispersalAbility();
     if (organism->getNumOfPath() == -1) {
         int id = organism->getID();
-        //LOG(DEBUG) << "Looking for neighbors for " << id << ", with dispersal ability is " << p_dispersal_ability << ".";
+        LOG(DEBUG) << "Looking for neighbors for " << id << ", with dispersal ability is " << p_dispersal_ability << ".";
         getNeighbors(id, p_dispersal_ability, new_cells);
-        //LOG(DEBUG)<<new_cells.size() <<" neighbors were found.";
+        LOG(DEBUG)<<new_cells.size() <<" neighbors were found.";
     }
 }
 Simulation::~Simulation() {

@@ -16,6 +16,7 @@
 
 Neighbor::Neighbor(sqlite3 *env_db) {
     sqlite3_stmt *stmt1;
+    /*
     LOG(INFO)<<"Loading neighbor";
     string sql = "SELECT * FROM neighbor";
     sqlite3_prepare(env_db, sql.c_str(), -1, &stmt1, NULL);
@@ -50,11 +51,12 @@ Neighbor::Neighbor(sqlite3 *env_db) {
     }
 
     sqlite3_finalize(stmt1);
+    */
     LOG(INFO)<<"Loading distances";
     sqlite3_stmt *stmt2;
-    sql = "SELECT * FROM distances";
+    string sql = "SELECT * FROM distances";
     sqlite3_prepare(env_db, sql.c_str(), -1, &stmt2, NULL);
-    done = false;
+    bool done = false;
     while (!done) {
         int status = sqlite3_step(stmt2);
         //LOG(INFO)<<"SQLITE3 status is :"<<status;
@@ -101,6 +103,7 @@ void Neighbor::getNeighborByID_dict(int p_id, int distance, unordered_map<int, i
         }
     }
 }
+/*
 void Neighbor::getNeighborByID_loop(int p_id, int distance, unordered_map<int, int> &p_neighbors) {
     set<int> v;
     set<int> handled_ids;
@@ -123,7 +126,8 @@ void Neighbor::getNeighborByID_loop(int p_id, int distance, unordered_map<int, i
         v = new_nei;
     }
 }
-
+*/
+/*
 //note: distance must <=1; or it will lost some neighbors. But it is the fastest way when distance <=1 and the result is correct.
 void Neighbor::getNeighborByID_recursive(int p_id, int distance, unordered_map<int, int> &p_neighbors, set<int> &handled_ids) {
     //LOG(DEBUG)<<"ID is "<<p_id<<" and distance is "<<distance;
@@ -140,9 +144,11 @@ void Neighbor::getNeighborByID_recursive(int p_id, int distance, unordered_map<i
     p_neighbors[p_id] = distance;
 
 }
+
 unordered_map<int, set<int>> Neighbor::getNeighbors(){
     return this->neighbors;
 }
+*/
 /*
 int Neighbor::distance(int p_id1, int p_id2, int limited) {
     int distance = 0;
@@ -167,6 +173,6 @@ int Neighbor::distance(int p_id1, int p_id2, int limited) {
 }
 */
 Neighbor::~Neighbor() {
-    neighbors.clear();
+    //neighbors.clear();
 }
 

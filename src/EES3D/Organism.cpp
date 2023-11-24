@@ -567,22 +567,22 @@ int Organism::isSuitable(ISEA* mask) {
     for (auto item : nicheBreadth) {
         float mask_value = mask->readByID(id);
         if ((int) mask_value == NODATA) {
-            //LOG(INFO)<<"NO MASK";
+            LOG(DEBUG)<<"NO MASK";
             return -1;
         }
         float env_value = envs[item.first];
         if ((int) env_value == NODATA) {
-            //LOG(INFO)<<"NO DATA";
+            LOG(DEBUG)<<"NO DATA";
             return -1;
         }
-        //LOG(INFO)<<"env_value:"<<env_value <<" MAX:"<<item.second->getMax()<<" MIN:"<<item.second->getMin();
+        //LOG(DEBUG)<<"env_value:"<<env_value <<" MAX:"<<item.second->getMax()<<" MIN:"<<item.second->getMin();
         if ((env_value > item.second->getMax())
                 || (env_value < item.second->getMin())) {
-            //LOG(INFO)<<"UNSUITABLE";
+            //LOG(DEBUG)<<"UNSUITABLE";
             return 0;
         }
     }
-    //LOG(INFO)<<"SUITABLE";
+    //LOG(DEBUG)<<"SUITABLE";
     return 1;
 }
 Species* Organism::getSpecies() {

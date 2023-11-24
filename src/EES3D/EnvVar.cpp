@@ -19,6 +19,9 @@ EnvVar::EnvVar(){
 EnvVar::EnvVar(string p_env_name, sqlite3 *p_env_db) {
     envName = p_env_name;
     Utility::readEnvInfo(p_env_db, p_env_name, true, layers);
+    /*for (auto& it: layers) {
+        LOG(DEBUG)<<it.first;
+    }*/
 }
 
 ISEA* EnvVar::getValues(int p_year) {

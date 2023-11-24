@@ -29,7 +29,7 @@ using namespace std;
  */
 class Neighbor {
 private:
-    unordered_map<int, set<int>> neighbors;
+    //unordered_map<int, set<int>> neighbors;
     unordered_map<int, unordered_map<int, set<int>>> distances;
 public:
 
