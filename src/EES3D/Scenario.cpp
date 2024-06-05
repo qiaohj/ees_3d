@@ -149,7 +149,7 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
     string sql;
 
     if (p_id == -1) {
-        sql = "SELECT * FROM simulations WHERE is_run=1 and species_id<=100 and continent_id<=1000 order by random()";
+        sql = "SELECT * FROM simulations WHERE is_run=1 and continent_id<=100 order by random()";
     } else {
         sql = "SELECT * FROM simulations WHERE is_run=1 and id=" + to_string(p_id);
     }
@@ -171,9 +171,9 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
 			int species_evo_level = sqlite3_column_int(stmt, SIMULATION_species_evo_level);
 
             string label = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_label)));
-            //LOG(DEBUG) << "init Species";
+            LOG(DEBUG) << "init Species";
             Species *new_species = new Species(stmt, burn_in_year, timeLine, from, to, step);
-            //LOG(DEBUG) << "Finished to init Species";
+            LOG(DEBUG) << "Finished to init Species";
 
             string environments_str = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_environments)));
             string mask_table = string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, SIMULATION_mask)));
@@ -181,7 +181,7 @@ void Scenario::initSimulations(sqlite3 *conf_db, sqlite3 *env_db, int p_id, stri
 
 
             vector<string> environment_labels = CommonFun::splitStr(environments_str, ",");
-            //LOG(INFO)<<"evo_type is "<<evo_type;
+            LOG(DEBUG)<<"evo_type is "<<evo_type;
             Simulation *simulation = new Simulation(new_species, label, burn_in_year, p_target, p_overwrite, memLimit, timeLine, neighborInfo,
                     environment_labels, mask_table, details, evo_type, from, to, step, species_evo_type, directional_speed, species_evo_level);
 

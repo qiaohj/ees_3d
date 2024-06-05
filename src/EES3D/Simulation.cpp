@@ -34,7 +34,8 @@ Simulation::Simulation(Species *p_species, string label, int burnInYear, string 
     this->environment_labels = environment_labels;
     this->mask_table = mask_table;
     this->mask = NULL;
-    this->targetFolder = target + "/" + to_string(p_species->getID()) + "/" + label;
+    //this->targetFolder = target + "/" + to_string(p_species->getID()) + "/" + label;
+    this->targetFolder = target + "/" + label;
     this->organism_uid = 0;
     this->details = p_details;
     this->evoType = p_evoType;
@@ -323,7 +324,7 @@ int Simulation::run() {
         double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
         int memory = (int)CommonFun::getCurrentRSS(pow(1024, 2));
         this->max_memory = (max_memory>memory)?max_memory:memory;
-        LOG(INFO) << "v3.9 Current year @ "<<year_i<<" : " << timeLine[year_i] << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"
+        LOG(INFO) << "v3.9.1 Current year @ "<<year_i<<" : " << timeLine[year_i] << " @ " << this->targetFolder << " ("<<indexSimulation<<"/"
         		<<totalSimulation<<") N_sp:"<<
                 //organisms_in_current_year->size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
                 organisms_in_current_year.size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << memory << "MB.";
