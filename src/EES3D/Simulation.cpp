@@ -329,13 +329,19 @@ int Simulation::run() {
                 //organisms_in_current_year->size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << CommonFun::getCurrentRSS(pow(1024, 2)) << "MB.";
                 organisms_in_current_year.size()<< ". "<<time_taken/60<<" Mins. Memory usage:" << memory << "MB.";
 
-        if (organisms_in_current_year.size()>1000 & year_i<1600){
-        	vector<string> s;
-        	s.push_back(organisms_in_current_year.size() + ":" + timeLine[year_i]);
-        	string nnn = this->targetFolder + "/unfinished.txt";
-        	CommonFun::writeFile(s, nnn.c_str());
+		if (organisms_in_current_year.size() > 1000 & year_i < 1600) {
+			vector<string> s;
+			char sss[5000];
 
-        }
+			sprintf(sss, "%d:%d", organisms_in_current_year.size(),
+					timeLine[year_i]);
+			string sss_c = sss;
+			s.push_back(sss_c);
+			string nnn = this->targetFolder + "/unfinished.txt";
+			CommonFun::writeFile(s, nnn.c_str());
+			break;
+
+		}
         LOG(DEBUG) << "Load environments of year " << timeLine[year_i] << " via index " << year_i;
 
         unordered_map<string, ISEA*> current_environments = getEnvironmentMap(timeLine[year_i]);
