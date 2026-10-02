@@ -937,8 +937,8 @@ int Simulation::run() {
             unordered_map<int, vector<Organism*> > organisms = sp_it.second;
             Species *species = sp_it.first;
             int  current_group_id = 1;
-            //if ((int)year_i >= (species->getBurnInYear() + species->getSpeciationYears())) {
-            if (true){
+            if ((int)year_i >= (species->getBurnInYear() + species->getSpeciationYears())) {
+            //if (true){
                 //LOG(DEBUG)<<"Begin to mark the organism.";
                 int unmarked_id = getUnmarkedID(organisms);
 
